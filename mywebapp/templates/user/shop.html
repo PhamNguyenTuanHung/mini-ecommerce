@@ -1,0 +1,238 @@
+{% extends 'user/layout/base.html' %}
+{% block css %}
+<!-- Favicon -->
+<link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.png') }}"/>
+
+<!-- Plugin CSS -->
+<link rel="stylesheet" href="{{ url_for('static', filename='user/plugins/themefisher-font/style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='user/plugins/bootstrap/css/bootstrap.min.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='user/plugins/animate/animate.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='user/plugins/slick/slick.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='user/plugins/slick/slick-theme.css') }}">
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='user/plugins/bootstrap-touchspin/dist/jquery.bootstrap-touchspin.min.css') }}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<link rel="stylesheet" href="{{ url_for('static', filename='user/css1/bootstrap.min.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='user/css1/font-awesome.min.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='user/css1/magnific-popup.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='user/css1/nice-select.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='user/css/style1.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='user/css/style.css') }}">
+
+{% endblock %}
+{% block title %} Cửa hàng {% endblock %}
+{% block content %}
+
+
+<section class="products section">
+    <div class="container">
+        <div class="row" x-data="dataProducts">
+            <div class="col-lg-3">
+                <div class="shop__sidebar">
+                    <div class="shop__sidebar__search">
+                        <form action="#">
+                            <input x-model="searchQuery"
+                                   @input="filterProducts()"
+                                   type="text" placeholder="Search...">
+                            <button type="submit"><span class="icon_search"></span></button>
+                        </form>
+                    </div>
+                    <div class="shop__sidebar__accordion">
+                        <div class="accordion" id="accordionExample">
+                            <div class="card">
+                                <div class="card-heading">
+                                    <a data-toggle="collapse" data-target="#collapseOne">Categories</a>
+                                </div>
+                                <div id="collapseOne" class="collapse show" data-parent="#accordionExample">
+                                    <div class="card-body">
+                                        <div class="shop__sidebar__categories">
+                                            <ul>
+                                                <template x-for="category in categories" :key="category.id">
+                                                    <li>
+                                                        <a href="#"
+                                                           @click.prevent="
+                                                           categoryFilter = categoryFilter === category.name ? '' : category.name;
+                                                           filterProducts();"
+                                                           :class="categoryFilter === category.name ? 'active' : ''"
+                                                           x-text="category.name">
+                                                        </a>
+                                                    </li>
+                                                </template>
+                                            </ul>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="card-heading">
+                                    <a data-toggle="collapse" data-target="#collapseTwo">Branding</a>
+                                </div>
+                                <div id="collapseTwo" class="collapse show" data-parent="#accordionExample">
+                                    <div class="card-body">
+                                        <div class="shop__sidebar__brand">
+                                            <ul>
+                                                <template x-for="brand in brands" :key="brand.id">
+                                                    <li><a href="#"
+                                                           @click.prevent="brandFilter = brandFilter === brand.name ? '' : brand.name;;
+                                                           filterProducts()"
+                                                           :class="brandFilter === brand.name ? 'active' : ''"
+                                                           x-text="brand.name "></a>
+                                                    </li>
+                                                </template>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="card-heading">
+                                    <a data-toggle="collapse" data-target="#collapseThree">Filter Price</a>
+                                </div>
+                                <div id="collapseThree" class="collapse show" data-parent="#accordionExample">
+                                    <div class="card-body">
+                                        <div class="shop__sidebar__price">
+                                            <input type="range" id="minPrice" min="0" max="2000000" step="10000"
+                                                   value="200000">
+                                            <input type="range" id="maxPrice" min="0" max="2000000" step="10000"
+                                                   value="1000000">
+                                            <div class="price-display">
+                                                <span id="minPriceLabel"></span> - <span id="maxPriceLabel"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-9 product-container">
+                <div class="shop__product__option">
+                    <div class="row">
+                        <div class="col-lg-6 col-md-6 col-sm-6">
+                        </div>
+                        <div class="col-lg-6 col-md-6 col-sm-6">
+                            <div class="shop__product__option__right">
+                                <p>Sắp xếp theo:</p>
+                                    <select x-model="sortOption" @change="filterProducts()">
+                                        <option value="priceLowHigh">Giá: Thấp → Cao</option>
+                                        <option value="priceHighLow">Giá: Cao → Thấp</option>
+                                        <option value="newest">Mới nhất</option>
+                                        <option value="bestseller">Bán chạy nhất</option>
+                                        <option value="discount">Khuyến mãi nhiều nhất</option>
+                                    </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <template x-for="product in paginatedProducts" :key="product.id">
+                        <div class="col-lg-4 col-md-6 col-sm-6">
+                            <div class="product-item">
+                                <div class="product-thumb">
+                                    <span class="bage">Sale</span>
+                                    <img class="img-responsive"
+                                         :src="product.image"
+                                         alt="product-img"/>
+                                    <a :href="`/product/${product.MaSanPham}`"></a>
+                                    <div class="preview-meta">
+                                        <ul>
+                                            <li>
+                                            <span @click="openModal(product)">
+                                                <i class="tf-ion-ios-search-strong"></i>
+                                            </span>
+                                            </li>
+                                            <li>
+                                                <a href="javascript:void(0);"><i class="tf-ion-ios-heart"></i></a>
+                                            </li>
+                                            <li>
+                                                <a :href="`/product_single/${product.id}`">
+                                                    <i class="tf-ion-android-cart"></i>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="product-content">
+                                    <h4><a :href="`/product_single/${product.id}`" x-text="product.name"></a></h4>
+                                    <p class="price" x-text="`$${product.price}`"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                </div>
+                <div class="row shop-pagination">
+                    <div class="d-flex justify-content-end align-items-center">
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0">
+                                <li x-show="currentPage>1" class="page-item" :class="{ 'disabled': currentPage === 1 }">
+                                    <a class="page-link" href="#"
+                                       @click.prevent="goToPage(currentPage - 1)">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </a>
+                                </li>
+                                <template x-for="(page, index) in visiblePages" :key="`page-${index}`">
+                                    <li class="page-item" :class="{ 'active': page === currentPage }">
+                                        <a class="page-link" href="#"
+                                           @click.prevent="page !== '...' && goToPage(page)"
+                                           x-text="page"></a>
+                                    </li>
+                                </template>
+                                <li class="page-item" :class="{ 'disabled': currentPage === totalPages }">
+                                    <a class="page-link" href="#"
+                                       @click.prevent="goToPage(currentPage + 1)">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Modal -->
+<div class="modal product-modal fade" id="product-modal">
+    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <i class="tf-ion-close"></i>
+    </button>
+    <div class="modal-dialog " role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-8 col-sm-6 col-xs-12">
+                        <div class="modal-image">
+                            <img class="img-responsive"
+                                 src="{{ url_for('static', filename='user/images/shop/products/modal-product.jpg') }}"
+                                 alt="product-img"/>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-sm-6 col-xs-12">
+                        <div class="product-short-details">
+                            <h2 class="product-title">GM Pendant, Basalt Grey</h2>
+                            <p class="product-price">$200</p>
+                            <p class="product-short-description">
+                                Lorem ipsum dolor sit amet, consectetur adipisicing elit. Rem iusto nihil
+                                cum. Illo laborum numquam rem aut officia dicta cumque.
+                            </p>
+                            <a href="{{ url_for('main.cart') }}" class="btn btn-main">Add To Cart</a>
+                            Product Details</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /.modal -->
+<script type="module" src="{{ url_for('static', filename='user/js/components/product.js') }}" defer></script>
+
+
+{% endblock %}

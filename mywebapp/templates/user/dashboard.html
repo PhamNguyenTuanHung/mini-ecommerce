@@ -1,0 +1,64 @@
+{% extends 'user/layout/base.html' %}
+{% block title %} Trang chủ {% endblock %}
+{% block content %}
+
+
+
+<section class="user-dashboard page-wrapper">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <ul class="list-inline dashboard-menu text-center">
+                    <li><a class="active" href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+                    <li><a href="{{ url_for('main.order') }}">Orders</a></li>
+                    <li><a href="{{ url_for('main.view_address') }}">Address</a></li>
+                    <li><a href="{{url_for('main.profile_details')}}">Profile Details</a></li>
+                </ul>
+                <div class="dashboard-wrapper user-dashboard">
+                    <div class="media">
+                        <div class="pull-left">
+                            <img class="media-object user-img"
+                                 src="{{ current_user.AnhDaiDien or url_for('static', filename='user/images/avatar.jpg') }}"
+                                 alt="Image">
+                        </div>
+                        <div class="media-body">
+                            <h2 class="media-heading">Welcome {{ current_user.HoTen }}</h2>
+                            <p>Chào mừng bạn đến trang quản lý cá nhân!</p>
+                        </div>
+                    </div>
+
+                    <div class="total-order mt-20">
+                        <h4>Total Orders</h4>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Total</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for o in orders %}
+                                <tr>
+                                    <td>#{{ o.id }}</td>
+                                    <td>{{ o.date.strftime('%d/%m/%Y') }}</td>
+                                    <td>{{ o.status }}</td>
+                                    <td>{{ "{:,.0f}".format(o.total) }}</td>
+                                </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>
+
+
+{% endblock %}

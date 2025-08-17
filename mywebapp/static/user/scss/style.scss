@@ -1,0 +1,90 @@
+/*------------------------------------------------------------------
+[Table of contents]
+
+1. Body
+	2. Header 
+		2.1. Navigation 
+		2.2. Menu 
+		2.3. Cart 
+	3. Banner
+		3.1 Revolution Slider
+	4. Products
+		4.1 Product Item
+		4.2 Single Product
+	5. Pricing
+	6. Clients
+	7. Instagram Feed 
+	8. User Dashboard
+		8.1 User Profile
+	9. Blog
+		9.1 Post
+		9.2 Post Pagination
+		9.3 Single Post
+		9.4 Post Sidebar
+	10. Backgrounds
+	11. Comming Soon
+	12. Account Page
+	13. Shopping
+		13.1 Checkout
+		13.2 Shopping Cart
+		13.3 Product Checkout Details
+		13.4 Purchase Confirmation
+		13.5 Empty Cart
+		13.6 Success Message
+	14.404 Page
+	15. Contact 
+		15.1  Contact Form 
+		15.2 Contact Details
+		15.3 Social Icons
+	16.Footer
+	
+
+-------------------------------------------------------------------*/
+
+@import "variables";
+
+@import "media-query";
+
+@import "typography";
+
+@import "common";
+
+@import "templates/header";
+
+@import "templates/navigation";
+
+@import "templates/slider";
+
+@import "templates/products";
+
+@import "templates/single-product";
+
+@import "templates/pricing";
+
+@import "templates/clients";
+
+@import "templates/about";
+
+@import "templates/instagram";
+
+@import "templates/user-dashboard";
+
+@import "templates/blog";
+
+@import "templates/single-post";
+
+@import "templates/blog-sidebar";
+
+@import "templates/backgrounds";
+
+@import "templates/coming-soon";
+
+@import "templates/account";
+
+@import "templates/shopping";
+
+@import "templates/404";
+
+@import "templates/contact";
+
+@import "templates/footer";

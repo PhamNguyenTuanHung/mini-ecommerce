@@ -1,0 +1,533 @@
+{% extends 'admin/layout/base.html' %}
+{% block title %} Đơn hàng{%endblock%}
+
+
+<!-- Main Content -->
+{%block content %}
+<main class="admin-main">
+    <div class="container-fluid p-4 p-lg-5">
+
+        <!-- Page Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4 mb-lg-5">
+            <div>
+                <h1 class="h3 mb-0">Order Management</h1>
+                <p class="text-muted mb-0">Track orders, manage fulfillment, and analyze sales</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-secondary" @click="exportOrders()">
+                    <i class="bi bi-download me-2"></i>Export
+                </button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
+                        data-bs-target="#bulkUpdateModal">
+                    <i class="bi bi-arrow-repeat me-2"></i>Bulk Update
+                </button>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#orderModal">
+                    <i class="bi bi-plus-lg me-2"></i>New Order
+                </button>
+            </div>
+        </div>
+
+        <!-- Order Management Container -->
+        <div x-data="orderTable">
+
+            <!-- Order Stats Widgets -->
+            <div class="row g-4 g-lg-5 mb-5">
+                <div class="col-xl-3 col-lg-6">
+                    <div class="card stats-card">
+                        <div class="card-body p-3 p-lg-4">
+                            <div class="d-flex align-items-center">
+                                <div class="stats-icon bg-primary bg-opacity-10 text-primary me-3">
+                                    <i class="bi bi-bag-check"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 text-muted">Tổng đơn hàng</h6>
+                                    <h3 class="mb-0" x-text="stats.total"></h3>
+                                    <small class="text-success">
+                                        <i class="bi bi-arrow-up"></i> +12% so với tháng trước
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-lg-6">
+                    <div class="card stats-card">
+                        <div class="card-body p-3 p-lg-4">
+                            <div class="d-flex align-items-center">
+                                <div class="stats-icon bg-warning bg-opacity-10 text-warning me-3">
+                                    <i class="bi bi-clock"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 text-muted"> Chờ xử lý</h6>
+                                    <h3 class="mb-0" x-text="stats.pending"></h3>
+                                    <small class="text-warning">
+                                        <i class="bi bi-exclamation-circle"></i> Chú ý
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-lg-6">
+                    <div class="card stats-card">
+                        <div class="card-body p-3 p-lg-4">
+                            <div class="d-flex align-items-center">
+                                <div class="stats-icon bg-info bg-opacity-10 text-info me-3">
+                                    <i class="bi bi-truck"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 text-muted">Vận chuyển</h6>
+                                    <h3 class="mb-0" x-text="stats.shipping"></h3>
+                                    <small class="text-info">
+                                        <i class="bi bi-arrow-right"></i> Đang vận chuyển
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-lg-6">
+                    <div class="card stats-card">
+                        <div class="card-body p-3 p-lg-4">
+                            <div class="d-flex align-items-center">
+                                <div class="stats-icon bg-success bg-opacity-10 text-success me-3">
+                                    <i class="bi bi-currency-dollar"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 text-muted">Doanh thu</h6>
+                                    <h3 class="mb-0" x-text="`${stats.revenue.toLocaleString()}`"></h3>
+                                    <small class="text-success">
+                                        <i class="bi bi-arrow-up"></i> +8% so với tháng trước
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="row g-4 g-lg-5 mb-5">
+                <!-- Order Trends Chart -->
+                <div class="col-lg-8">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">Order Trends</h5>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <input type="radio" class="btn-check" name="trendsPeriod" id="trends7d"
+                                       autocomplete="off" checked>
+                                <label class="btn btn-outline-secondary" for="trends7d">7D</label>
+                                <input type="radio" class="btn-check" name="trendsPeriod" id="trends30d"
+                                       autocomplete="off">
+                                <label class="btn btn-outline-secondary" for="trends30d">30D</label>
+                                <input type="radio" class="btn-check" name="trendsPeriod" id="trends90d"
+                                       autocomplete="off">
+                                <label class="btn btn-outline-secondary" for="trends90d">90D</label>
+                            </div>
+                        </div>
+                        <div class="card-body p-3 p-lg-4">
+                            <div id="orderTrendsChart" style="height: 300px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Status Distribution -->
+                <div class="col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Order Status</h5>
+                        </div>
+                        <div class="card-body p-3 p-lg-4">
+                            <div id="statusChart" style="height: 200px;"></div>
+                            <div class="mt-3">
+                                <template x-for="status in statusStats" :key="status.name">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="small" x-text="status.name"></span>
+                                        <div class="d-flex align-items-center">
+                                            <span class="small text-muted me-2" x-text="`${status.percentage}%`"></span>
+                                            <span class="small fw-medium" x-text="status.count"></span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders Table -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="card-title mb-0">Orders</h5>
+                        </div>
+                        <div class="col-auto">
+                            <div class="d-flex gap-2">
+                                <!-- Search -->
+                                <div class="position-relative">
+                                    <input type="search"
+                                           class="form-control form-control-sm"
+                                           placeholder="Tìm kếm đơn hàng..."
+                                           x-model="searchQuery"
+                                           @input="filterOrders()"
+                                           style="width: 200px;">
+                                    <i class="bi bi-search position-absolute top-50 end-0 translate-middle-y me-2 text-muted"></i>
+                                </div>
+
+                                <!-- Status Filter -->
+                                <select class="form-select form-select-sm"
+                                        x-model="statusFilter"
+                                        @change="filterOrders()"
+                                        style="width: 150px;">
+                                    <option value="">Tất cả</option>
+                                    <option value="pending">Đang chờ xác nhận</option>
+                                    <option value="processing">Đang xử lý</option>
+                                    <option value="shipping">Đang vận chuyển</option>
+                                    <option value="delivered">Đã giao</option>
+                                    <option value="cancelled">Đã hủy</option>
+                                </select>
+
+                                <!-- Date Range -->
+                                <select class="form-select form-select-sm"
+                                        x-model="dateFilter"
+                                        @change="filterOrders()"
+                                        style="width: 150px;">
+                                    <option value="">Tất cả</option>
+                                    <option value="today">Hôm nay</option>
+                                    <option value="week">Tuần này</option>
+                                    <option value="month">Tháng này</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Bulk Actions Bar -->
+                    <div class="bulk-actions-bar p-3 bg-light border-bottom" x-show="selectedOrders.length > 0"
+                         x-transition>
+                        <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted">
+                                            <span x-text="selectedOrders.length"></span> đơn hàng đã chọn
+                                        </span>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-secondary" @click="bulkAction('processing')">
+                                    <i class="bi bi-arrow-clockwise me-1"></i>Đang xử lý
+                                </button>
+                                <button class="btn btn-sm btn-outline-info" @click="bulkAction('shipped')">
+                                    <i class="bi bi-truck me-1"></i>Đang vận chuyển
+                                </button>
+                                <button class="btn btn-sm btn-outline-success" @click="bulkAction('delivered')">
+                                    <i class="bi bi-check-circle me-1"></i>Đã giao
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th style="width: 40px;">
+                                    <input type="checkbox"
+                                           class="form-check-input"
+                                           @change="toggleAll($event.target.checked)"
+                                           :checked="selectedOrders.length === filteredOrders.length && filteredOrders.length > 0">
+                                </th>
+                                <th @click="sortBy('orderNumber')" class="sortable">Order #</th>
+                                <th>Khách hàng</th>
+                                <th>Sản phẩm</th>
+                                <th @click="sortBy('total')" class="sortable">Tổng</th>
+                                <th>Trạng thái</th>
+                                <th @click="sortBy('orderDate')" class="sortable">Date</th>
+                                <th>Thanh toán</th>
+                                <th style="width: 120px;">Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <template x-for="order in paginatedOrders" :key="order.id">
+                                <tr>
+                                    <td>
+                                        <input type="checkbox"
+                                               class="form-check-input"
+                                               :value="order.id"
+                                               x-model="selectedOrders">
+                                    </td>
+                                    <td>
+                                        <div class="fw-medium" x-text="order.id"></div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img :src="order.customer.avatar"
+                                                 class="rounded-circle me-2"
+                                                 width="32"
+                                                 height="32">
+                                            <div>
+                                                <div class="fw-medium" x-text="order.customer.name"></div>
+                                                <small class="text-muted" x-text="order.customer.email"></small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="order-items">
+                                            <div x-text="order.itemCount + ' item' + (order.itemCount > 1 ? 's' : '')"></div>
+                                            <small class="text-muted"
+                                                   x-text="order.items[0].name + (order.itemCount > 1 ? ' +' + (order.itemCount - 1) + ' more' : '')"></small>
+                                        </div>
+                                    </td>
+                                    <td class="fw-medium" x-text="`$${order.total}`"></td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="order-status badge"
+                                                  :class="{
+                                                              'bg-secondary': order.status === 'pending',
+                                                              'bg-info': order.status === 'processing',
+                                                              'bg-primary': order.status === 'shipping',
+                                                              'bg-success': order.status === 'delivered',
+                                                              'bg-danger': order.status === 'cancelled'
+                                                          }"
+                                                  x-text="order.status.charAt(0).toUpperCase() + order.status.slice(1)">
+                                                    </span>
+
+                                        </div>
+
+
+                                    </td>
+
+                                    <td x-text="order.orderDate"></td>
+                                    <td x-text="order.payment"></td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                                    type="button"
+                                                    data-bs-toggle="dropdown">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#" @click="viewOrder(order)">
+                                                    <i class="bi bi-eye me-2"></i>Xem chi tiết
+                                                </a></li>
+                                                <li><a class="dropdown-item" href="#" @click="printInvoice(order)">
+                                                    <i class="bi bi-printer me-2"></i>In hóa đơn
+                                                </a></li>
+                                                <li>
+                                                    <hr class="dropdown-divider">
+                                                </li>
+                                                <li><a class="dropdown-item text-danger" href="#"
+                                                       @click="cancelOrder(order)">
+                                                    <i class="bi bi-x-circle me-2"></i>Hủy đơn hàng
+                                                </a></li>
+                                            </ul>
+                                        </div>
+                                    </td>
+
+                                </tr>
+                            </template>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="d-flex justify-content-between align-items-center p-3">
+                        <div class="text-muted">
+                            Showing <span x-text="(currentPage - 1) * itemsPerPage + 1"></span> to
+                            <span x-text="Math.min(currentPage * itemsPerPage, filteredOrders.length)"></span> of
+                            <span x-text="filteredOrders.length"></span> results
+                        </div>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0">
+                                <li class="page-item" :class="{ 'disabled': currentPage === 1 }">
+                                    <a class="page-link" href="#"
+                                       @click.prevent="goToPage(currentPage - 1)">Previous</a>
+                                </li>
+                                <template x-for="(page, index) in visiblePages" :key="`page-${index}`">
+                                    <li class="page-item" :class="{ 'active': page === currentPage }">
+                                        <a class="page-link" href="#" @click.prevent="page !== '...' && goToPage(page)"
+                                           x-text="page"></a>
+                                    </li>
+                                </template>
+                                <li class="page-item" :class="{ 'disabled': currentPage === totalPages }">
+                                    <a class="page-link" href="#" @click.prevent="goToPage(currentPage + 1)">Next</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="orderModal" tabindex="-1">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Order Details</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+
+                        <template x-if="selectedOrder">
+                            <div class="modal-body text-white bg-dark">
+                                <h6 class="mb-3">Thông tin khách hàng</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Họ Tên</label>
+                                        <div class="form-control bg-dark text-white border-secondary"
+                                             x-text="selectedOrder.customer.name"></div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Email</label>
+                                        <div class="form-control bg-dark text-white border-secondary"
+                                             x-text="selectedOrder.customer.email"></div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Số điện thoại</label>
+                                        <div class="form-control bg-dark text-white border-secondary"
+                                             x-text="selectedOrder.customer.phone"></div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Địa chỉ giao hàng</label>
+                                        <div class="form-control bg-dark text-white border-secondary"
+                                             x-text="selectedOrder.shippingAddress"></div>
+                                    </div>
+                                </div>
+
+                                <hr class="border-secondary my-4">
+
+                                <h6 class="mb-3">Sản phẩm</h6>
+                                <table class="table bg-dark text-white border-secondary">
+                                    <thead class="bg-dark text-white border-bottom border-secondary">
+                                    <tr>
+                                        <th class="border-0">Sản phẩm</th>
+                                        <th class="border-0">Giá</th>
+                                        <th class="border-0">Số lượng</th>
+                                        <th class="text-end border-0">Tổng</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <template x-for="item in selectedOrder.items" :key="item.id">
+                                        <tr>
+                                            <td class="border-0">
+                                                <strong x-text="item.name"></strong><br>
+                                                <span x-text="`${item.color} - ${item.size} x ${item.quantity}`"></span>
+                                            </td>
+                                            <td class="border-0" x-text="item.price.toLocaleString() + ' đ'"></td>
+                                            <td class="border-0" x-text="item.quantity"></td>
+                                            <td class="text-end border-0"
+                                                x-text="(item.price * item.quantity).toLocaleString() + ' đ'"></td>
+                                        </tr>
+                                    </template>
+                                    </tbody>
+                                </table>
+
+                                <!--                                <template x-for="(item, index) in selectedOrder.items" :key="index">-->
+                                <!--                                    <div class="border rounded p-3 mb-2 bg-secondary bg-opacity-10">-->
+                                <!--                                        &lt;!&ndash; Dòng 1: Tên sản phẩm | Giá | Tổng &ndash;&gt;-->
+                                <!--                                        <div class="row">-->
+                                <!--                                            &lt;!&ndash; Tên sản phẩm (col-md-6) &ndash;&gt;-->
+                                <!--                                            <div class="col-md-3 d-flex align-items-center">-->
+                                <!--                                                <strong x-text="item.name"></strong>-->
+                                <!--                                            </div>-->
+
+                                <!--                                            &lt;!&ndash; Giá (col-md-3) &ndash;&gt;-->
+                                <!--                                            <div class="col-md-3 d-flex align-items-center justify-content-end">-->
+                                <!--                                                Giá: <span class="ms-1" x-text="formatCurrency(item.price)"></span>-->
+                                <!--                                            </div>-->
+
+                                <!--                                            &lt;!&ndash; Tổng (col-md-3), lệch sát phải &ndash;&gt;-->
+                                <!--                                            <div class="col-md-6 d-flex align-items-center justify-content-end pe-0">-->
+                                <!--                                                Tổng: <span class="ms-1"-->
+                                <!--                                                            x-text="formatCurrency(item.price * item.quantity)"></span>-->
+                                <!--                                            </div>-->
+                                <!--                                        </div>-->
+
+                                <!--                                        &lt;!&ndash; Dòng 2: Màu - Size | SL &ndash;&gt;-->
+                                <!--                                        <div class="row mt-1">-->
+                                <!--                                            <div class="col-md-6 text-muted">-->
+                                <!--                                                <span x-text="`${item.color} - ${item.size} x ${item.quantity}`"></span>-->
+                                <!--                                            </div>-->
+
+                                <!--                                        </div>-->
+                                <!--                                    </div>-->
+                                <!--                                </template>-->
+
+                                <!-- Tổng đơn -->
+                                <div class="d-flex justify-content-between align-items-center mt-4">
+
+                                    <h6 class="mb-0">Tổng đơn hàng</h6>
+                                    <h6 class="mb-0 text-success" x-text="formatCurrency(selectedOrder.total)"></h6>
+                                </div>
+
+                                <div class="mt-5 d-flex align-items-center gap-3">
+                                    <label class="form-label fw-semibold mb-0">Trạng thái</label>
+                                    <select class="form-select bg-dark text-white border-secondary w-auto"
+                                            x-model="selectedOrder.status">
+                                        <option value="pending">Đang chờ xác nhận</option>
+                                        <option value="processing">Đang xử lý</option>
+                                        <option value="shipping">Đang vận chuyển</option>
+                                        <option value="delivered">Đã giao</option>
+                                        <option value="cancelled">Đã hủy</option>
+                                    </select>
+                                </div>
+
+
+                            </div>
+                        </template>
+                        <div class="modal-footer bg-dark border-secondary">
+                            <button type="button" class="btn btn-primary" @click="updateStatusOrder(selectedOrder)">
+                                Lưu
+                            </button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+
+    </div> <!-- End Order Management Container -->
+
+    </div>
+</main>
+{%endblock%}
+
+{% block Modal %}
+
+
+<!-- Bulk Update Modal -->
+<div class="modal fade" id="bulkUpdateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Bulk Update Orders</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Cập nhật trạng thái</label>
+                    <select class="form-select">
+                        <option value="processing">Đang xử lý</option>
+                        <option value="shipping">Đang vận chuyển</option>
+                        <option value="delivered">Đã giao</option>
+                        <option value="cancelled"> Đã hủy</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Filter Orders</label>
+                    <select class="form-select">
+                        <option value="">All orders</option>
+                        <option value="pending">Đang chờ xác nhận</option>
+                        <option value="processing">Đang xử lý</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary">Cập nhật</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

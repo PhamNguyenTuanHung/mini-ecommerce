@@ -1,0 +1,587 @@
+{% extends 'admin/layout/base.html' %}
+{% block title %} Người dùng {%endblock%}
+<!-- Main Content -->
+{%block content %}
+<main class="admin-main">
+    <div class="container-fluid p-4 p-lg-5" x-data="userTable">
+
+        <!-- Page Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4 mb-lg-5 mb-xl-6">
+            <div>
+                <h1 class="h3 mb-0">User Management</h1>
+                <p class="text-muted mb-0">Manage users, roles, and permissions</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
+                        data-bs-target="#importModal">
+                    <i class="bi bi-upload me-2"></i>Import Users
+                </button>
+                <button type="button" class="btn btn-outline-secondary" @click="exportUsers()">
+                    <i class="bi bi-download me-2"></i>Export
+                </button>
+                <div>
+                    <button type="button" class="btn btn-primary"
+                            x-data="userForm"
+                            @click="$store.userFormStore.openModal('add')">
+                        <i class="bi bi-person-plus me-2"></i>Add User
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Users Management Container -->
+        <div >
+            <!-- User Stats Widgets -->
+            <div class="row g-4 g-lg-5 g-xl-6 mb-5 mb-lg-5 mb-xl-6">
+                <div class="col-xl-4 col-lg-6">
+                    <div class="card stats-card">
+                        <div class="card-body p-3 p-lg-4">
+                            <div class="d-flex align-items-center">
+                                <div class="stats-icon bg-primary bg-opacity-10 text-primary me-3">
+                                    <i class="bi bi-people-fill"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 ">Tổng người dùng</h6>
+                                    <h3 class="mb-0" x-text="stats.total"></h3>
+                                    <small
+                                            :class="{
+                                        'text-success': stats.growthPercentage > 0,
+                                        'text-danger': stats.growthPercentage < 0,
+                                    }">
+                                        <template x-if="stats.growthPercentage !== 0">
+                                            <i :class="{
+                                                'bi bi-arrow-up': stats.growthPercentage > 0,
+                                                'bi bi-arrow-down': stats.growthPercentage < 0
+                                            }"></i>
+                                        </template>
+                                        <span x-text="stats.growthPercentage + '% so với tháng trước'"></span>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-4 col-lg-6">
+                    <div class="card stats-card">
+                        <div class="card-body p-3 p-lg-4">
+                            <div class="d-flex align-items-center">
+                                <div class="stats-icon bg-success bg-opacity-10 text-success me-3">
+                                    <i class="bi bi-person-check-fill"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 ">Active Users</h6>
+                                    <h3 class="mb-0" x-text="stats.active"></h3>
+                                    <small class="text-success">
+                                        <i class="bi bi-arrow-up"></i> +8% from last week
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-4 col-lg-6">
+                    <div class="card stats-card">
+                        <div class="card-body p-3 p-lg-4">
+                            <div class="d-flex align-items-center">
+                                <div class="stats-icon bg-info bg-opacity-10 text-info me-3">
+                                    <i class="bi bi-person-plus-fill"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 ">Người dùng mới tháng này</h6>
+                                    <h3 class="mb-0" x-text="stats.newThisMonth"></h3>
+
+                                    <small
+                                            :class="{
+                                        'text-success': stats.growthPercentage > 0,
+                                        'text-danger': stats.growthPercentage < 0,
+                                    }">
+                                        <template x-if="stats.growthPercentage !== 0">
+                                            <i :class="{
+                                                'bi bi-arrow-up': stats.growthPercentage > 0,
+                                                'bi bi-arrow-down': stats.growthPercentage < 0
+                                            }"></i>
+                                        </template>
+                                        <span x-text="stats.growthPercentage + '% so với tháng trước'"></span>
+                                    </small>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enhanced Analytics Widgets Row -->
+            <div class="row g-4 g-lg-5 g-xl-6 mb-5 mb-lg-5 mb-xl-6">
+                <!-- User Growth Chart -->
+                <div class="col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">Người dùng dăng kí mới</h5>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-primary active"
+                                        data-chart-period="7d">7D
+                                </button>
+                                <button type="button" class="btn btn-outline-primary"
+                                        data-chart-period="30d">30D
+                                </button>
+                                <button type="button" class="btn btn-outline-primary"
+                                        data-chart-period="90d">90D
+                                </button>
+                                <button type="button" class="btn btn-outline-primary"
+                                        data-chart-period="1y">1Y
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body p-3 p-lg-4">
+                            <div class="mb-4">
+                                <div id="userGrowthChart"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">Recent Activity</h5>
+                            <button class="btn btn-sm btn-outline-secondary" @click="getRecentActivities()">
+                                <i class="bi bi-arrow-clockwise"></i>
+                            </button>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="activity-feed" style="max-height: 350px; overflow-y: auto;">
+                                <template x-for="activity in recentActivities" :key="activity.id">
+                                    <div class="d-flex p-3 border-bottom">
+                                        <div class="flex-shrink-0 me-3">
+                                            <div class="activity-icon"
+                                                 :class="`bg-${activityIcons[activity.type]?.color || 'secondary'} bg-opacity-10`">
+                                                <i :class="`bi ${activityIcons[activity.type]?.icon || 'bi-info-circle'} text-${activityIcons[activity.type]?.color || 'secondary'}`"></i>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex justify-content-between">
+                                                <p class="mb-1 small">
+                                                    <strong x-text="activity.user"></strong>
+                                                    <span x-text="activity.action"></span>
+                                                </p>
+                                                <small class="text-muted" x-text="activity.time"></small>
+                                            </div>
+                                            <small class="text-muted" x-text="activity.details"></small>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Users Table -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="card-title mb-0">Users Directory</h5>
+                        </div>
+                        <div class="col-auto">
+                            <div class="d-flex gap-2">
+                                <!-- Search -->
+                                <div class="position-relative">
+                                    <input type="search"
+                                           class="form-control form-control-sm"
+                                           placeholder="Search users..."
+                                           x-model="searchQuery"
+                                           @input="filterUsers()"
+                                           style="width: 200px;">
+                                    <i class="bi bi-search position-absolute top-50 end-0 translate-middle-y me-2 text-muted"></i>
+                                </div>
+
+                                <!-- Status Filter -->
+                                <select class="form-select form-select-sm"
+                                        x-model="statusFilter"
+                                        @change="filterUsers()"
+                                        style="width: 150px;">
+                                    <option value="">All Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                    <option value="pending">Pending</option>
+                                </select>
+
+                                <!-- Role Filter -->
+                                <select class="form-select form-select-sm"
+                                        x-model="roleFilter"
+                                        @change="filterUsers()"
+                                        style="width: 150px;">
+                                    <option value="">All Roles</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="user">User</option>
+                                    <option value="moderator">Moderator</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Bulk Actions Bar -->
+                    <div class="bulk-actions-bar p-3 bg-primary bg-opacity-10 border-bottom border-primary border-opacity-25"
+                         x-show="selectedUsers.length > 0"
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 transform translate-y-2"
+                         x-transition:enter-end="opacity-100 transform translate-y-0">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-check-circle-fill text-primary me-2"></i>
+                                <span class="fw-medium text-primary">
+                                                <span x-text="selectedUsers.length"></span> user<span
+                                        x-show="selectedUsers.length !== 1">s</span> selected
+                                            </span>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-success" @click="bulkAction('activate')">
+                                    <i class="bi bi-check-circle me-1"></i>Activate
+                                </button>
+                                <button class="btn btn-sm btn-warning" @click="bulkAction('deactivate')">
+                                    <i class="bi bi-x-circle me-1"></i>Deactivate
+                                </button>
+                                <button class="btn btn-sm btn-danger" @click="bulkAction('delete')">
+                                    <i class="bi bi-trash me-1"></i>Delete
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" @click="selectedUsers = []"
+                                        title="Clear selection">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th style="width: 40px;">
+                                    <input type="checkbox"
+                                           class="form-check-input "
+                                           @change="toggleAll($event.target.checked)"
+                                           :checked="selectedUsers.length === filteredUsers.length && filteredUsers.length > 0">
+                                </th>
+                                <th @click="sortBy('name')" class="sortable">
+                                    Name
+                                    <i class="bi bi-arrow-up"
+                                       x-show="sortField === 'name' && sortDirection === 'asc'"></i>
+                                    <i class="bi bi-arrow-down"
+                                       x-show="sortField === 'name' && sortDirection === 'desc'"></i>
+                                </th>
+                                <th @click="sortBy('email')" class="sortable">
+                                    Email
+                                    <i class="bi bi-arrow-up"
+                                       x-show="sortField === 'email' && sortDirection === 'asc'"></i>
+                                    <i class="bi bi-arrow-down"
+                                       x-show="sortField === 'email' && sortDirection === 'desc'"></i>
+                                </th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th @click="sortBy('lastActive')" class="sortable">
+                                    Last Active
+                                    <i class="bi bi-arrow-up"
+                                       x-show="sortField === 'lastActive' && sortDirection === 'asc'"></i>
+                                    <i class="bi bi-arrow-down"
+                                       x-show="sortField === 'lastActive' && sortDirection === 'desc'"></i>
+                                </th>
+                                <th style="width: 120px;">Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <template x-for="user in paginatedUsers" :key="user.id">
+                                <tr>
+                                    <td>
+                                        <input type="checkbox"
+                                               class="form-check-input user-select-checkbox"
+                                               :value="user.id"
+                                               x-model="selectedUsers">
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img :src="user.avatar"
+                                                 class="rounded-circle me-2"
+                                                 width="32"
+                                                 height="32">
+                                            <div>
+                                                <div class="fw-medium" x-text="user.name"></div>
+                                                <small class="text-muted" x-text="'ID: ' + user.id"></small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td x-text="user.email"></td>
+                                    <td>
+                                        <span class="badge"
+                                              :class="{
+                                                  'bg-danger': user.role === 'admin',
+                                                  'bg-primary': user.role === 'user',
+                                                  'bg-warning': user.role === 'moderator'
+                                              }"
+                                              x-text="user.role"></span>
+                                    </td>
+                                    <td>
+                                        <span class="badge"
+                                              :class="{
+                                                  'bg-success': user.status === 'active',
+                                                  'bg-secondary': user.status === 'inactive',
+                                                  'bg-warning': user.status === 'pending'
+                                              }"
+                                              x-text="user.status"></span>
+                                    </td>
+                                    <td x-text="user.lastActive"></td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                                    type="button"
+                                                    data-bs-toggle="dropdown">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#" @click="viewUser(user)">
+                                                    <i class="bi bi-eye me-2"></i>View Profile
+                                                </a></li>
+                                                <li><a class="dropdown-item" href="#" @click="editUser(user)">
+                                                    <i class="bi bi-pencil me-2"></i>Edit Profile
+                                                </a></li>
+                                                <li>
+                                                    <hr class="dropdown-divider">
+                                                </li>
+                                                <li><a class="dropdown-item text-danger" href="#"
+                                                       @click="deleteUser(user)">
+                                                    <i class="bi bi-trash me-2"></i>Delete
+                                                </a></li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="d-flex justify-content-between align-items-center p-3">
+                        <div class="text-muted">
+                            Showing <span x-text="(currentPage - 1) * itemsPerPage + 1"></span> to
+                            <span x-text="Math.min(currentPage * itemsPerPage, filteredUsers.length)"></span> of
+                            <span x-text="filteredUsers.length"></span> results
+                        </div>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0">
+                                <li class="page-item" :class="{ 'disabled': currentPage === 1 }">
+                                    <a class="page-link" href="#"
+                                       @click.prevent="goToPage(currentPage - 1)">Previous</a>
+                                </li>
+                                <template x-for="page in visiblePages" :key="page">
+                                    <li class="page-item" :class="{ 'active': page === currentPage }">
+                                        <a class="page-link" href="#" @click.prevent="goToPage(page)" x-text="page"></a>
+                                    </li>
+                                </template>
+                                <li class="page-item" :class="{ 'disabled': currentPage === totalPages }">
+                                    <a class="page-link" href="#" @click.prevent="goToPage(currentPage + 1)">Next</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+
+        </div> <!-- End Users Management Container -->
+
+    </div>
+</main>
+{%endblock%}
+{% block Modal %}
+
+<div class="modal fade" id="userModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" x-text="Thông tin người dùng"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body" x-data="userForm">
+                <!-- Tabs -->
+                <ul class="nav nav-tabs" id="userTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info"
+                                type="button" role="tab" aria-controls="info" aria-selected="true">
+                            Thông tin người dùng
+                        </button>
+                    </li>
+                    <li x-show="mode ==='view'" class="nav-item" role="presentation">
+                        <button class="nav-link" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats"
+                                type="button" role="tab" aria-controls="stats" aria-selected="false">
+                            Thống kê hoạt động
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab content -->
+                <div class="tab-content mt-3">
+                    <!-- Tab 1: Form thông tin -->
+                    <div class="tab-pane fade show active" id="info" role="tabpanel" aria-labelledby="info-tab">
+                        <form @submit.prevent="saveUser">
+                            <div class="row g-3">
+                                <div class="col-md-6" x-show="mode==='add'">
+                                    <label class="form-label">Tài khoản</label>
+                                    <input type="text" class="form-control"
+                                           x-model="form.username"
+                                           :required="mode === 'add'">
+                                </div>
+                                <div class="col-md-6" x-show="mode==='add'">
+                                    <label class="form-label">Mật khẩu</label>
+                                    <input type="text" class="form-control"
+                                           x-model="form.password"
+                                           :required="mode === 'add'">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">First Name</label>
+                                    <input type="text" class="form-control"
+                                           x-model="form.firstName"
+                                           :readonly="mode==='view'"
+                                           required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Last Name</label>
+                                    <input type="text" class="form-control"
+                                           x-model="form.lastName"
+                                           :readonly="mode==='view'"
+                                           required>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" class="form-control"
+                                           x-model="form.email"
+                                           :readonly="mode==='view'"
+                                           required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Role</label>
+                                    <select class="form-select"
+                                            x-model="form.role"
+                                            :disabled="mode==='view'"
+                                            required>
+                                        <option value="">Select Role</option>
+                                        <option value="admin">Admin</option>
+                                        <option value="user">User</option>
+                                        <option value="moderator">Moderator</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Status</label>
+                                    <select class="form-select"
+                                            x-model="form.status"
+                                            :disabled="mode==='view'"
+                                            required>
+                                        <option value="">Select Status</option>
+                                        <option value="active">Active</option>
+                                        <option value="inactive">Inactive</option>
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Phone</label>
+                                    <input type="tel" class="form-control"
+                                           x-model="form.phone"
+                                           :readonly="mode==='view'">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Ảnh</label>
+                                    <div class="mb-2">
+                                        <img x-show="form.avatarUrl" :src="form.avatarUrl"
+                                             style="max-height: 120px;" class="rounded border">
+                                    </div>
+                                    <input type="file" class="form-control" accept="image/*"
+                                           @change="e => {
+                                                   const file = e.target.files[0];
+                                                   form.img = file;
+                                                   if (file) {
+                                                       const reader = new FileReader();
+                                                       reader.onload = () => form.avatarUrl = reader.result;
+                                                       reader.readAsDataURL(file);
+                                                   }
+                                               }">
+                                </div>
+                            </div>
+                            <div class="mt-3 text-end">
+                                <div>
+                                    <button type="button"
+                                            class="btn btn-success"
+                                            x-text="mode === 'view' ? 'Sửa' : (mode === 'add' ? 'Thêm' : 'Lưu thay đổi')"
+                                            @click="mode === 'view' ? mode = 'edit' : saveUser()">
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Tab 2: Thống kê -->
+                    <div x-show="mode === 'view' " class="tab-pane fade" id="stats" role="tabpanel"
+                         aria-labelledby="stats-tab"
+                         x-data="userStats">
+                        <div class="row text-center mb-4">
+                            <div class="col-md-4">
+                                <h6>Đơn hàng</h6>
+                                <p class="fs-4 fw-bold" x-text="summary.orders"></p>
+                            </div>
+                            <div class="col-md-4">
+                                <h6>Lượt đăng nhập</h6>
+                                <p class="fs-4 fw-bold" x-text="summary.logins"></p>
+                            </div>
+                            <div class="col-md-4">
+                                <h6>Tổng chi tiêu</h6>
+                                <p class="fs-4 fw-bold text-success"
+                                   x-text="summary.totalSpent.toLocaleString() + ' ₫'"></p>
+                            </div>
+                        </div>
+                        <canvas id="ordersChart" height="120"></canvas>
+                        <canvas id="loginsChart" height="120" class="mt-4"></canvas>
+                        <canvas id="spendingChart" height="120" class="mt-4"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Import Modal -->
+<div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Import Users</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Upload CSV File</label>
+                    <input type="file" class="form-control" accept=".csv">
+                    <div class="form-text">Upload a CSV file with columns: name, email, role, status</div>
+                </div>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>CSV Format:</strong> name, email, role, status<br>
+                    <small>Example: John Doe, john@example.com, user, active</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary">Import Users</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,88 @@
+<section class="top-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 col-xs-12 col-sm-4">
+                <div class="contact-number">
+                    <i class="tf-ion-ios-telephone"></i>
+                    <span>0129- 12323-123123</span>
+                </div>
+            </div>
+            <div class="col-md-4 col-xs-12 col-sm-4">
+                <!-- Site Logo -->
+                 <ul class="top-menu text-center list-inline">
+                    <!-- Trang chủ -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.home') }}">Trang chủ</a>
+                    </li>
+
+                    <!-- Sản phẩm -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.shop') }}">Sản phẩm</a>
+                    </li>
+
+                </ul>
+            </div>
+            <div class="col-md-4 col-xs-12 col-sm-4">
+
+                <ul class="top-menu text-right list-inline">
+                    <!-- Search -->
+                    <li class="dropdown search dropdown-slide">
+                        <a href="javascript:void(0);" class="dropdown-toggle" data-toggle="dropdown"
+                           data-hover="dropdown"><i
+                                class="tf-ion-ios-search-strong"></i> Search</a>
+                        <ul class="dropdown-menu search-dropdown">
+                            <li>
+                                <form action="post"><input type="search" class="form-control" placeholder="Search...">
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <!-- Cart -->
+                    <li class="dropdown cart-nav dropdown-slide">
+                        <a href="{{ url_for('main.cart') }}" class="cart-wrapper">
+                              <span class="cart-icon-wrapper">
+                                <i class="tf-ion-android-cart"></i>
+                                <span id="cart_count_id"
+                                      class="cart-badge {% if cart_count.total_quantity == 0 %}d-none{% endif %}">
+                                        {{ cart_count.total_quantity }}
+                                </span>
+                              </span>
+                            Cart
+                        </a>
+
+                        <div class="dropdown-menu cart-dropdown">
+                            {% include 'user/partials/mini_cart.html' %}
+                        </div>
+                    </li>
+
+                    <!-- User -->
+                    <li class="dropdown user-info dropdown-slide">
+                        <a href="javascript:void(0);" class="dropdown-toggle" data-toggle="dropdown"
+                           data-hover="dropdown">
+                            {% if current_user.is_authenticated %}
+                            <img src="{{ current_user.AnhDaiDien }}"
+                                 alt="avatar" style="width:30px; height:30px; border-radius:50%;">
+                            {% else %}
+                            <i class="tf-ion-ios-person"></i>
+                            {% endif %}
+                            {{ current_user.TenDangNhap if current_user.is_authenticated else 'User' }}
+                        </a>
+                        <ul class="dropdown-menu">
+                            {% if current_user.is_authenticated %}
+                            <li><a href="{{url_for('main.profile_details')}}">Thông tin tài khoản</a></li>
+                            <li><a href="{{ url_for('main.logout') }}">Đăng xuất</a></li>
+                            {% else %}
+                            <li><a href="{{ url_for('main.login') }}">Đăng nhập</a></li>
+                            <li><a href="{{ url_for('main.register') }}">Đăng ký</a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+
+
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+

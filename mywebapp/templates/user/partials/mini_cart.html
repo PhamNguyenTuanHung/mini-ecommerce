@@ -1,0 +1,39 @@
+<div class="cart-dropdown">
+    {% if cart %}
+    {% for item in cart.values() %}
+    <!-- Cart Item -->
+    <div class="media">
+        <a class="pull-left" href="{{ item.image }}">
+            <img class="media-object" src="{{ item.image }}" alt="image"/>
+        </a>
+        <div class="media-body">
+            <h4 class="media-heading">{{ item.name }}</h4>
+            <div class="cart-price">{{ item.quantity }} x {{ item.price }}</div>
+        </div>
+        <a class="remove">
+            <i class="tf-ion-close"
+               onclick="removeCartItem({{ item.product_id }}, '{{ item.color }}', '{{ item.size }}')"></i>
+        </a>
+    </div>
+    {% endfor %}
+
+    <div class="cart-summary">
+        <span>Total</span>
+        <span class="total-price">${{ cart_count.total_amount }}</span>
+    </div>
+    {% else %}
+    <!-- Khi giỏ hàng trống -->
+    <div class="cart-empty-message">
+        Giỏ hàng của bạn đang trống.
+    </div>
+    <div class="cart-summary">
+        <span>Total</span>
+        <span class="total-price">$0</span>
+    </div>
+    {% endif %}
+
+    <ul class="text-center cart-buttons">
+        <li><a href="{{ url_for('main.cart') }}" class="btn btn-small">View Cart</a></li>
+        <li><a href="{{ url_for('main.checkout') }}" class="btn btn-small">Checkout</a></li>
+    </ul>
+</div>

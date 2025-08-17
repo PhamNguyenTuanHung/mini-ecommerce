@@ -1,0 +1,83 @@
+{% extends 'user/layout/base.html' %}
+{% block title %} Thông tin cá nhân {% endblock %}
+{% block content %}
+
+<section class="user-dashboard page-wrapper">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <ul class="list-inline dashboard-menu text-center">
+                    <li><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+                    <li><a href="{{ url_for('main.order') }}">Orders</a></li>
+                    <li><a href="{{ url_for('main.view_address') }}">Address</a></li>
+                    <li><a class="active" href="{{ url_for('main.profile_details') }}">Profile
+                        Details</a></li>
+                </ul>
+                <div class="dashboard-wrapper dashboard-user-profile">
+                    <div class="media">
+                        <div class="pull-left text-center">
+                            <img src="{{ current_user.AnhDaiDien }}" alt="avatar" id="avatar-preview"
+                                 style="width: 150px; height: 150px; object-fit: cover;">
+                            <br>
+                            <input type="file" id="avatar-input" name="avatar" accept="image/*"
+                                   class="form-control mt-2" style="display: none;">
+                        </div>
+
+                        <div class="media-body">
+                            <!-- Thông tin hiển thị -->
+                            <ul class="user-profile-list" id="info-view">
+                                <li>
+                                    <span class="info-label">Full Name:</span>
+                                    <span class="user_fullname">{{ current_user.HoTen }}</span>
+                                </li>
+                                <li>
+                                    <span class="info-label">Email:</span>
+                                    <span class="user_email">{{ current_user.Email }}</span>
+                                </li>
+                                <li>
+                                    <span class="info-label">Phone:</span>
+                                    <span class="user_phone">{{ current_user.SoDienThoai }}</span>
+                                </li>
+                            </ul>
+
+
+                            <!-- Form cập nhật -->
+                            <form id="info-form" style="display: none;" enctype="multipart/form-data">
+                                <ul class="user-profile-list-2" style="list-style: none; padding: 0;">
+                                    <li class="mb-2">
+                                        <label>Full Name:</label>
+                                        <input type="text" id="name" class="form-control"
+                                               value="{{ current_user.HoTen }}">
+                                    </li>
+                                    <li class="mb-2">
+                                        <label>Email:</label>
+                                        <input type="email" id="email" class="form-control"
+                                               value="{{ current_user.Email }}">
+                                    </li>
+                                    <li class="mb-2">
+                                        <label>Phone:</label>
+                                        <input type="text" id="phone" class="form-control"
+                                               value="{{ current_user.SoDienThoai }}">
+                                    </li>
+                                </ul>
+
+                                <div class="d-flex gap-2 justify-content-end mt-3">
+                                    <button type="button" class="btn btn-success" onclick="updateUserProfile()">Lưu
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" onclick="cancelEdit()">Hủy</button>
+                                </div>
+                            </form>
+
+
+                            <!-- Nút Sửa -->
+                            <button type="button" id="edit-btn" class="btn btn-secondary mt-3" onclick="startEdit()">
+                                Sửa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

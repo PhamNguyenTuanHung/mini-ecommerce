@@ -1,0 +1,355 @@
+{% extends 'admin/layout/base.html' %}
+{% block title %} Cài đặt {%endblock%}
+
+
+<!-- Main Content -->
+{%block content %}
+
+<main class="admin-main">
+    <div class="container-fluid p-4 p-lg-4">
+
+        <!-- Page Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h3 mb-0">Settings</h1>
+                <p class="text-muted mb-0">Manage your application preferences and configuration</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-secondary" @click="resetSettings()">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Reset to Defaults
+                </button>
+                <button type="button" class="btn btn-primary" @click="saveSettings()">
+                    <i class="bi bi-check-lg me-2"></i>Save Changes
+                </button>
+            </div>
+        </div>
+
+        <!-- Settings Container -->
+        <div x-data="settingsComponent" x-init="init()" class="settings-layout">
+            <div class="row g-6">
+
+                <!-- Settings Navigation Sidebar -->
+                <div class="col-lg-3 settings-sidebar" :class="{ 'show': sidebarVisible }">
+                    <nav class="settings-nav nav nav-pills flex-column">
+                        <template x-for="section in sections" :key="section.id">
+                            <a class="nav-link"
+                               :class="{ 'active': activeSection === section.id }"
+                               href="#"
+                               @click="setActiveSection(section.id)">
+                                <i :class="section.icon" class="me-2"></i>
+                                <span x-text="section.name"></span>
+                            </a>
+                        </template>
+                    </nav>
+                </div>
+
+                <!-- Settings Content -->
+                <div class="col-lg-9 settings-content">
+
+                    <!-- General Settings -->
+                    <div x-show="activeSection === 'general'" class="settings-section">
+                        <h5>General Settings</h5>
+                        <p>Configure basic application preferences and behavior</p>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h6>Application Language</h6>
+                                <small>Choose your preferred language for the interface</small>
+                            </div>
+                            <select class="form-select" style="width: auto;" x-model="settings.language">
+                                <option value="en">English</option>
+                                <option value="es">Español</option>
+                                <option value="fr">Français</option>
+                                <option value="de">Deutsch</option>
+                                <option value="it">Italiano</option>
+                            </select>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h6>Timezone</h6>
+                                <small>Set your local timezone for accurate timestamps</small>
+                            </div>
+                            <select class="form-select timezone-select" style="width: auto;"
+                                    x-model="settings.timezone">
+                                <option value="UTC">UTC (Coordinated Universal Time)</option>
+                                <option value="America/New_York">Eastern Time (ET)</option>
+                                <option value="America/Chicago">Central Time (CT)</option>
+                                <option value="America/Denver">Mountain Time (MT)</option>
+                                <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                                <option value="Europe/London">London (GMT)</option>
+                                <option value="Europe/Paris">Paris (CET)</option>
+                                <option value="Asia/Tokyo">Tokyo (JST)</option>
+                            </select>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h6>Date Format</h6>
+                                <small>Choose how dates are displayed throughout the application</small>
+                            </div>
+                            <select class="form-select" style="width: auto;" x-model="settings.dateFormat">
+                                <option value="MM/DD/YYYY">MM/DD/YYYY (US)</option>
+                                <option value="DD/MM/YYYY">DD/MM/YYYY (UK)</option>
+                                <option value="YYYY-MM-DD">YYYY-MM-DD (ISO)</option>
+                                <option value="DD.MM.YYYY">DD.MM.YYYY (DE)</option>
+                            </select>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h6>Auto-save</h6>
+                                <small>Automatically save changes as you work</small>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" x-model="settings.autoSave">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Appearance Settings -->
+                    <div x-show="activeSection === 'appearance'" class="settings-section">
+                        <h5>Appearance & Theme</h5>
+                        <p>Customize the look and feel of your dashboard</p>
+
+                        <div class="mb-4">
+                            <h6 class="mb-3">Theme Mode</h6>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="theme-option" :class="{ 'active': settings.theme === 'light' }"
+                                         @click="setTheme('light')">
+                                        <div class="theme-preview light"></div>
+                                        <strong>Light</strong>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="theme-option" :class="{ 'active': settings.theme === 'dark' }"
+                                         @click="setTheme('dark')">
+                                        <div class="theme-preview dark"></div>
+                                        <strong>Dark</strong>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="theme-option" :class="{ 'active': settings.theme === 'auto' }"
+                                         @click="setTheme('auto')">
+                                        <div class="theme-preview auto"></div>
+                                        <strong>Auto</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h6>Sidebar Collapsed by Default</h6>
+                                <small>Start with a collapsed sidebar for more screen space</small>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" x-model="settings.collapsedSidebar">
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h6>Animations</h6>
+                                <small>Enable smooth transitions and animations</small>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" x-model="settings.animations">
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h6>High Contrast Mode</h6>
+                                <small>Improve accessibility with higher contrast colors</small>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" x-model="settings.highContrast">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notifications Settings -->
+                    <div x-show="activeSection === 'notifications'" class="settings-section">
+                        <h5>Notifications</h5>
+                        <p>Control how and when you receive notifications</p>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h6>Desktop Notifications</h6>
+                                <small>Show notifications on your desktop</small>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox"
+                                       x-model="settings.notifications.desktop">
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h6>Email Notifications</h6>
+                                <small>Receive important updates via email</small>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" x-model="settings.notifications.email">
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h6>Sound Alerts</h6>
+                                <small>Play sounds for important notifications</small>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" x-model="settings.notifications.sound">
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h6>Marketing Updates</h6>
+                                <small>Receive updates about new features and promotions</small>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox"
+                                       x-model="settings.notifications.marketing">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Privacy Settings -->
+                    <div x-show="activeSection === 'privacy'" class="settings-section">
+                        <h5>Privacy & Data</h5>
+                        <p>Control your data and privacy preferences</p>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h6>Analytics Tracking</h6>
+                                <small>Help improve the application by sharing usage data</small>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" x-model="settings.privacy.analytics">
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h6>Performance Monitoring</h6>
+                                <small>Allow monitoring to help us improve performance</small>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" x-model="settings.privacy.performance">
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h6>Activity History</h6>
+                                <small>Keep a log of your recent activity</small>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox"
+                                       x-model="settings.privacy.activityHistory">
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <h6>Data Export</h6>
+                            <p class="small text-muted">Download your data in various formats</p>
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <div class="export-format" @click="exportData('json')">
+                                        <i class="bi bi-file-code fs-3 text-primary mb-2"></i>
+                                        <div><strong>JSON</strong></div>
+                                        <small class="text-muted">Machine readable</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="export-format" @click="exportData('csv')">
+                                        <i class="bi bi-file-spreadsheet fs-3 text-success mb-2"></i>
+                                        <div><strong>CSV</strong></div>
+                                        <small class="text-muted">Spreadsheet format</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="export-format" @click="exportData('pdf')">
+                                        <i class="bi bi-file-pdf fs-3 text-danger mb-2"></i>
+                                        <div><strong>PDF</strong></div>
+                                        <small class="text-muted">Printable format</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="export-format" @click="exportData('xml')">
+                                        <i class="bi bi-file-code fs-3 text-warning mb-2"></i>
+                                        <div><strong>XML</strong></div>
+                                        <small class="text-muted">Structured data</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Storage Settings -->
+                    <div x-show="activeSection === 'storage'" class="settings-section">
+                        <h5>Storage & Performance</h5>
+                        <p>Manage storage usage and performance settings</p>
+
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6>Storage Usage</h6>
+                                <span class="text-muted" x-text="`${storageUsed}GB of ${storageTotal}GB used`"></span>
+                            </div>
+                            <div class="storage-bar">
+                                <div class="storage-progress" :style="`width: ${storagePercentage}%`"></div>
+                            </div>
+                            <div class="d-flex justify-content-between mt-1">
+                                <small class="text-muted">Free: <span x-text="`${storageRemaining}GB`"></span></small>
+                                <small class="text-muted" x-text="`${storagePercentage}% used`"></small>
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h6>Auto-cleanup Cache</h6>
+                                <small>Automatically clear temporary files older than 30 days</small>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" x-model="settings.storage.autoCleanup">
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h6>Cache Size Limit</h6>
+                                <small>Maximum cache size before automatic cleanup</small>
+                            </div>
+                            <select class="form-select" style="width: auto;" x-model="settings.storage.cacheLimit">
+                                <option value="500">500 MB</option>
+                                <option value="1000">1 GB</option>
+                                <option value="2000">2 GB</option>
+                                <option value="5000">5 GB</option>
+                            </select>
+                        </div>
+
+                        <div class="mt-4">
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-primary" @click="clearCache()">
+                                    <i class="bi bi-arrow-clockwise me-2"></i>Clear Cache
+                                </button>
+                                <button class="btn btn-outline-secondary" @click="optimizeStorage()">
+                                    <i class="bi bi-speedometer2 me-2"></i>Optimize Storage
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</main>
+
+{%endblock%}

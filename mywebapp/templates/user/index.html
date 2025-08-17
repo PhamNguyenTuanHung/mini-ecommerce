@@ -1,0 +1,153 @@
+{% extends 'user/layout/base.html' %}
+{% block title %} Trang chủ {%endblock%}
+{%block content %}
+<div class="hero-slider">
+    <div class="slider-item th-fullpage hero-area"
+         style="background-image: url('{{ url_for('static', filename='user/images/slider/slider-1.jpg') }}')">
+
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 text-center">
+                    <p data-duration-in=".3" data-animation-in="fadeInUp" data-delay-in=".1">PRODUCTS</p>
+                    <h1 data-duration-in=".3" data-animation-in="fadeInUp" data-delay-in=".5">The beauty of nature <br>
+                        is hidden in details.</h1>
+                    <a data-duration-in=".3" data-animation-in="fadeInUp" data-delay-in=".8" class="btn"
+                       href="{{ url_for('main.shop') }}">Shop Now</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="slider-item th-fullpage hero-area"
+         style="background-image: url('{{ url_for('static', filename='user/images/slider/slider-2.jpg') }}')">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 text-left">
+                    <p data-duration-in=".3" data-animation-in="fadeInUp" data-delay-in=".1">PRODUCTS</p>
+                    <h1 data-duration-in=".3" data-animation-in="fadeInUp" data-delay-in=".5">The beauty of nature <br>
+                        is hidden in details.</h1>
+                    <a data-duration-in=".3" data-animation-in="fadeInUp" data-delay-in=".8" class="btn"
+                       href="{{ url_for('main.shop') }}">Shop Now</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="slider-item th-fullpage hero-area"
+         style="background-image: url('{{ url_for('static', filename='user/images/slider/slider-3.jpg') }}')">
+
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 text-right">
+                    <p data-duration-in=".3" data-animation-in="fadeInUp" data-delay-in=".1">PRODUCTS</p>
+                    <h1 data-duration-in=".3" data-animation-in="fadeInUp" data-delay-in=".5">The beauty of nature <br>
+                        is hidden in details.</h1>
+                    <a data-duration-in=".3" data-animation-in="fadeInUp" data-delay-in=".8" class="btn"
+                       href="{{ url_for('main.shop') }}">Shop Now</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="product-category section">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="title text-center">
+                    <h2>Product Category</h2>
+                </div>
+            </div>
+            {% if categories %}
+            <div class="col-md-6">
+                {% for i in range(0,2) %}
+                <div class="category-box">
+                    <a href="{{ url_for('main.shop',cate_id=categories[i].MaDanhMuc) }}">
+                        <img src="{{ url_for('static', filename='user/images/shop/category/category-' + (i+1)|string + '.jpg') }}"
+                             alt=""/>
+                        <div class="content">
+                            <h3>{{categories[i].TenDanhMuc}}</h3>
+                            <p>Shop New Season Clothing</p>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="col-md-6">
+                <div class="category-box category-box-2">
+                    <a href="{{ url_for('main.shop',cate_id=categories[2].MaDanhMuc) }}">
+                        <img src="{{ url_for('static', filename='user/images/shop/category/category-3.jpg') }}" alt=""/>
+                        <div class="content">
+                            <h3>{{categories[2].TenDanhMuc}}</h3>
+                            <p>Special Design Comes First</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<section class="products section bg-gray">
+    <div class="container" x-data="dataProducts">
+        <div class="row">
+            <div class="row">
+                <div class="col-lg-12">
+                    <ul class="filter__controls">
+                        <li @click = "filteredProducts = bestSeller"
+                            data-filter="*">Best Sellers
+                        </li>
+                        <li @click = "filteredProducts = bestRating"
+                            data-filter=".new-arrivals">New Arrivals
+                        </li>
+                        <li
+                            data-filter=".hot-sales">Hot Sales
+                        </li>
+                    </ul>
+
+                </div>
+            </div>
+        </div>
+        <div class="row" >
+            <template x-for="product in filteredProducts" :key="product.id">
+                <div class="col-md-3">
+                    <div class="product-item">
+                        <div class="product-thumb">
+                            <span class="bage">Sale</span>
+                            <img class="img-responsive"
+                                 :src="product.image"
+                                 alt="product-img"/>
+                            <a :href="`/product/${product.MaSanPham}`"></a>
+                            <div class="preview-meta">
+                                <ul>
+                                    <li>
+                                            <span @click="openModal(product)">
+                                                <i class="tf-ion-ios-search-strong"></i>
+                                            </span>
+                                    </li>
+                                    <li>
+                                        <a href="javascript:void(0);"><i class="tf-ion-ios-heart"></i></a>
+                                    </li>
+                                    <li>
+                                        <a :href="`/product_single/${product.id}`">
+                                            <i class="tf-ion-android-cart"></i>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="product-content">
+                            <h4><a :href="`/product_single/${product.id}`" x-text="product.name"></a></h4>
+                            <p class="price" x-text="`$${product.price}`"></p>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+        </div>
+
+    </div>
+</section>
+<script type="module" src="{{ url_for('static', filename='user/js/components/product.js') }}" defer></script>
+
+
+{%endblock%}

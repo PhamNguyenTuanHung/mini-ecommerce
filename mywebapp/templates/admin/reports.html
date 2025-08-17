@@ -1,0 +1,1455 @@
+{% extends 'admin/layout/base.html' %}
+{% block title %} Báo cáo {%endblock%}
+
+<!-- Main Content -->
+{%block content %}
+
+
+<main class="admin-main">
+    <div class="container-fluid p-4 p-lg-5">
+
+        <div x-data="page">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4 mb-lg-5">
+                <div>
+                    <h1 class="h3 mb-0">Reports & Analytics</h1>
+                    <p class="text-muted mb-0">Generate insights and export business data</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary" @click="exportReport()">
+                        <i class="bi bi-download me-2"></i>Export
+                    </button>
+                </div>
+            </div>
+
+            <div class="report-filter">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label fw-medium">CHon khoảng thời gian</label>
+                        <select class="form-select" x-model="period" @change="updateReports()">
+                            <option value="today">Hôm nay</option>
+                            <option value="week">Tuần này</option>
+                            <option value="month">Tháng này</option>
+                            <option value="quarter">Quý này</option>
+                            <option value="year">Năm nay</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-medium">Loại báo cáo</label>
+                        <select x-model="current" class="form-select" @change="updateReports()">
+                            <option value="overview">Tổng quan</option>
+                            <option value="inventory">Báo cáo kho hàng</option>
+                            <option value="customer">Báo cáo người dùng</option>
+                            <option value="financial">Báo cáo doanh thu</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-medium">Form</label>
+                        <select class="form-select" x-model="exportFormat" @change="updateReports()">
+                            <option value="pdf">PDF Report</option>
+                            <option value="excel">Excel Spreadsheet</option>
+                            <option value="csv">CSV Data</option>
+                            <option value="json">JSON Data</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Reports Management Container -->
+        <div x-show="Alpine.store('pageStore').current ==='overview'" x-data="reportsComponent">
+
+            <!-- KPI Overview -->
+            <div class="kpi-grid">
+                <div class="card stats-card">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <h6 class="text-muted mb-2">Doanh thu</h6>
+                                <div class="metric-value" x-text="kpis.revenue"></div>
+                                <small
+                                        :class="{
+                                        'text-success': kpis.revenueChange > 0,
+                                        'text-danger': kpis.revenueChange < 0,
+                                    }">
+                                    <template x-if="kpis.revenueChange !== 0">
+                                        <i :class="{
+                                                'bi bi-arrow-up': kpis.revenueChange > 0,
+                                                'bi bi-arrow-down': kpis.revenueChange < 0
+                                            }"></i>
+                                    </template>
+                                    <span x-text="kpis.revenueChange + '% so với ' + ({today:'ngày', week:'tuần', month:'tháng', quarter:'quý', year:'năm' }[period]) + ' trước'"></span>
+                                </small>
+
+                            </div>
+                            <div class="stats-icon bg-success bg-opacity-10 text-success">
+                                <i class="bi bi-currency-dollar"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card stats-card">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <h6 class="text-muted mb-2">Đơn hàng mới</h6>
+                                <div class="metric-value" x-text="kpis.orders"></div>
+                                <small
+                                        :class="{
+                                        'text-success': kpis.ordersChange > 0,
+                                        'text-danger': kpis.ordersChange < 0,
+                                    }">
+                                    <template x-if="kpis.ordersChange !== 0">
+                                        <i :class="{
+                                                'bi bi-arrow-up': kpis.ordersChange > 0,
+                                                'bi bi-arrow-down': kpis.ordersChange < 0
+                                            }"></i>
+                                    </template>
+                                    <span x-text="kpis.ordersChange + '% so với ' + ({today:'ngày', week:'tuần', month:'tháng', quarter:'quý', year:'năm' }[period]) + ' trước'"></span>
+                                </small>
+
+                            </div>
+                            <div class="stats-icon bg-primary bg-opacity-10 text-primary">
+                                <i class="bi bi-bag-check"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card stats-card">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <h6 class="text-muted mb-2">Người dùng mới</h6>
+                                <div class="metric-value" x-text="userStats.newUsers"></div>
+                                <small
+                                        :class="{
+                                        'text-success': kpis.customersChange > 0,
+                                        'text-danger': kpis.customersChange < 0,
+                                    }">
+                                    <template x-if="kpis.customersChange !== 0">
+                                        <i :class="{
+                                                'bi bi-arrow-up': kpis.customersChange > 0,
+                                                'bi bi-arrow-down': kpis.customersChange < 0
+                                            }"></i>
+                                    </template>
+                                    <span x-text="kpis.customersChange + '% so với ' + ({today:'ngày', week:'tuần', month:'tháng', quarter:'quý', year:'năm' }[period]) + ' trước'"></span>
+                                </small>
+                            </div>
+                            <div class="stats-icon bg-info bg-opacity-10 text-info">
+                                <i class="bi bi-people"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card stats-card">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <h6 class="text-muted mb-2">Tồn kho</h6>
+                                <div class="metric-value" x-text="productStats.totalStock"></div>
+                                <div class="metric-change neutral">
+                                    <i class="bi bi-dash"></i>
+                                    <span>Sản phẩm</span>
+                                </div>
+                            </div>
+                            <div class="stats-icon bg-warning bg-opacity-10 text-warning">
+                                <i class="bi bi-graph-up-arrow"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="row g-4 g-lg-5 mb-5">
+                <!-- Revenue Trends -->
+                <div class="col-lg-8">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">Revenue Trends</h5>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <input type="radio" class="btn-check" name="revenuePeriod" id="revenue7d"
+                                       autocomplete="off" checked>
+                                <label class="btn btn-outline-secondary" for="revenue7d">7D</label>
+                                <input type="radio" class="btn-check" name="revenuePeriod" id="revenue30d"
+                                       autocomplete="off">
+                                <label class="btn btn-outline-secondary" for="revenue30d">30D</label>
+                                <input type="radio" class="btn-check" name="revenuePeriod" id="revenue90d"
+                                       autocomplete="off">
+                                <label class="btn btn-outline-secondary" for="revenue90d">90D</label>
+                            </div>
+                        </div>
+                        <div class="card-body p-3 p-lg-4">
+                            <div id="revenueTrendsChart" class="chart-container"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Products -->
+                <div class="col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Top Products</h5>
+                        </div>
+                        <div class="card-body p-3 p-lg-4">
+                            <div id="topProductsChart" style="height: 200px;"></div>
+                            <div class="mt-3">
+                                <template x-for="product in topProducts" :key="product.product_id">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="small" x-text="product.product_name"></span>
+                                        <div class="d-flex align-items-center">
+                                            <span class="small fw-medium" x-text="product.totalSold"></span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="card-title mb-0">Báo cáo gần đây</h5>
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-sm btn-outline-primary" @click="refreshReports()">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Report Name</th>
+                                <th>Type</th>
+                                <th>Date Range</th>
+                                <th>Generated</th>
+                                <th>Status</th>
+                                <th style="width: 120px;">Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <template x-for="report in recentReports" :key="report.id">
+                                <tr>
+                                    <td>
+                                        <div class="fw-medium" x-text="report.name"></div>
+                                        <small class="text-muted" x-text="`ID: ${report.id}`"></small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark" x-text="report.type"></span>
+                                    </td>
+                                    <td x-text="report.dateRange"></td>
+                                    <td x-text="report.generated"></td>
+                                    <td>
+                                                        <span class="badge"
+                                                              :class="{
+                                                                  'bg-success': report.status === 'ready',
+                                                                  'bg-warning': report.status === 'generating',
+                                                                  'bg-danger': report.status === 'failed'
+                                                              }"
+                                                              x-text="report.status"></span>
+                                    </td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                                    type="button"
+                                                    data-bs-toggle="dropdown">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#" @click="downloadReport(report)">
+                                                    <i class="bi bi-download me-2"></i>Download
+                                                </a></li>
+                                                <li><a class="dropdown-item" href="#" @click="shareReport(report)">
+                                                    <i class="bi bi-share me-2"></i>Share
+                                                </a></li>
+                                                <li><a class="dropdown-item" href="#" @click="duplicateReport(report)">
+                                                    <i class="bi bi-copy me-2"></i>Duplicate
+                                                </a></li>
+                                                <li>
+                                                    <hr class="dropdown-divider">
+                                                </li>
+                                                <li><a class="dropdown-item text-danger" href="#"
+                                                       @click="deleteReport(report)">
+                                                    <i class="bi bi-trash me-2"></i>Delete
+                                                </a></li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <!-- End Reports Management Container -->
+
+        <!-- Product Management Container -->
+        <div x-show="Alpine.store('pageStore').current === 'inventory'" x-data="productTable">
+
+            <!-- Product Stats Widgets -->
+            <div class="row g-4 g-lg-5 mb-5">
+                <div class="col-xl-3 col-lg-6">
+                    <div class="card stats-card">
+                        <div class="card-body p-3 p-lg-4">
+                            <div class="d-flex align-items-center">
+                                <div class="stats-icon bg-primary bg-opacity-10 text-primary me-3">
+                                    <i class="bi bi-box"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 text-muted">Sản phẩm</h6>
+                                    <h3 class="mb-0" x-text="stats.total"></h3>
+                                    <small class="text-success">
+                                        <i class="bi bi-arrow-up"></i> +5% from last month
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-lg-6">
+                    <div class="card stats-card">
+                        <div class="card-body p-3 p-lg-4">
+                            <div class="d-flex align-items-center">
+                                <div class="stats-icon bg-success bg-opacity-10 text-success me-3">
+                                    <i class="bi bi-check-circle"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 text-muted">Còn hàng</h6>
+                                    <h3 class="mb-0" x-text="stats.inStock"></h3>
+                                    <small class="text-success">
+                                        <i class="bi bi-arrow-up"></i> sẵn sàng
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-lg-6">
+                    <div class="card stats-card">
+                        <div class="card-body p-3 p-lg-4">
+                            <div class="d-flex align-items-center">
+                                <div class="stats-icon bg-warning bg-opacity-10 text-warning me-3">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 text-muted">Sắp hết hàng</h6>
+                                    <h3 class="mb-0" x-text="stats.lowStock"></h3>
+                                    <small class="text-warning">
+                                        <i class="bi bi-exclamation-circle"></i> Cần chú ý
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-lg-6">
+                    <div class="card stats-card">
+                        <div class="card-body p-3 p-lg-4">
+                            <div class="d-flex align-items-center">
+                                <div class="stats-icon bg-info bg-opacity-10 text-info me-3">
+                                    <i class="bi bi-currency-dollar"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 text-muted">Tổng giá trị </h6>
+                                    <h3 class="mb-0" x-text="`$${stats.totalValue.toLocaleString()}`"></h3>
+                                    <small class="text-info">
+                                        <i class="bi bi-info-circle"></i> Inventory value
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="row g-4 g-lg-5 mb-5">
+                <!-- Sales Performance Chart -->
+                <div class="col-lg-8">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">Sản phẩm bán chạy</h5>
+                        </div>
+                        <div class="card-body p-3 p-lg-4">
+                            <div id="salesChart" style="height: 300px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category Distribution -->
+                <div class="col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Phân bổ theo danh mục</h5>
+                        </div>
+                        <div class="card-body p-3 p-lg-4">
+                            <div id="categoryChart" style="height: 200px;"></div>
+                            <div class="mt-3">
+                                <template x-for="category in categoryStats" :key="category.name">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="small" x-text="category.name"></span>
+                                        <div class="d-flex align-items-center">
+                                                        <span class="small text-muted me-2"
+                                                              x-text="`${category.percentage}%`"></span>
+                                            <span class="small fw-medium" x-text="category.count"></span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products Table -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="card-title mb-0">Product Catalog</h5>
+                        </div>
+                        <div class="col-auto">
+                            <div class="d-flex gap-2">
+                                <!-- Search -->
+                                <div class="position-relative">
+                                    <input type="search" class="form-control form-control-sm"
+                                           placeholder="Search products..." x-model="searchQuery"
+                                           @input="filterProducts()" style="width: 200px;">
+                                    <i class="bi bi-search position-absolute top-50 end-0 translate-middle-y me-2 text-muted"></i>
+                                </div>
+
+                                <!-- Category Filter -->
+                                <select class="form-select form-select-sm" x-model="categoryFilter"
+                                        @change="filterProducts()" style="width: 150px;">
+                                    <option value="">All Categories</option>
+                                    {% for cate in categories %}
+                                    <option value="{{cate.name}}">{{cate.name}}</option>
+                                    {% endfor %}
+                                </select>
+
+                                <select class="form-select form-select-sm" x-model="brandFilter"
+                                        @change="filterProducts()" style="width: 150px;">
+                                    <option value="">All Brand</option>
+                                    {% for brand in brands %}
+                                    <option value="{{brand.TenThuongHieu}}">{{brand.TenThuongHieu}}</option>
+                                    {% endfor %}
+                                </select>
+
+                                <!-- Stock Filter -->
+                                <select class="form-select form-select-sm" x-model="stockFilter"
+                                        @change="filterProducts()" style="width: 150px;">
+                                    <option value="">All Stock</option>
+                                    <option value="in-stock">In Stock</option>
+                                    <option value="low-stock">Low Stock</option>
+                                    <option value="out-of-stock">Out of Stock</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Bulk Actions Bar -->
+                    <div class="bulk-actions-bar p-3 bg-light border-bottom" x-show="selectedProducts.length > 0"
+                         x-transition>
+                        <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted">
+                                            <span x-text="selectedProducts.length"></span> product(s) selected
+                                        </span>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-secondary" @click="bulkAction('publish')">
+                                    <i class="bi bi-eye me-1"></i>Publish
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" @click="bulkAction('unpublish')">
+                                    <i class="bi bi-eye-slash me-1"></i>Unpublish
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" @click="bulkAction('delete')">
+                                    <i class="bi bi-trash me-1"></i>Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th style="width: 40px;">
+                                    <input type="checkbox"
+                                           class="form-check-input"
+                                           @change="toggleAll($event.target.checked)"
+                                           :checked="selectedProducts.length === filteredProducts.length && filteredProducts.length > 0">
+                                </th>
+                                <th>Sản phẩm</th>
+                                <th @click="sortBy('category')" class="sortable">Danh mục</th>
+                                <th @click="sortBy('brand')" class="sortable">Thương hiệu</th>
+                                <th @click="sortBy('price')" class="sortable">Giá</th>
+                                <th @click="sortBy('stock')" class="sortable">Só lượng trong kho</th>
+                                <th style="width: 120px;">Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <template x-for="product in paginatedProducts" :key="product.id">
+                                <tr>
+                                    <td>
+                                        <input type="checkbox"
+                                               class="form-check-input"
+                                               :value="product.id"
+                                               x-model="selectedProducts">
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img :src="product.image" class="rounded-circle me-2"
+                                                 width="32"
+                                                 height="32">
+                                            <div>
+                                                <div class="fw-medium" x-text="product.name"></div>
+                                                <small class="text-muted"
+                                                       x-text="product.description"></small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                                        <span class="badge bg-light text-dark"
+                                                              x-text="product.category.name"></span>
+                                    </td>
+                                    <td>
+                                                        <span class="badge bg-light text-dark"
+                                                              x-text="product.brand.name"></span>
+                                    </td>
+                                    <td x-text="`$${product.price}`"></td>
+                                    <td>
+                                                        <span class="badge stock-badge" :class="{
+                                                                  'in-stock': product.stock > 20,
+                                                                  'low-stock': product.stock > 0 && product.stock <= 20,
+                                                                  'out-of-stock': product.stock === 0
+                                                              }" x-text="product.stock + ' units'"></span>
+                                    </td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button
+                                                    class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                                    type="button" data-bs-toggle="dropdown">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#" @click="editProduct(product)">
+                                                    <i class="bi bi-pencil me-2"></i>Sửa
+                                                </a></li>
+                                                <li><a class="dropdown-item" href="#"
+                                                       @click="viewProduct(product)">
+                                                    <i class="bi bi-eye me-2"></i>Xem chi tiết
+                                                </a></li>
+                                                <li>
+                                                    <hr class="dropdown-divider">
+                                                </li>
+                                                <li><a class="dropdown-item text-danger" href="#"
+                                                       @click="deleteProduct(product)">
+                                                    <i class="bi bi-trash me-2"></i>Xóa
+                                                </a></li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="d-flex justify-content-between align-items-center p-3">
+                        <div class="text-muted">
+                            Showing <span x-text="(currentPage - 1) * itemsPerPage + 1"></span> to
+                            <span
+                                    x-text="Math.min(currentPage * itemsPerPage, filteredProducts.length)"></span>
+                            of
+                            <span x-text="filteredProducts.length"></span> results
+                        </div>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0">
+                                <li class="page-item" :class="{ 'disabled': currentPage === 1 }">
+                                    <a class="page-link" href="#"
+                                       @click.prevent="goToPage(currentPage - 1)">Previous</a>
+                                </li>
+                                <template x-for="(page, index) in visiblePages" :key="`page-${index}`">
+                                    <li class="page-item" :class="{ 'active': page === currentPage }">
+                                        <a class="page-link" href="#"
+                                           @click.prevent="page !== '...' && goToPage(page)"
+                                           x-text="page"></a>
+                                    </li>
+                                </template>
+                                <li class="page-item" :class="{ 'disabled': currentPage === totalPages }">
+                                    <a class="page-link" href="#"
+                                       @click.prevent="goToPage(currentPage + 1)">Next</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <!-- End Product Management Container -->
+
+        <!-- Users Management Container -->
+        <div x-show="Alpine.store('pageStore').current === 'customer'" x-data="userTable">
+            <!-- User Stats Widgets -->
+            <div class="row g-4 g-lg-5 g-xl-6 mb-5 mb-lg-5 mb-xl-6">
+                <div class="col-xl-4 col-lg-6">
+                    <div class="card stats-card">
+                        <div class="card-body p-3 p-lg-4">
+                            <div class="d-flex align-items-center">
+                                <div class="stats-icon bg-primary bg-opacity-10 text-primary me-3">
+                                    <i class="bi bi-people-fill"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 ">Tổng người dùng</h6>
+                                    <h3 class="mb-0" x-text="users.length"></h3>
+                                    <small
+                                            :class="{
+                                        'text-success': growthPercentage > 0,
+                                        'text-danger': growthPercentage < 0,
+                                    }">
+                                        <template x-if="growthPercentage !== 0">
+                                            <i :class="{
+                                                'bi bi-arrow-up': growthPercentage > 0,
+                                                'bi bi-arrow-down': growthPercentage < 0
+                                            }"></i>
+                                        </template>
+                                        <span x-text="growthPercentage + '% so với ' + ({today:'ngày', week:'tuần', month:'tháng', quarter:'quý', year:'năm' }[period]) + ' trước'"></span>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-4 col-lg-6">
+                    <div class="card stats-card">
+                        <div class="card-body p-3 p-lg-4">
+                            <div class="d-flex align-items-center">
+                                <div class="stats-icon bg-success bg-opacity-10 text-success me-3">
+                                    <i class="bi bi-person-check-fill"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 ">Người dùng Active</h6>
+                                    <h3 class="mb-0" x-text="userStats.active"></h3>
+                                    <small class="text-success">
+                                        <i class="bi bi-arrow-up"></i> +8% from last week
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-4 col-lg-6">
+                    <div class="card stats-card">
+                        <div class="card-body p-3 p-lg-4">
+                            <div class="d-flex align-items-center">
+                                <div class="stats-icon bg-info bg-opacity-10 text-info me-3">
+                                    <i class="bi bi-person-plus-fill"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 "
+                                        x-text="'Người dùng mới '+ ({today:'ngày', week:'tuần', month:'tháng', quarter:'quý', year:'năm' }[period])     +' này'"></h6>
+                                    <h3 class="mb-0" x-text="userStats.newUsers"></h3>
+                                    <small
+                                            :class="{
+                                        'text-success': growthPercentage > 0,
+                                        'text-danger': growthPercentage < 0,
+                                    }">
+                                        <template x-if="growthPercentage !== 0">
+                                            <i :class="{
+                                                'bi bi-arrow-up': growthPercentage > 0,
+                                                'bi bi-arrow-down': growthPercentage < 0
+                                            }"></i>
+                                        </template>
+                                        <span x-text="growthPercentage + '% so với ' + ({today:'ngày', week:'tuần', month:'tháng', quarter:'quý', year:'năm' }[period]) + ' trước'"></span>
+                                    </small>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enhanced Analytics Widgets Row -->
+            <div class="row g-4 g-lg-5 g-xl-6 mb-5 mb-lg-5 mb-xl-6">
+                <!-- User Growth Chart -->
+                <div class="col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">Người dùng dăng kí mới</h5>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-primary active"
+                                        data-chart-period="7d">7D
+                                </button>
+                                <button type="button" class="btn btn-outline-primary"
+                                        data-chart-period="30d">30D
+                                </button>
+                                <button type="button" class="btn btn-outline-primary"
+                                        data-chart-period="90d">90D
+                                </button>
+                                <button type="button" class="btn btn-outline-primary"
+                                        data-chart-period="1y">1Y
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body p-3 p-lg-4">
+                            <div class="mb-4">
+                                <div id="userGrowthChart"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">Recent Activity</h5>
+                            <button class="btn btn-sm btn-outline-secondary" @click="getRecentActivities()">
+                                <i class="bi bi-arrow-clockwise"></i>
+                            </button>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="activity-feed" style="max-height: 350px; overflow-y: auto;">
+                                <template x-for="activity in recentActivities" :key="activity.id">
+                                    <div class="d-flex p-3 border-bottom">
+                                        <div class="flex-shrink-0 me-3">
+                                            <div class="activity-icon"
+                                                 :class="`bg-${activityIcons[activity.type]?.color || 'secondary'} bg-opacity-10`">
+                                                <i :class="`bi ${activityIcons[activity.type]?.icon || 'bi-info-circle'} text-${activityIcons[activity.type]?.color || 'secondary'}`"></i>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex justify-content-between">
+                                                <p class="mb-1 small">
+                                                    <strong x-text="activity.user"></strong>
+                                                    <span x-text="activity.action"></span>
+                                                </p>
+                                                <small class="text-muted" x-text="activity.time"></small>
+                                            </div>
+                                            <small class="text-muted" x-text="activity.details"></small>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Users Table -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="card-title mb-0">Users Directory</h5>
+                        </div>
+                        <div class="col-auto">
+                            <div class="d-flex gap-2">
+                                <!-- Search -->
+                                <div class="position-relative">
+                                    <input type="search"
+                                           class="form-control form-control-sm"
+                                           placeholder="Search users..."
+                                           x-model="searchQuery"
+                                           @input="filterUsers()"
+                                           style="width: 200px;">
+                                    <i class="bi bi-search position-absolute top-50 end-0 translate-middle-y me-2 text-muted"></i>
+                                </div>
+
+                                <!-- Status Filter -->
+                                <select class="form-select form-select-sm"
+                                        x-model="statusFilter"
+                                        @change="filterUsers()"
+                                        style="width: 150px;">
+                                    <option value="">All Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                    <option value="pending">Pending</option>
+                                </select>
+
+                                <!-- Role Filter -->
+                                <select class="form-select form-select-sm"
+                                        x-model="roleFilter"
+                                        @change="filterUsers()"
+                                        style="width: 150px;">
+                                    <option value="">All Roles</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="user">User</option>
+                                    <option value="moderator">Moderator</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Bulk Actions Bar -->
+                    <div class="bulk-actions-bar p-3 bg-primary bg-opacity-10 border-bottom border-primary border-opacity-25"
+                         x-show="selectedUsers.length > 0"
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 transform translate-y-2"
+                         x-transition:enter-end="opacity-100 transform translate-y-0">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-check-circle-fill text-primary me-2"></i>
+                                <span class="fw-medium text-primary">
+                                                <span x-text="selectedUsers.length"></span> user<span
+                                        x-show="selectedUsers.length !== 1">s</span> selected
+                                            </span>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-success" @click="bulkAction('activate')">
+                                    <i class="bi bi-check-circle me-1"></i>Activate
+                                </button>
+                                <button class="btn btn-sm btn-warning" @click="bulkAction('deactivate')">
+                                    <i class="bi bi-x-circle me-1"></i>Deactivate
+                                </button>
+                                <button class="btn btn-sm btn-danger" @click="bulkAction('delete')">
+                                    <i class="bi bi-trash me-1"></i>Delete
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" @click="selectedUsers = []"
+                                        title="Clear selection">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th style="width: 40px;">
+                                    <input type="checkbox"
+                                           class="form-check-input "
+                                           @change="toggleAll($event.target.checked)"
+                                           :checked="selectedUsers.length === filteredUsers.length && filteredUsers.length > 0">
+                                </th>
+                                <th @click="sortBy('name')" class="sortable">
+                                    Name
+                                    <i class="bi bi-arrow-up"
+                                       x-show="sortField === 'name' && sortDirection === 'asc'"></i>
+                                    <i class="bi bi-arrow-down"
+                                       x-show="sortField === 'name' && sortDirection === 'desc'"></i>
+                                </th>
+                                <th @click="sortBy('email')" class="sortable">
+                                    Email
+                                    <i class="bi bi-arrow-up"
+                                       x-show="sortField === 'email' && sortDirection === 'asc'"></i>
+                                    <i class="bi bi-arrow-down"
+                                       x-show="sortField === 'email' && sortDirection === 'desc'"></i>
+                                </th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th @click="sortBy('lastActive')" class="sortable">
+                                    Last Active
+                                    <i class="bi bi-arrow-up"
+                                       x-show="sortField === 'lastActive' && sortDirection === 'asc'"></i>
+                                    <i class="bi bi-arrow-down"
+                                       x-show="sortField === 'lastActive' && sortDirection === 'desc'"></i>
+                                </th>
+                                <th style="width: 120px;">Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <template x-for="user in paginatedUsers" :key="user.id">
+                                <tr>
+                                    <td>
+                                        <input type="checkbox"
+                                               class="form-check-input user-select-checkbox"
+                                               :value="user.id"
+                                               x-model="selectedUsers">
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img :src="user.avatar"
+                                                 class="rounded-circle me-2"
+                                                 width="32"
+                                                 height="32">
+                                            <div>
+                                                <div class="fw-medium" x-text="user.name"></div>
+                                                <small class="text-muted" x-text="'ID: ' + user.id"></small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td x-text="user.email"></td>
+                                    <td>
+                                        <span class="badge"
+                                              :class="{
+                                                  'bg-danger': user.role === 'admin',
+                                                  'bg-primary': user.role === 'user',
+                                                  'bg-warning': user.role === 'moderator'
+                                              }"
+                                              x-text="user.role"></span>
+                                    </td>
+                                    <td>
+                                        <span class="badge"
+                                              :class="{
+                                                  'bg-success': user.status === 'active',
+                                                  'bg-secondary': user.status === 'inactive',
+                                                  'bg-warning': user.status === 'pending'
+                                              }"
+                                              x-text="user.status"></span>
+                                    </td>
+                                    <td x-text="user.lastActive"></td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                                    type="button"
+                                                    data-bs-toggle="dropdown">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#" @click="viewUser(user)">
+                                                    <i class="bi bi-eye me-2"></i>View Profile
+                                                </a></li>
+                                                <li><a class="dropdown-item" href="#" @click="editUser(user)">
+                                                    <i class="bi bi-pencil me-2"></i>Edit Profile
+                                                </a></li>
+                                                <li>
+                                                    <hr class="dropdown-divider">
+                                                </li>
+                                                <li><a class="dropdown-item text-danger" href="#"
+                                                       @click="deleteUser(user)">
+                                                    <i class="bi bi-trash me-2"></i>Delete
+                                                </a></li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="d-flex justify-content-between align-items-center p-3">
+                        <div class="text-muted">
+                            Showing <span x-text="(currentPage - 1) * itemsPerPage + 1"></span> to
+                            <span x-text="Math.min(currentPage * itemsPerPage, filteredUsers.length)"></span> of
+                            <span x-text="filteredUsers.length"></span> results
+                        </div>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0">
+                                <li class="page-item" :class="{ 'disabled': currentPage === 1 }">
+                                    <a class="page-link" href="#"
+                                       @click.prevent="goToPage(currentPage - 1)">Previous</a>
+                                </li>
+                                <template x-for="page in visiblePages" :key="page">
+                                    <li class="page-item" :class="{ 'active': page === currentPage }">
+                                        <a class="page-link" href="#" @click.prevent="goToPage(page)" x-text="page"></a>
+                                    </li>
+                                </template>
+                                <li class="page-item" :class="{ 'disabled': currentPage === totalPages }">
+                                    <a class="page-link" href="#" @click.prevent="goToPage(currentPage + 1)">Next</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <!-- End Users Management Container -->
+
+        <!-- Orders Management Container -->
+        <div x-show="Alpine.store('pageStore').current === 'financial'" x-data="orderTable">
+
+            <!-- Order Stats Widgets -->
+            <div class="row g-4 g-lg-5 mb-5">
+                <div class="col-xl-3 col-lg-6">
+                    <div class="card stats-card">
+                        <div class="card-body p-3 p-lg-4">
+                            <div class="d-flex align-items-center">
+                                <div class="stats-icon bg-primary bg-opacity-10 text-primary me-3">
+                                    <i class="bi bi-bag-check"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 text-muted"
+                                        x-text="'Đơn hàng mới '+ ({today:'ngày', week:'tuần', month:'tháng', quarter:'quý', year:'năm' }[period]) "></h6>
+                                    <h3 class="mb-0" x-text="newOrders"></h3>
+                                    <small
+                                            :class="{
+                                        'text-success': growthOrderPercentage > 0,
+                                        'text-danger': growthOrderPercentage < 0,
+                                    }">
+                                        <template x-if="growthOrderPercentage !== 0">
+                                            <i :class="{
+                                                'bi bi-arrow-up': growthOrderPercentage > 0,
+                                                'bi bi-arrow-down': growthOrderPercentage < 0
+                                            }"></i>
+                                        </template>
+                                        <span x-text="growthOrderPercentage + '% so với ' + ({today:'ngày', week:'tuần', month:'tháng', quarter:'quý', year:'năm' }[period]) + ' trước'"></span>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-lg-6">
+                    <div class="card stats-card">
+                        <div class="card-body p-3 p-lg-4">
+                            <div class="d-flex align-items-center">
+                                <div class="stats-icon bg-warning bg-opacity-10 text-warning me-3">
+                                    <i class="bi bi-clock"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 text-muted"> Chờ xử lý</h6>
+                                    <h3 class="mb-0" x-text="orderStats.pending"></h3>
+                                    <small class="text-warning">
+                                        <i class="bi bi-exclamation-circle"></i> Chú ý
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-lg-6">
+                    <div class="card stats-card">
+                        <div class="card-body p-3 p-lg-4">
+                            <div class="d-flex align-items-center">
+                                <div class="stats-icon bg-info bg-opacity-10 text-info me-3">
+                                    <i class="bi bi-truck"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 text-muted">Vận chuyển</h6>
+                                    <h3 class="mb-0" x-text="orderStats.shipping"></h3>
+                                    <small class="text-info">
+                                        <i class="bi bi-arrow-right"></i> Đang vận chuyển
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-lg-6">
+                    <div class="card stats-card">
+                        <div class="card-body p-3 p-lg-4">
+                            <div class="d-flex align-items-center">
+                                <div class="stats-icon bg-success bg-opacity-10 text-success me-3">
+                                    <i class="bi bi-currency-dollar"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 text-muted"
+                                        x-text="'Số tiền đã bán '+ ({today:'ngày', week:'tuần', month:'tháng', quarter:'quý', year:'năm' }[period]) "></h6>
+                                    <h3 class="mb-0" x-text="revenueCurrent"></h3>
+                                    <small
+                                            :class="{
+                                        'text-success': growthRevenuePercentage > 0,
+                                        'text-danger': growthRevenuePercentage < 0,
+                                    }">
+                                        <template x-if="growthRevenuePercentage !== 0">
+                                            <i :class="{
+                                                'bi bi-arrow-up': growthRevenuePercentage > 0,
+                                                'bi bi-arrow-down': growthRevenuePercentage < 0
+                                            }"></i>
+                                        </template>
+                                        <span x-text="growthRevenuePercentage + '% so với ' + ({today:'ngày', week:'tuần', month:'tháng', quarter:'quý', year:'năm' }[period]) + ' trước'"></span>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="row g-4 g-lg-5 mb-5">
+                <!-- Order Trends Chart -->
+                <div class="col-lg-8">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">Order Trends</h5>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <input type="radio" class="btn-check" name="trendsPeriod" id="trends7d"
+                                       autocomplete="off" checked>
+                                <label class="btn btn-outline-secondary" for="trends7d">7D</label>
+                                <input type="radio" class="btn-check" name="trendsPeriod" id="trends30d"
+                                       autocomplete="off">
+                                <label class="btn btn-outline-secondary" for="trends30d">30D</label>
+                                <input type="radio" class="btn-check" name="trendsPeriod" id="trends90d"
+                                       autocomplete="off">
+                                <label class="btn btn-outline-secondary" for="trends90d">90D</label>
+                            </div>
+                        </div>
+                        <div class="card-body p-3 p-lg-4">
+                            <div id="orderTrendsChart" style="height: 300px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Status Distribution -->
+                <div class="col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Order Status</h5>
+                        </div>
+                        <div class="card-body p-3 p-lg-4">
+                            <div id="statusChart" style="height: 200px;"></div>
+                            <div class="mt-3">
+                                <template x-for="status in statusStats" :key="status.name">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="small" x-text="status.name"></span>
+                                        <div class="d-flex align-items-center">
+                                            <span class="small text-muted me-2" x-text="`${status.percentage}%`"></span>
+                                            <span class="small fw-medium" x-text="status.count"></span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders Table -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="card-title mb-0">Orders</h5>
+                        </div>
+                        <div class="col-auto">
+                            <div class="d-flex gap-2">
+                                <!-- Search -->
+                                <div class="position-relative">
+                                    <input type="search"
+                                           class="form-control form-control-sm"
+                                           placeholder="Tìm kếm đơn hàng..."
+                                           x-model="searchQuery"
+                                           @input="filterOrders()"
+                                           style="width: 200px;">
+                                    <i class="bi bi-search position-absolute top-50 end-0 translate-middle-y me-2 text-muted"></i>
+                                </div>
+
+                                <!-- Status Filter -->
+                                <select class="form-select form-select-sm"
+                                        x-model="statusFilter"
+                                        @change="filterOrders()"
+                                        style="width: 150px;">
+                                    <option value="">Tất cả</option>
+                                    <option value="pending">Đang chờ xác nhận</option>
+                                    <option value="processing">Đang xử lý</option>
+                                    <option value="shipping">Đang vận chuyển</option>
+                                    <option value="delivered">Đã giao</option>
+                                    <option value="cancelled">Đã hủy</option>
+                                </select>
+
+                                <!-- Date Range -->
+                                <select class="form-select form-select-sm"
+                                        x-model="dateFilter"
+                                        @change="filterOrders()"
+                                        style="width: 150px;">
+                                    <option value="">Tất cả</option>
+                                    <option value="today">Hôm nay</option>
+                                    <option value="week">Tuần này</option>
+                                    <option value="month">Tháng này</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Bulk Actions Bar -->
+                    <div class="bulk-actions-bar p-3 bg-light border-bottom" x-show="selectedOrders.length > 0"
+                         x-transition>
+                        <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted">
+                                            <span x-text="selectedOrders.length"></span> đơn hàng đã chọn
+                                        </span>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-secondary" @click="bulkAction('processing')">
+                                    <i class="bi bi-arrow-clockwise me-1"></i>Đang xử lý
+                                </button>
+                                <button class="btn btn-sm btn-outline-info" @click="bulkAction('shipped')">
+                                    <i class="bi bi-truck me-1"></i>Đang vận chuyển
+                                </button>
+                                <button class="btn btn-sm btn-outline-success" @click="bulkAction('delivered')">
+                                    <i class="bi bi-check-circle me-1"></i>Đã giao
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th style="width: 40px;">
+                                    <input type="checkbox"
+                                           class="form-check-input"
+                                           @change="toggleAll($event.target.checked)"
+                                           :checked="selectedOrders.length === filteredOrders.length && filteredOrders.length > 0">
+                                </th>
+                                <th @click="sortBy('orderNumber')" class="sortable">Order #</th>
+                                <th>Khách hàng</th>
+                                <th>Sản phẩm</th>
+                                <th @click="sortBy('total')" class="sortable">Tổng</th>
+                                <th>Trạng thái</th>
+                                <th @click="sortBy('orderDate')" class="sortable">Date</th>
+                                <th>Thanh toán</th>
+                                <th style="width: 120px;">Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <template x-for="order in paginatedOrders" :key="order.id">
+                                <tr>
+                                    <td>
+                                        <input type="checkbox"
+                                               class="form-check-input"
+                                               :value="order.id"
+                                               x-model="selectedOrders">
+                                    </td>
+                                    <td>
+                                        <div class="fw-medium" x-text="order.id"></div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img :src="order.customer.avatar"
+                                                 class="rounded-circle me-2"
+                                                 width="32"
+                                                 height="32">
+                                            <div>
+                                                <div class="fw-medium" x-text="order.customer.name"></div>
+                                                <small class="text-muted" x-text="order.customer.email"></small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="order-items">
+                                            <div x-text="order.itemCount + ' item' + (order.itemCount > 1 ? 's' : '')"></div>
+                                            <small class="text-muted"
+                                                   x-text="order.items[0].name + (order.itemCount > 1 ? ' +' + (order.itemCount - 1) + ' more' : '')"></small>
+                                        </div>
+                                    </td>
+                                    <td class="fw-medium" x-text="`$${order.total}`"></td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="order-status badge"
+                                                  :class="{
+                                                              'bg-secondary': order.status === 'pending',
+                                                              'bg-info': order.status === 'processing',
+                                                              'bg-primary': order.status === 'shipping',
+                                                              'bg-success': order.status === 'delivered',
+                                                              'bg-danger': order.status === 'cancelled'
+                                                          }"
+                                                  x-text="order.status.charAt(0).toUpperCase() + order.status.slice(1)">
+                                                    </span>
+
+                                        </div>
+
+
+                                    </td>
+
+                                    <td x-text="order.orderDate"></td>
+                                    <td x-text="order.payment"></td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                                    type="button"
+                                                    data-bs-toggle="dropdown">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#" @click="viewOrder(order)">
+                                                    <i class="bi bi-eye me-2"></i>Xem chi tiết
+                                                </a></li>
+                                                <li><a class="dropdown-item" href="#" @click="printInvoice(order)">
+                                                    <i class="bi bi-printer me-2"></i>In hóa đơn
+                                                </a></li>
+                                                <li>
+                                                    <hr class="dropdown-divider">
+                                                </li>
+                                                <li><a class="dropdown-item text-danger" href="#"
+                                                       @click="cancelOrder(order)">
+                                                    <i class="bi bi-x-circle me-2"></i>Hủy đơn hàng
+                                                </a></li>
+                                            </ul>
+                                        </div>
+                                    </td>
+
+                                </tr>
+                            </template>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="d-flex justify-content-between align-items-center p-3">
+                        <div class="text-muted">
+                            Showing <span x-text="(currentPage - 1) * itemsPerPage + 1"></span> to
+                            <span x-text="Math.min(currentPage * itemsPerPage, filteredOrders.length)"></span> of
+                            <span x-text="filteredOrders.length"></span> results
+                        </div>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0">
+                                <li class="page-item" :class="{ 'disabled': currentPage === 1 }">
+                                    <a class="page-link" href="#"
+                                       @click.prevent="goToPage(currentPage - 1)">Previous</a>
+                                </li>
+                                <template x-for="(page, index) in visiblePages" :key="`page-${index}`">
+                                    <li class="page-item" :class="{ 'active': page === currentPage }">
+                                        <a class="page-link" href="#" @click.prevent="page !== '...' && goToPage(page)"
+                                           x-text="page"></a>
+                                    </li>
+                                </template>
+                                <li class="page-item" :class="{ 'disabled': currentPage === totalPages }">
+                                    <a class="page-link" href="#" @click.prevent="goToPage(currentPage + 1)">Next</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="orderModal" tabindex="-1">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Order Details</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+
+                        <template x-if="selectedOrder">
+                            <div class="modal-body text-white bg-dark">
+                                <h6 class="mb-3">Thông tin khách hàng</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Họ Tên</label>
+                                        <div class="form-control bg-dark text-white border-secondary"
+                                             x-text="selectedOrder.customer.name"></div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Email</label>
+                                        <div class="form-control bg-dark text-white border-secondary"
+                                             x-text="selectedOrder.customer.email"></div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Số điện thoại</label>
+                                        <div class="form-control bg-dark text-white border-secondary"
+                                             x-text="selectedOrder.customer.phone"></div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Địa chỉ giao hàng</label>
+                                        <div class="form-control bg-dark text-white border-secondary"
+                                             x-text="selectedOrder.shippingAddress"></div>
+                                    </div>
+                                </div>
+
+                                <hr class="border-secondary my-4">
+
+                                <h6 class="mb-3">Sản phẩm</h6>
+                                <table class="table bg-dark text-white border-secondary">
+                                    <thead class="bg-dark text-white border-bottom border-secondary">
+                                    <tr>
+                                        <th class="border-0">Sản phẩm</th>
+                                        <th class="border-0">Giá</th>
+                                        <th class="border-0">Số lượng</th>
+                                        <th class="text-end border-0">Tổng</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <template x-for="item in selectedOrder.items" :key="item.id">
+                                        <tr>
+                                            <td class="border-0">
+                                                <strong x-text="item.name"></strong><br>
+                                                <span x-text="`${item.color} - ${item.size} x ${item.quantity}`"></span>
+                                            </td>
+                                            <td class="border-0" x-text="item.price.toLocaleString() + ' đ'"></td>
+                                            <td class="border-0" x-text="item.quantity"></td>
+                                            <td class="text-end border-0"
+                                                x-text="(item.price * item.quantity).toLocaleString() + ' đ'"></td>
+                                        </tr>
+                                    </template>
+                                    </tbody>
+                                </table>
+
+                                <!--                                <template x-for="(item, index) in selectedOrder.items" :key="index">-->
+                                <!--                                    <div class="border rounded p-3 mb-2 bg-secondary bg-opacity-10">-->
+                                <!--                                        &lt;!&ndash; Dòng 1: Tên sản phẩm | Giá | Tổng &ndash;&gt;-->
+                                <!--                                        <div class="row">-->
+                                <!--                                            &lt;!&ndash; Tên sản phẩm (col-md-6) &ndash;&gt;-->
+                                <!--                                            <div class="col-md-3 d-flex align-items-center">-->
+                                <!--                                                <strong x-text="item.name"></strong>-->
+                                <!--                                            </div>-->
+
+                                <!--                                            &lt;!&ndash; Giá (col-md-3) &ndash;&gt;-->
+                                <!--                                            <div class="col-md-3 d-flex align-items-center justify-content-end">-->
+                                <!--                                                Giá: <span class="ms-1" x-text="formatCurrency(item.price)"></span>-->
+                                <!--                                            </div>-->
+
+                                <!--                                            &lt;!&ndash; Tổng (col-md-3), lệch sát phải &ndash;&gt;-->
+                                <!--                                            <div class="col-md-6 d-flex align-items-center justify-content-end pe-0">-->
+                                <!--                                                Tổng: <span class="ms-1"-->
+                                <!--                                                            x-text="formatCurrency(item.price * item.quantity)"></span>-->
+                                <!--                                            </div>-->
+                                <!--                                        </div>-->
+
+                                <!--                                        &lt;!&ndash; Dòng 2: Màu - Size | SL &ndash;&gt;-->
+                                <!--                                        <div class="row mt-1">-->
+                                <!--                                            <div class="col-md-6 text-muted">-->
+                                <!--                                                <span x-text="`${item.color} - ${item.size} x ${item.quantity}`"></span>-->
+                                <!--                                            </div>-->
+
+                                <!--                                        </div>-->
+                                <!--                                    </div>-->
+                                <!--                                </template>-->
+
+                                <!-- Tổng đơn -->
+                                <div class="d-flex justify-content-between align-items-center mt-4">
+
+                                    <h6 class="mb-0">Tổng đơn hàng</h6>
+                                    <h6 class="mb-0 text-success" x-text="formatCurrency(selectedOrder.total)"></h6>
+                                </div>
+
+                                <div class="mt-5 d-flex align-items-center gap-3">
+                                    <label class="form-label fw-semibold mb-0">Trạng thái</label>
+                                    <select class="form-select bg-dark text-white border-secondary w-auto"
+                                            x-model="selectedOrder.status">
+                                        <option value="pending">Đang chờ xác nhận</option>
+                                        <option value="processing">Đang xử lý</option>
+                                        <option value="shipping">Đang vận chuyển</option>
+                                        <option value="delivered">Đã giao</option>
+                                        <option value="cancelled">Đã hủy</option>
+                                    </select>
+                                </div>
+
+
+                            </div>
+                        </template>
+                        <div class="modal-footer bg-dark border-secondary">
+                            <button type="button" class="btn btn-primary" @click="updateStatusOrder(selectedOrder)">
+                                Lưu
+                            </button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <!-- End Orders Management Container -->
+
+    </div>
+</main>
+
+{%endblock%}

@@ -1,0 +1,377 @@
+{% extends 'admin/layout/base.html' %}
+{% block title %} Trang chủ {% endblock %}
+<!-- Main Content -->
+{% block content %}
+<main class="admin-main">
+    <div class="container-fluid p-4 p-lg-5" x-data="dashboard">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h3 mb-0">Tổng quan</h1>
+                </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-primary">
+                    <i class="bi bi-plus-lg me-2"></i>
+                    New Item
+                </button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="tooltip"
+                        title="Refresh data">
+                    <i class="bi bi-arrow-clockwise icon-hover"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="tooltip"
+                        title="Export data">
+                    <i class="bi bi-download icon-hover"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="tooltip"
+                        title="Settings">
+                    <i class="bi bi-gear icon-hover"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4 ">
+            <div class="col-lg-3 col-md-6 col-sm-12">
+                <div class="card stats-card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="stats-icon bg-primary bg-opacity-10 text-primary">
+                                    <i class="bi bi-people"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-0 ">Tổng người dùng</h6>
+                                <h3 class="mb-0" x-text="users.length"></h3>
+                                <small
+                                        :class="{
+                                        'text-success': userComparison.percentChange > 0,
+                                        'text-danger': userComparison.percentChange < 0,
+                                    }">
+                                    <template x-if="userComparison.percentChange !== 0">
+                                        <i :class="{
+                                                'bi bi-arrow-up': userComparison.percentChange > 0,
+                                                'bi bi-arrow-down': userComparison.percentChange < 0
+                                            }"></i>
+                                    </template>
+                                    <span x-text="userComparison.percentChange + '% so với tháng trước'"></span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 col-sm-12">
+                <div class="card stats-card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="stats-icon bg-success bg-opacity-10 text-success">
+                                    <i class="bi bi-graph-up"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-0">Doanh thu tháng này</h6>
+                                <h3 class="mb-0" x-text="revenueMonthComparison.currentMonth"></h3>
+                                <small
+                                        :class="{
+                                        'text-success': revenueMonthComparison.percentChange > 0,
+                                        'text-danger': revenueMonthComparison.percentChange < 0,
+                                    }">
+                                    <template x-if="revenueMonthComparison.percentChange !== 0">
+                                        <i :class="{
+                                                'bi bi-arrow-up': revenueMonthComparison.percentChange > 0,
+                                                'bi bi-arrow-down': revenueMonthComparison.percentChange < 0
+                                            }"></i>
+                                    </template>
+                                    <span x-text="revenueMonthComparison.percentChange + '% so với tháng trước'"></span>
+                                </small>
+
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 col-sm-12">
+                <div class="card stats-card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="stats-icon bg-warning bg-opacity-10 text-warning">
+                                    <i class="bi bi-bag-check"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-0 ">Đơn hàng tháng này</h6>
+                                <h3 class="mb-0" x-text="orderComparison.currentMonth"></h3>
+                                <small :class="{
+                                        'text-success': orderComparison.percentChange > 0,
+                                        'text-danger': orderComparison.percentChange < 0,
+                                    }">
+                                    <template x-if="orderComparison.percentChange !== 0">
+                                        <i :class="{
+                                        'bi bi-arrow-up': orderComparison.percentChange > 0,
+                                        'bi bi-arrow-down': orderComparison.percentChange < 0,
+                                    }"></i>
+                                    </template>
+                                    <span x-text="orderComparison.percentChange + '% so với tháng trước'"></span>
+                                </small>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 col-sm-12">
+                <div class="card stats-card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="stats-icon bg-warning bg-opacity-10 text-warning">
+                                    <i class="bi bi-bag-check"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-0 ">Doanh thu hôm nay</h6>
+                                <h3 class="mb-0" x-text="revenueComparison.today"></h3>
+                                <small :class="{
+                                        'text-success': revenueComparison.percentChange > 0,
+                                        'text-danger': revenueComparison.percentChange < 0,
+                                    }">
+                                    <template x-if="revenueComparison.percentChange !== 0">
+                                        <i :class="{
+                                        'bi bi-arrow-up': revenueComparison.percentChange > 0,
+                                        'bi bi-arrow-down': revenueComparison.percentChange < 0,
+                                    }"></i>
+                                    </template>
+                                    <span x-text="revenueComparison.percentChange + '% so với tháng trước'"></span>
+                                </small>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Tổng quan doanh thu</h5>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-primary active"
+                                    data-chart-period="7d">7D
+                            </button>
+                            <button type="button" class="btn btn-outline-primary"
+                                    data-chart-period="30d">30D
+                            </button>
+                            <button type="button" class="btn btn-outline-primary"
+                                    data-chart-period="90d">90D
+                            </button>
+                            <button type="button" class="btn btn-outline-primary"
+                                    data-chart-period="1y">1Y
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="revenueChart" height="350"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Hoạt động gần đây</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="activity-feed" style="max-height: 350px; overflow-y: auto;">
+                            <template x-for="activity in recentActivities" :key="activity.id">
+                                <div class="d-flex p-3 border-bottom">
+                                    <div class="flex-shrink-0 me-3">
+                                        <div class="activity-icon"
+                                             :class="`bg-${activityIcons[activity.type]?.color || 'secondary'} bg-opacity-10`">
+                                            <i :class="`bi ${activityIcons[activity.type]?.icon || 'bi-info-circle'} text-${activityIcons[activity.type]?.color || 'secondary'}`"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between">
+                                            <p class="mb-1 small">
+                                                <strong x-text="activity.user"></strong>
+                                                <span x-text="activity.action"></span>
+                                            </p>
+                                            <small class="text-muted" x-text="activity.time"></small>
+                                        </div>
+                                        <small class="text-muted" x-text="activity.details"></small>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <!-- Recent Orders -->
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Đơn hàng gần đây</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                <tr>
+                                    <th>Mã đơn hàng</th>
+                                    <th>Khách hàng</th>
+                                    <th>Tổng tiền</th>
+                                    <th>Trạng thái</th>
+                                    <th>Ngày đặt</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <template x-for="order in recentOrders" :key="order.id">
+                                    <tr>
+                                        <td><strong x-text="order.id"></strong></td>
+                                        <td x-text="order.customer"></td>
+                                        <td x-text="order.total"></td>
+                                        <td>
+                                            <span class="order-status badge"
+                                                  :class="{
+                                                              'bg-secondary': order.status === 'pending',
+                                                              'bg-info': order.status === 'processing',
+                                                              'bg-primary': order.status === 'shipping',
+                                                              'bg-success': order.status === 'delivered',
+                                                              'bg-danger': order.status === 'cancelled'
+                                                          }"
+                                                  x-text="order.status.charAt(0).toUpperCase() + order.status.slice(1)">
+                                            </span>
+                                        </td>
+                                        <td x-text="order.date"></td>
+                                    </tr>
+                                </template>
+
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Storage Status -->
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Phân bố trạng thái đơn hàng</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="orderStatusChart" height="240"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+{% endblock %}
+{% block Modal %}
+<!-- Toast Container -->
+<div aria-live="polite" aria-atomic="true" class="position-fixed top-0 end-0 p-3" style="z-index: 11">
+    <div id="toast-container"></div>
+</div>
+
+<div class="modal fade" id="iconDemoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-palette me-2"></i>
+                    Icon System Demo
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" x-data="iconDemo">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6>Current Provider: <span class="badge bg-primary" x-text="currentProvider"></span></h6>
+                        <div class="btn-group" role="group">
+                            <button type="button"
+                                    class="btn btn-outline-primary"
+                                    @click="switchProvider('bootstrap')"
+                                    :class="{ 'active': currentProvider === 'bootstrap' }">
+                                Bootstrap Icons
+                            </button>
+                            <button type="button"
+                                    class="btn btn-outline-primary"
+                                    @click="switchProvider('lucide')"
+                                    :class="{ 'active': currentProvider === 'lucide' }">
+                                Lucide Icons
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-3 text-center">
+                        <div class="p-3 border rounded">
+                            <i class="bi bi-speedometer2 icon-xl text-primary mb-2"></i>
+                            <br><small>Dashboard</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="p-3 border rounded">
+                            <i class="bi bi-people icon-xl text-success mb-2"></i>
+                            <br><small>Users</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="p-3 border rounded">
+                            <i class="bi bi-graph-up icon-xl text-info mb-2"></i>
+                            <br><small>Analytics</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="p-3 border rounded">
+                            <i class="bi bi-gear icon-xl text-warning mb-2"></i>
+                            <br><small>Settings</small>
+                        </div>
+                    </div>
+                </div>
+
+                <h6 class="mt-4">Icon Animations</h6>
+                <div class="row g-3">
+                    <div class="col-md-3 text-center">
+                        <i class="bi bi-arrow-clockwise icon-xl icon-spin text-primary"></i>
+                        <br><small>Spin</small>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <i class="bi bi-heart icon-xl icon-pulse text-danger"></i>
+                        <br><small>Pulse</small>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <i class="bi bi-star icon-xl icon-hover text-warning"></i>
+                        <br><small>Hover Effect</small>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <i class="bi bi-check-circle icon-xl text-success"></i>
+                        <br><small>Static</small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x me-2"></i>Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+

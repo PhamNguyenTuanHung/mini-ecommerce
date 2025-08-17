@@ -1,0 +1,132 @@
+{% extends 'user/layout/base.html' %}
+{% block title %} Đơn hàng {% endblock %}
+{% block content %}
+
+<section class="user-dashboard page-wrapper">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <ul class="list-inline dashboard-menu text-center">
+                    <li><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+                    <li><a class="active" href="{{ url_for('main.order') }}">Orders</a></li>
+                    <li><a href="{{ url_for('main.view_address') }}">Address</a></li>
+                    <li><a href="{{url_for('main.profile_details')}}">Profile Details</a></li>
+                </ul>
+                <div class="dashboard-wrapper user-dashboard">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th>Mã đơn hàng</th>
+                                <th>Sản phẩm</th>
+                                <th>Ngày đặt</th>
+                                <th>Giảm giá</th>
+                                <th>Trạng thái</th>
+                                <th>Tổng đơn hàng</th>
+                                <th></th>
+                            </tr>
+                            </thead>
+                            <tbody x-data="orderTable">
+                            <template x-for="order in orders" :key="order.id">
+                                <tr border="1px">
+                                    <td>
+                                        <div class="fw-medium" x-text="order.id"></div>
+                                    </td>
+                                    <td>
+                                        <template x-for="item in order.items"
+                                                  :key="item.name + item.size + item.color">
+                                            <div>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <small x-text="`${item.name}` "></small>
+                                                </div>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <small x-text="  `${item.size || ''} - ${item.color || ''} : ${item.quantity}`"></small>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </td>
+                                    <td x-text=" order.orderDate"></td>
+                                    <td x-text="order.payment"></td>
+                                    <td x-text="order.status"></td>
+                                    <td class="fw-medium" x-text="`$${order.total}`"></td>
+                                    <td><!-- Nút hủy đơn -->
+                                        <template x-if="order.status === 'pending' || order.status === 'processing'">
+                                            <button
+                                                    class="btn btn-danger btn-sm"
+                                                    @click="cancelOrder(order.id)">
+                                                <i class="fa fa-times"></i> Hủy đơn
+                                            </button>
+                                        </template>
+
+                                        <!-- Nút đánh giá -->
+                                        <template x-if="order.status === 'delivered'">
+                                            <button
+                                                    class="btn btn-warning btn-sm"
+                                                    @click="openReviewModal(order)">
+                                                <i class="fa fa-star"></i> Đánh giá sản phẩm
+                                            </button>
+                                        </template>
+
+                                    </td>
+                                </tr>
+                            </template>
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Review Modal -->
+<div class="modal fade" id="reviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Đánh giá sản phẩm</h5>
+            </div>
+            <!-- Body -->
+            <div class="modal-body" x-data="reviewForm">
+
+                <!-- Products list -->
+                <template x-for="product in products" :key="product.id">
+                    <div class="product-review border p-3 mb-3" x-show="!product.reviewed">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <img :src="product.image_url" class="img-fluid">
+                            </div>
+                            <div class="col-md-8">
+                                <h5 x-text="product.name"></h5>
+                                <p x-text="product.size + ' - ' + product.color"></p>
+                                <div>
+                                    <template x-for="star in 5" :key="star">
+                                        <i class="fa-star"
+                                           :class="star <= product.rating ? 'fas text-warning' : 'far text-secondary'"
+                                           style="cursor: pointer; font-size: 1.5rem;"
+                                           @click="product.rating = star"></i>
+                                    </template>
+                                </div>
+                                <textarea class="form-control mt-2" placeholder="Nhập nội dung đánh giá..."
+                                          x-model="product.comment"></textarea>
+                                <button class="btn btn-primary mt-2" @click="submitReview(product)">
+                                    Gửi đánh giá
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module" src="{{ url_for('static', filename='user/js/components/orders.js') }}" defer></script>
+
+{% endblock %}
+

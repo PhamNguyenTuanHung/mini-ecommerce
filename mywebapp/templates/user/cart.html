@@ -1,0 +1,86 @@
+{% extends 'user/layout/base.html' %}
+{% block title %} Giỏ hàng {% endblock %}
+{% block content %}
+<div class="page-wrapper">
+    <div class="cart shopping">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 col-md-offset-2">
+                    <div class="block">
+                        <div class="product-list">
+                                <table class="table">
+                                    <thead>
+                                    <tr>
+                                        <th class="">Sán phẩm</th>
+                                        <th class="">Giá</th>
+                                        <th class="">Số lượng</th>
+                                        <th class="">Tổng</th>
+                                        <th class=""></th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {%for item in cart.values() %}
+                                    <tr data-id="{{item.get('product_id')}}" class="">
+                                        <td class="">
+                                            <div class="product-info">
+                                                <img width="80"
+                                                     src="{{ url_for('static', filename='user/images/shop/cart/cart-1.jpg') }}"
+                                                     alt=""/>
+                                                <a href="">{{item.get('name')}}</a>
+                                                <a>{{ item.get('size') + " "+ item.get('color') }}</a>
+                                            </div>
+                                        </td>
+                                        <td class="">${{item.get('price')}}</td>
+                                        <td class="quantity__item">
+                                            <div class="product-quantity">
+                                                <div class="product-quantity-slider">
+                                                    <input class="cart-product-quantity"
+                                                           type="text"
+                                                           id="cart_item-{{ item.get('product_id') }}"
+                                                           data-id="{{ item.get('product_id') }}"
+                                                           data-product-id="{{ item.get('product_id') }}"
+                                                           data-size="{{ item.get('size') }}"
+                                                           data-color="{{ item.get('color') }}"
+                                                           value="{{ item.get('quantity') }}"
+                                                           name="product-quantity">
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="cart__price" id="item-total-{{ item.get('product_id') }}">
+                                            {{ "{:,.0f}".format(item.get('quantity') * item.get('price')) }}
+                                        <td>
+                                            <input type="checkbox" class="checkout-item" name="checkout_items"
+                                                   value="{{ item.get('product_id') }}_{{ item.get('size') }}_{{ item.get('color') }}"
+                                                   checked>
+                                        </td>
+                                        <td class="">
+                                            <a href="javascript:void(0)" class="product-remove"
+                                               onclick="removeCartItem('{{ item.get('product_id') }}', '{{ item.get('color') }}', '{{ item.get('size') }}')">Xoá
+                                            </a>
+
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                    <tfoot>
+                                    <tr>
+                                        <td><strong>Tổng cộng:</strong></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td id="cart-total" class="cart__price ">{{
+                                            "{:,.0f}".format(cartCount.get('total_amount')) }}
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                    </tfoot>
+                                </table>
+                                <button type="submit" class="btn btn-main pull-right" onclick="checkoutSelectedItems()">Checkout</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

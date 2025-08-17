@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}{% endblock %}</title>
+
+    {% block css %}
+    <!-- Favicon -->
+    <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.png') }}"/>
+
+
+    <!-- Plugin CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='user/plugins/themefisher-font/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='user/plugins/bootstrap/css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='user/plugins/animate/animate.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='user/plugins/slick/slick.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='user/plugins/slick/slick-theme.css') }}">
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='user/plugins/bootstrap-touchspin/dist/jquery.bootstrap-touchspin.min.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Main Style -->
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='user/css/style1.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='user/css/style.css') }}">
+
+
+    {% endblock %}
+</head>
+<body>
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var container = document.getElementById('toast-container');
+        {% for category, message in messages %}
+        var toast = document.createElement('div');
+        toast.className = 'alert alert-{{ category }} alert-dismissible';
+        toast.style.cssText = `
+            min-width: 250px;
+            margin-top: 10px;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+          `;
+        toast.innerHTML = `
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            {{ message }}`;
+        container.appendChild(toast);
+
+        setTimeout(function () {
+            toast.style.opacity = '0';
+            setTimeout(function () {
+                toast.remove();
+            }, 500);
+        }, 2000);
+        {% endfor %}
+    });
+</script>
+{% endif %}
+{% endwith %}
+
+
+{% block header %}
+{% include 'user/layout/header.html' %}
+{% endblock %}
+
+
+{% block content %}{% endblock %}
+
+{% block js %}
+
+<div id="toast-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;"></div>
+<!-- Core JS -->
+<script src="{{ url_for('static', filename='user/plugins/jquery/dist/jquery.min.js') }}"></script>
+<script src="{{ url_for('static', filename='user/plugins/bootstrap/js/bootstrap.min.js') }}"></script>
+<!-- Plugin JS -->
+<script src="{{ url_for('static', filename='user/plugins/bootstrap-touchspin/dist/jquery.bootstrap-touchspin.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script src="{{ url_for('static', filename='user/js/components/variant.js') }}"></script>
+<script src="{{ url_for('static', filename='user/js/components/product_details.js') }}"></script>
+<script src="{{ url_for('static', filename='user/js/script.js') }}"></script>
+<script src="{{ url_for('static', filename='user/js/components/cart.js') }}"></script>
+
+
+<script> setTimeout(function () {
+    var alerts = document.querySelectorAll('#flash-messages .alert');
+    alerts.forEach(function (alert) {
+        alert.style.transition = 'opacity 0.5s ease';
+        alert.style.opacity = '0';
+        setTimeout(function () {
+            if (alert.parentNode) {
+                alert.parentNode.removeChild(alert);
+            }
+        }, 500)
+    })
+});
+</script>
+
+
+{% endblock %}
+
+{% block footer %}
+{% include 'user/layout/footer.html' %}
+{% endblock %}
+</body>
+</html>
