@@ -11,6 +11,7 @@ from flask import Blueprint
 
 main = Blueprint('main', __name__, template_folder='../templates/user')
 
+
 @main.before_request
 def update_last_active():
     if current_user.is_authenticated:
@@ -31,20 +32,20 @@ def login():
     if request.method == "POST":
         username = request.form.get('username')
         password = request.form.get('password')
-        next_page = request.form.get('next') or  next_page
+        next_page = request.form.get('next') or next_page
         user = utils.check_login(username, password)
 
         if user:
             login_user(user)
             cart_session = utils.get_cart()
-            cart_db=utils.get_cart(current_user.MaNguoiDung)
-            merged_cart =utils.merge_cart_dicts(cart_session, cart_db)
-            utils.save_cart(user.MaNguoiDung,merged_cart)
+            cart_db = utils.get_cart(current_user.MaNguoiDung)
+            merged_cart = utils.merge_cart_dicts(cart_session, cart_db)
+            utils.save_cart(user.MaNguoiDung, merged_cart)
             session.pop('cart', None)
             flash('Đăng nhập thành công!', 'success')
             utils.log_activity(current_user.MaNguoiDung,
-                               action= 'login',
-                               message= f'Đăng nhập thành công với tên đăng nhập: {username}')
+                               action='login',
+                               message=f'Đăng nhập thành công với tên đăng nhập: {username}')
             if not next_page or not next_page.startswith('/'):
                 next_page = url_for('main.home')
             return redirect(next_page)
@@ -115,10 +116,11 @@ def register():
 
 
 @main.route('/logout')
+@login_required
 def logout():
     utils.log_activity(current_user.MaNguoiDung,
                        action='logout',
-                       message= f'Đăng xuất thành công')
+                       message=f'Đăng xuất thành công')
     logout_user()  # Xoá session hiện tại (đăng xuất)
     flash("Đăng xuất thành công!", "info")
     return redirect('/')  # hoặc chuyển về trang chủ
@@ -127,6 +129,39 @@ def logout():
 @main.route('/user/profile')
 def profile_details():
     return render_template('profile_details.html')
+
+
+@main.route('/user/api/change-password', methods=['GET', 'POST'])
+def change_password():
+    if request.method == 'POST':
+        old_password = request.form.get('old_password', '').strip()
+        new_password = request.form.get('new_password', '').strip()
+        confirm_password = request.form.get('confirm_password', '').strip()
+        if new_password != confirm_password:
+            return {"success": False, "error": "Mật khẩu xác nhận không khớp"}, 400
+
+        result = utils.change_password(
+            user_id=current_user.MaNguoiDung,
+            old_pass=old_password,
+            new_pass=new_password
+        )
+
+        if result is True:
+            utils.log_activity(
+                current_user.MaNguoiDung,
+                action='change_password',
+                message=f"User {current_user.MaNguoiDung} đổi mật khẩu"
+            )
+            return {"success": True, "message": "Đổi mật khẩu thành công"}, 200
+
+        if result == "wrong_old_password":
+            return {"success": False, "error": "Mật khẩu cũ không đúng"}, 401
+
+        return {"success": False, "error": "Có lỗi xảy ra, vui lòng thử lại"}, 500
+
+@main.route('/user/change-password')
+def change_password_view():
+    return render_template('change_password.html')
 
 
 @main.route('/api/user/profile', methods=['POST'])
@@ -202,8 +237,10 @@ def api_update_user():
 @main.route('/user/address')
 @login_required
 def view_address():
+    print("🔎 Debug request.path:", request.path)
     addresses = utils.get_user_addresses_by_id(user_id=current_user.MaNguoiDung)
     return render_template('address.html', addresses=addresses)
+
 
 @main.route('/user/dashboard')
 def dashboard():
@@ -240,7 +277,7 @@ def cart():
 @main.route('/product_single/<int:product_id>')
 def product_single(product_id):
     product = utils.get_product_by_id(product_id)
-    related_products = utils.load_products(cate_id=product.MaDanhMuc,brand_id=product.MaThuongHieu)
+    related_products = utils.load_products(cate_id=product.MaDanhMuc, brand_id=product.MaThuongHieu)
     reviews = utils.get_product_reviews(product_id)
 
     variants_data = utils.get_sizes_and_colors_by_product_id(product_id)
@@ -253,8 +290,9 @@ def product_single(product_id):
         related_products=related_products,
         sizes=sizes,
         colors=colors,
-        reviews= reviews
+        reviews=reviews
     )
+
 
 @main.route('/checkout', methods=['GET'])
 @login_required
@@ -320,7 +358,6 @@ def create_online_checkout():
         jsonify({'success': False, 'message': 'Không tạo được URL MoMo'}), 500
 
 
-
 @main.route('/api/payment/ipn', methods=['POST'])
 def momo_ipn():
     data = request.get_json()
@@ -376,10 +413,10 @@ def payment_success():
         return redirect(url_for('main.confirmation'))
     return jsonify({'message': 'fail'}), 400
 
+
 @main.route('/confirmation')
 def confirmation():
     return render_template('confirmation.html')
-
 
 
 @main.route('/about')
@@ -422,7 +459,6 @@ def blog_details():
     return render_template('blog_details.html')
 
 
-
 @main.route('/forget_password')
 def forget_password():
     return render_template('forget_password.html')
@@ -431,5 +467,3 @@ def forget_password():
 @main.route('/alerts')
 def alerts():
     return render_template('alerts.html')
-
-

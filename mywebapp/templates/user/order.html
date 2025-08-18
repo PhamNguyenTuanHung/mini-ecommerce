@@ -5,76 +5,106 @@
 <section class="user-dashboard page-wrapper">
     <div class="container">
         <div class="row">
-            <div class="col-md-12">
-                <ul class="list-inline dashboard-menu text-center">
-                    <li><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
-                    <li><a class="active" href="{{ url_for('main.order') }}">Orders</a></li>
-                    <li><a href="{{ url_for('main.view_address') }}">Address</a></li>
-                    <li><a href="{{url_for('main.profile_details')}}">Profile Details</a></li>
-                </ul>
-                <div class="dashboard-wrapper user-dashboard">
-                    <div class="table-responsive">
-                        <table class="table">
-                            <thead>
-                            <tr>
-                                <th>Mã đơn hàng</th>
-                                <th>Sản phẩm</th>
-                                <th>Ngày đặt</th>
-                                <th>Giảm giá</th>
-                                <th>Trạng thái</th>
-                                <th>Tổng đơn hàng</th>
-                                <th></th>
-                            </tr>
-                            </thead>
-                            <tbody x-data="orderTable">
-                            <template x-for="order in orders" :key="order.id">
-                                <tr border="1px">
-                                    <td>
-                                        <div class="fw-medium" x-text="order.id"></div>
-                                    </td>
-                                    <td>
-                                        <template x-for="item in order.items"
-                                                  :key="item.name + item.size + item.color">
-                                            <div>
-                                                <div class="d-flex align-items-center gap-2">
-                                                    <small x-text="`${item.name}` "></small>
-                                                </div>
-                                                <div class="d-flex align-items-center gap-2">
-                                                    <small x-text="  `${item.size || ''} - ${item.color || ''} : ${item.quantity}`"></small>
-                                                </div>
+            <div class="col-md-3">
+                <div class="sidebar-menu">
+    <ul class="list-unstyled">
+        <li>
+            <a href="{{ url_for('main.profile_details') }}"
+               class="menu-item {% if request.path.startswith(url_for('main.profile_details')) %}active{% endif %}">
+                <i class="fas fa-user"></i> Hồ sơ của tôi
+            </a>
+        </li>
+        <li>
+            <a href="{{ url_for('main.order') }}"
+               class="menu-item {% if request.path.startswith(url_for('main.order')) %}active{% endif %}">
+                <i class="fas fa-file-alt"></i> Đơn hàng của tôi
+            </a>
+        </li>
+        <li>
+            <a href="{{ url_for('main.view_address') }}"
+               class="menu-item {% if request.path.startswith(url_for('main.view_address')) %}active{% endif %}">
+                <i class="fas fa-map-marker-alt"></i> Sổ địa chỉ
+            </a>
+        </li>
+        <li>
+            <a href="#" class="menu-item voucher">
+                <i class="fas fa-tag"></i> Vouchers
+                <span class="badge bg-danger">New</span>
+            </a>
+        </li>
+        <li>
+            <a href="{{ url_for('main.change_password_view') }}"
+               class="menu-item {% if request.path.startswith(url_for('main.change_password_view')) %}active{% endif %}">
+                <i class="fas fa-lock"></i> Đổi mật khẩu
+            </a>
+        </li>
+    </ul>
+</div>
+
+            </div>
+            <div class="col-md-9">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>Mã đơn hàng</th>
+                            <th>Sản phẩm</th>
+                            <th>Ngày đặt</th>
+                            <th>Giảm giá</th>
+                            <th>Trạng thái</th>
+                            <th>Tổng đơn hàng</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody x-data="orderTable">
+                        <template x-for="order in orders" :key="order.id">
+                            <tr border="1px">
+                                <td>
+                                    <div class="fw-medium" x-text="order.id"></div>
+                                </td>
+                                <td>
+                                    <template x-for="item in order.items"
+                                              :key="item.name + item.size + item.color">
+                                        <div>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <small x-text="`${item.name}` "></small>
                                             </div>
-                                        </template>
-                                    </td>
-                                    <td x-text=" order.orderDate"></td>
-                                    <td x-text="order.payment"></td>
-                                    <td x-text="order.status"></td>
-                                    <td class="fw-medium" x-text="`$${order.total}`"></td>
-                                    <td><!-- Nút hủy đơn -->
-                                        <template x-if="order.status === 'pending' || order.status === 'processing'">
-                                            <button
-                                                    class="btn btn-danger btn-sm"
-                                                    @click="cancelOrder(order.id)">
-                                                <i class="fa fa-times"></i> Hủy đơn
-                                            </button>
-                                        </template>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <small x-text="  `${item.size || ''} - ${item.color || ''} : ${item.quantity}`"></small>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </td>
+                                <td x-text=" order.orderDate"></td>
+                                <td x-text="order.payment"></td>
+                                <td x-text="order.status"></td>
+                                <td class="fw-medium" x-text="`$${order.total}`"></td>
+                                <td><!-- Nút hủy đơn -->
+                                    <template x-if="order.status === 'pending' || order.status === 'processing'">
+                                        <button
+                                                class="btn btn-danger btn-sm"
+                                                @click="cancelOrder(order.id)">
+                                            <i class="fa fa-times"></i> Hủy đơn
+                                        </button>
+                                    </template>
 
-                                        <!-- Nút đánh giá -->
-                                        <template x-if="order.status === 'delivered'">
-                                            <button
-                                                    class="btn btn-warning btn-sm"
-                                                    @click="openReviewModal(order)">
-                                                <i class="fa fa-star"></i> Đánh giá sản phẩm
-                                            </button>
-                                        </template>
+                                    <!-- Nút đánh giá -->
+                                    <template x-if="order.status === 'delivered'">
+                                        <button
+                                                class="btn btn-warning btn-sm"
+                                                @click="openReviewModal(order)">
+                                            <i class="fa fa-star"></i> Đánh giá sản phẩm
+                                        </button>
+                                    </template>
 
-                                    </td>
-                                </tr>
-                            </template>
+                                </td>
+                            </tr>
+                        </template>
 
-                            </tbody>
-                        </table>
-                    </div>
+                        </tbody>
+                    </table>
                 </div>
+
             </div>
         </div>
     </div>

@@ -808,9 +808,6 @@ input[type=email]:focus, input[type=password]:focus, input[type=text]:focus, inp
 }
 
 
-
-
-
 .navigation {
     margin-bottom: 0;
     padding: 10px 0;
@@ -1085,11 +1082,19 @@ input[type=email]:focus, input[type=password]:focus, input[type=text]:focus, inp
 
 .product-item .product-thumb {
     position: relative;
+    width: 100%;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #f9f9f9;
 }
 
 .product-item .product-thumb img {
     width: 100%;
-    height: auto;
+    height: 100%;
+    object-fit: cover;
 }
 
 .product-item .product-thumb .bage {
@@ -1132,14 +1137,19 @@ input[type=email]:focus, input[type=password]:focus, input[type=text]:focus, inp
     display: inline-block;
 }
 
-.product-item .product-thumb .preview-meta li a, .product-item .product-thumb .preview-meta li span {
+.product-item .product-thumb .preview-meta li a,
+.product-item .product-thumb .preview-meta li span {
     background: #fff;
-    padding: 10px 0px;
     cursor: pointer;
-    display: inline-block;
-    font-size: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
     transition: 0.2s all;
-    width: 50px;
+    width: 36px;
+    height: 36px;
+    border-radius: 4px;
+    padding: 0;
 }
 
 .product-item .product-thumb .preview-meta li a:hover, .product-item .product-thumb .preview-meta li span:hover {
@@ -2915,5 +2925,44 @@ li a.active::after {
 }
 
 .cart-dropdown .media:last-child {
-    border-bottom: none;              /* bỏ border cho item cuối */
+    border-bottom: none;
+}
+
+
+.sidebar-menu {
+    background: #fff;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+.sidebar-menu .menu-item {
+    display: block;
+    padding: 12px 15px;
+    margin-bottom: 8px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    color: #333;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.sidebar-menu .menu-item i {
+    margin-right: 8px;
+}
+
+.sidebar-menu .menu-item:hover {
+    background: #e9ecef;
+}
+
+.sidebar-menu .menu-item.active {
+    background: #ffc107;
+    color: #000;
+    font-weight: bold;
+}
+
+.sidebar-menu .voucher .badge {
+    position: absolute;
+    top: -5px;
+    right: 10px;
 }

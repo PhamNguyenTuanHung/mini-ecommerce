@@ -10,7 +10,7 @@ document.addEventListener('alpine:init', () => {
         categories: [],
         brands: [],
         currentPage: 1,
-        itemsPerPage: 6,
+        itemsPerPage: 12,
         searchQuery: '',
         categoryFilter: '',
         brandFilter: '',

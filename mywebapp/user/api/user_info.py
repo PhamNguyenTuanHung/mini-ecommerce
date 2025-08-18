@@ -18,8 +18,7 @@ def add_address():
     utils.log_activity(
         user_id,
         action='add_address',
-        message='Người dùng thêm địa chỉ mới',
-        ip=request.remote_addr
+        message='Người dùng thêm địa chỉ mới'
     )
 
     if new_address:
@@ -43,23 +42,19 @@ def update_address():
     if utils.update_address(address_id, name, address, sdt, is_default):
         utils.log_activity(current_user.MaNguoiDung,
                            action='update_profile',
-                           message='Cập nhật địa chỉ ',
-                           ip=request.remote_addr)
+                           message='Cập nhật địa chỉ ')
         return jsonify({'success': True})
     else:
         return jsonify({'success': False})
 
 
-@user_api.route('/address', methods=['DELETE'])
-def delete_address():
-    data = request.get_json()
-    address_id = data.get('id')
+@user_api.route('/address/<int:address_id>', methods=['DELETE'])
+def delete_address(address_id):
     if id:
         if utils.delete_address(address_id):
             utils.log_activity(current_user.MaNguoiDung,
                                action='delete_address',
-                               message='Xóa địa chỉ ',
-                               ip=request.remote_addr
+                               message='Xóa địa chỉ '
                                )
 
             return jsonify({'success': True})
@@ -123,8 +118,7 @@ def update_profile():
     utils.log_activity(
         user_id=current_user.MaNguoiDung,
         action='update_profile',
-        message=f"User {current_user.MaNguoiDung} cập nhật: {change_message}",
-        ip=request.remote_addr
+        message=f"User {current_user.MaNguoiDung} cập nhật: {change_message}"
     )
 
     if updated_user:

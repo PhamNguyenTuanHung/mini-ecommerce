@@ -245,14 +245,15 @@ def get_all_products_with_stock():
 
     return result
 
+
 def get_all_sales():
     rows = db.session.query(
         Order.NgayDat,
         OrderDetail.MaSanPham,
         OrderDetail.SoLuong
     ).join(OrderDetail, Order.MaDonHang == OrderDetail.MaDonHang) \
-     .filter(Order.TrangThai == 'delivered') \
-     .all()
+        .filter(Order.TrangThai == 'delivered') \
+        .all()
 
     result = [
         {
@@ -263,6 +264,7 @@ def get_all_sales():
         for row in rows
     ]
     return result
+
 
 def delete_product_by_id(product_id):
     product = Product.query.get(product_id)
@@ -476,6 +478,15 @@ def update_user(user_id, name=None, email=None, phone=None, avatar=None, status=
         print(f"Error updating user: {e}")
         return None
 
+def change_password(user_id, old_pass, new_pass):
+    user = User.query.get(user_id)
+    if not check_password_hash(user.MatKhau, old_pass):
+        return "wrong_old_password"
+
+    user.MatKhau = generate_password_hash(new_pass.strip())
+    db.session.commit()
+    return True
+
 
 def update_last_active(user):
     user.LanCuoiHoatDong = datetime.utcnow()
@@ -512,6 +523,12 @@ def update_address(address_id, name, address_detail, phone, is_default):
 def delete_address(address_id):
     address = UserAddress.query.get(address_id)
     if address:
+        if address.MacDinh:
+            other_address = UserAddress.query.filter(
+                UserAddress.MaDiaChi != address.MaDiaChi
+            ).first()
+            if other_address:
+                other_address.MacDinh = True
         db.session.delete(address)
         db.session.commit()
         return True
@@ -1228,7 +1245,7 @@ def check_admin_login(username, password):
             Admin.Email == username
         )
     ).first()
-    if admin :
+    if admin:
         return admin
     return None
 
@@ -1249,5 +1266,8 @@ def add_admin(fullname, username, password, email, sdt, avatar):
 
 
 def get_admin(admin_id):
-    admin =  Admin.query.get(admin_id)
+    admin = Admin.query.get(admin_id)
     return admin
+
+
+

@@ -5,96 +5,125 @@
 <section class="user-dashboard page-wrapper">
     <div class="container">
         <div class="row">
-            <div class="col-md-12">
-                <ul class="list-inline dashboard-menu text-center">
-                    <li><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
-                    <li><a href="{{ url_for('main.order') }}">Orders</a></li>
-                    <li><a class="active"
-                           href="{{ url_for('main.view_address') }}">Address</a></li>
-                    <li><a href="{{url_for('main.profile_details')}}">Profile
-                        Details</a></li>
-                </ul>
-                <div class="dashboard-wrapper user-dashboard">
-                    <div class="table-responsive">
-                        <table class="table">
-                            <thead>
-                            <tr>
-                                <th>Người nhận</th>
-                                <th>Địa chỉ</th>
-                                <th>SĐT</th>
-                                <th>Mặc định</th>
-                                <th>Hành động</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {% for address in addresses %}
-                            <tr data-id="{{ address.MaDiaChi }}">
-                                <td>
-                                    <div class="view-mode">{{ address.TenNguoiNhan }}</div>
-                                    <div class="edit-mode d-none">
-                                        <input type="text" class="form-control input-ten"
-                                               value="{{ address.TenNguoiNhan }}">
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="view-mode">{{ address.DiaChiChiTiet }}</div>
-                                    <div class="edit-mode d-none">
-                                        <input type="text" class="form-control input-diachi"
-                                               value="{{ address.DiaChiChiTiet }}">
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="view-mode">{{ address.SoDienThoai }}</div>
-                                    <div class="edit-mode d-none">
-                                        <input type="text" class="form-control input-sdt"
-                                               value="{{ address.SoDienThoai }}">
-                                    </div>
-                                </td>
-                                <td class="radio-cell">
-                                    <input type="radio" class="input-macdinh" name="macdinh"
-                                           {% if address.MacDinh %} checked {% endif %} disabled>
-                                </td>
-                                <td>
-                                    <div class="view-mode">
-                                        <button class="btn btn-sm btn-warning btn-edit">Sửa</button>
-                                        <button class="btn btn-sm btn-danger btn-delete">Xóa</button>
-                                    </div>
-                                    <div class="edit-mode d-none">
-                                        <button class="btn btn-sm btn-success btn-save">Lưu</button>
-                                        <button class="btn btn-sm btn-secondary btn-cancel">Hủy</button>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                            <tr id="add-address-form" class="d-none">
-                                <td><input id="add-ten" type="text" class="form-control" placeholder="Người nhận"></td>
-                                <td><input id="add-diachi" type="text" class="form-control" placeholder="Địa chỉ"></td>
-                                <td><input id="add-sdt" type="text" class="form-control" placeholder="SĐT"></td>
-                                <td class="text-center">
-                                    <input type="radio" name="macdinh_add" id="add-macdinh">
-                                </td>
-                                <td>
-                                    <button id="btn-submit-add" class="btn btn-success btn-sm">Lưu</button>
-                                    <button id="btn-cancel-add" class="btn btn-secondary btn-sm">Hủy</button>
-                                </td>
-                            </tr>
+            <div class="col-md-3">
+                <div class="sidebar-menu">
+                    <ul class="list-unstyled">
+                        <li>
+                            <a href="{{ url_for('main.profile_details') }}"
+                               class="menu-item {% if request.path.startswith(url_for('main.profile_details')) %}active{% endif %}">
+                                <i class="fas fa-user"></i> Hồ sơ của tôi
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('main.order') }}"
+                               class="menu-item {% if request.path.startswith(url_for('main.order')) %}active{% endif %}">
+                                <i class="fas fa-file-alt"></i> Đơn hàng của tôi
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('main.view_address') }}"
+                               class="menu-item {% if request.path.startswith(url_for('main.view_address')) %}active{% endif %}">
+                                <i class="fas fa-map-marker-alt"></i> Sổ địa chỉ
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="menu-item voucher">
+                                <i class="fas fa-tag"></i> Vouchers
+                                <span class="badge bg-danger">New</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('main.change_password_view') }}"
+                               class="menu-item {% if request.path.startswith(url_for('main.change_password_view')) %}active{% endif %}">
+                                <i class="fas fa-lock"></i> Đổi mật khẩu
+                            </a>
+                        </li>
+                    </ul>
+                </div>
 
-                            </tbody>
-                            <tfoot>
-                            <tr class="no-spacing-row">
-                                <td colspan="5">
-                                    <button id="btn-add" class="btn btn-primary" onclick="addAdress()">
-                                        + Thêm địa chỉ mới
-                                    </button>
-                                </td>
-                            </tr>
-                            </tfoot>
-                        </table>
-                    </div>
+            </div>
+
+            <div class="col-md-9">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>Người nhận</th>
+                            <th>Địa chỉ</th>
+                            <th>SĐT</th>
+                            <th>Mặc định</th>
+                            <th>Hành động</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for address in addresses %}
+                        <tr data-id="{{ address.MaDiaChi }}">
+                            <td>
+                                <div class="view-mode">{{ address.TenNguoiNhan }}</div>
+                                <div class="edit-mode d-none">
+                                    <input type="text" class="form-control input-ten"
+                                           value="{{ address.TenNguoiNhan }}">
+                                </div>
+                            </td>
+                            <td>
+                                <div class="view-mode">{{ address.DiaChiChiTiet }}</div>
+                                <div class="edit-mode d-none">
+                                    <input type="text" class="form-control input-diachi"
+                                           value="{{ address.DiaChiChiTiet }}">
+                                </div>
+                            </td>
+                            <td>
+                                <div class="view-mode">{{ address.SoDienThoai }}</div>
+                                <div class="edit-mode d-none">
+                                    <input type="text" class="form-control input-sdt"
+                                           value="{{ address.SoDienThoai }}">
+                                </div>
+                            </td>
+                            <td class="radio-cell">
+                                <input type="radio" class="input-macdinh" name="macdinh"
+                                       {% if address.MacDinh %} checked {% endif %} disabled>
+                            </td>
+                            <td>
+                                <div class="view-mode">
+                                    <button class="btn btn-sm btn-warning btn-edit">Sửa</button>
+                                    <button class="btn btn-sm btn-danger btn-delete">Xóa</button>
+                                </div>
+                                <div class="edit-mode d-none">
+                                    <button class="btn btn-sm btn-success btn-save">Lưu</button>
+                                    <button class="btn btn-sm btn-secondary btn-cancel">Hủy</button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        <tr id="add-address-form" class="d-none">
+                            <td><input id="add-ten" type="text" class="form-control" placeholder="Người nhận"></td>
+                            <td><input id="add-diachi" type="text" class="form-control" placeholder="Địa chỉ"></td>
+                            <td><input id="add-sdt" type="text" class="form-control" placeholder="SĐT"></td>
+                            <td class="text-center">
+                                <input type="radio" name="macdinh_add" id="add-macdinh">
+                            </td>
+                            <td>
+                                <button id="btn-submit-add" class="btn btn-success btn-sm">Lưu</button>
+                                <button id="btn-cancel-add" class="btn btn-secondary btn-sm">Hủy</button>
+                            </td>
+                        </tr>
+
+                        </tbody>
+                        <tfoot>
+                        <tr class="no-spacing-row">
+                            <td colspan="5">
+                                <button id="btn-add" class="btn btn-primary" onclick="addAdress()">
+                                    + Thêm địa chỉ mới
+                                </button>
+                            </td>
+                        </tr>
+                        </tfoot>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 </section>
+
 
 {% endblock %}
