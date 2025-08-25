@@ -30,7 +30,6 @@ document.addEventListener('alpine:init', () => {
         },
 
         loadDataProducts() {
-            this.isLoading = true;
             fetch('/user/api/products', {
                 method: 'GET'
             })
@@ -42,9 +41,6 @@ document.addEventListener('alpine:init', () => {
                 .catch(error => {
                     console.error('Lỗi khi load sản phẩm:', error);
                 })
-                .finally(() => {
-                    this.isLoading = false;
-                });
         },
 
         loadCategories() {
@@ -99,12 +95,10 @@ document.addEventListener('alpine:init', () => {
                 case 'priceHighLow':
                     this.filteredProducts.sort((a, b) => b.price - a.price);
                     break;
-                // case 'newest':
-                //     // giả sử có trường product.createdAt kiểu ngày tháng
-                //     this.filteredProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                //     break;
+                case 'newest':
+                    this.filteredProducts.sort((a, b) => b.product_id-a.product_id);
+                    break;
                 case 'bestseller':
-                    // giả sử có trường product.quantity_sold
                     this.filteredProducts.sort((a, b) => (b.quantity_sold || 0) - (a.quantity_sold || 0));
                     break;
                 // case 'discount':
@@ -114,7 +108,7 @@ document.addEventListener('alpine:init', () => {
                 default:
                     break;
             }
-            // this.sortProducts();
+            this.sortProducts();
             this.currentPage = 1;
         }
         ,

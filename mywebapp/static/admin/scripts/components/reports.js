@@ -211,7 +211,7 @@ document.addEventListener('alpine:init', () => {
 
             getPeriodRange(period = 'week') {
                 const today = new Date();
-                let start, end = today;
+                let start, end;
 
                 switch (period) {
                     case 'today': {
@@ -223,24 +223,40 @@ document.addEventListener('alpine:init', () => {
                         break;
                     }
                     case 'week': {
-                        const dayOfWeek = today.getDay() || 7; // Sunday = 0 → 7
+                        const dayOfWeek = today.getDay() || 7;
                         start = new Date(today);
-                        start.setDate(today.getDate() - dayOfWeek + 1); // Monday
+                        start.setDate(today.getDate() - dayOfWeek + 1);
+                        start.setHours(0, 0, 0, 0);
+
+                        end = new Date(start);
+                        end.setDate(start.getDate() + 6);
+                        end.setHours(23, 59, 59, 999);
                         break;
                     }
-                    case 'month':
+                    case 'month': {
                         start = new Date(today.getFullYear(), today.getMonth(), 1);
+                        end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                        end.setHours(23, 59, 59, 999);
                         break;
+                    }
                     case 'quarter': {
                         const quarter = Math.floor(today.getMonth() / 3);
                         start = new Date(today.getFullYear(), quarter * 3, 1);
+                        end = new Date(today.getFullYear(), quarter * 3 + 3, 0);
+                        end.setHours(23, 59, 59, 999);
                         break;
                     }
-                    case 'year':
+                    case 'year': {
                         start = new Date(today.getFullYear(), 0, 1);
+                        end = new Date(today.getFullYear(), 11, 31);
+                        end.setHours(23, 59, 59, 999);
                         break;
-                    default :
+                    }
+                    default: {
+                        start = today;
+                        end = today;
                         break;
+                    }
                 }
 
                 return {start, end};
@@ -249,8 +265,7 @@ document.addEventListener('alpine:init', () => {
 
             getPeriodRangeWithPrevious(period = 'month') {
                 const today = new Date();
-                let startCurrent, endCurrent = today;
-                let startPrevious, endPrevious;
+                let startCurrent, endCurrent, startPrevious, endPrevious;
 
                 switch (period) {
                     case 'today': {
@@ -262,54 +277,92 @@ document.addEventListener('alpine:init', () => {
 
                         startPrevious = new Date(startCurrent);
                         startPrevious.setDate(startPrevious.getDate() - 1);
+                        startPrevious.setHours(0, 0, 0, 0);
 
                         endPrevious = new Date(startPrevious);
                         endPrevious.setHours(23, 59, 59, 999);
                         break;
                     }
+
                     case 'week': {
-                        const dayOfWeek = today.getDay() || 7; // Sunday = 0 → 7
+                        const dayOfWeek = today.getDay() || 7; // CN=0 → 7
                         startCurrent = new Date(today);
-                        startCurrent.setDate(today.getDate() - dayOfWeek + 1); // Monday
+                        startCurrent.setDate(today.getDate() - dayOfWeek + 1); // thứ 2
+                        startCurrent.setHours(0, 0, 0, 0);
+
+                        endCurrent = new Date(startCurrent);
+                        endCurrent.setDate(startCurrent.getDate() + 6); // CN
+                        endCurrent.setHours(23, 59, 59, 999);
 
                         startPrevious = new Date(startCurrent);
                         startPrevious.setDate(startPrevious.getDate() - 7);
+                        startPrevious.setHours(0, 0, 0, 0);
+
                         endPrevious = new Date(startCurrent);
                         endPrevious.setDate(endPrevious.getDate() - 1);
+                        endPrevious.setHours(23, 59, 59, 999);
                         break;
                     }
+
                     case 'month': {
                         startCurrent = new Date(today.getFullYear(), today.getMonth(), 1);
+                        startCurrent.setHours(0, 0, 0, 0);
+
+                        endCurrent = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                        endCurrent.setHours(23, 59, 59, 999);
+
                         startPrevious = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-                        endPrevious = new Date(today.getFullYear(), today.getMonth(), 0); // cuối tháng trước
+                        startPrevious.setHours(0, 0, 0, 0);
+
+                        endPrevious = new Date(today.getFullYear(), today.getMonth(), 0);
+                        endPrevious.setHours(23, 59, 59, 999);
                         break;
                     }
+
                     case 'quarter': {
                         const quarter = Math.floor(today.getMonth() / 3);
                         startCurrent = new Date(today.getFullYear(), quarter * 3, 1);
+                        startCurrent.setHours(0, 0, 0, 0);
+
+                        endCurrent = new Date(today.getFullYear(), quarter * 3 + 3, 0);
+                        endCurrent.setHours(23, 59, 59, 999);
+
                         startPrevious = new Date(today.getFullYear(), quarter * 3 - 3, 1);
-                        endPrevious = new Date(today.getFullYear(), quarter * 3, 0); // cuối quý trước
+                        startPrevious.setHours(0, 0, 0, 0);
+
+                        endPrevious = new Date(today.getFullYear(), quarter * 3, 0);
+                        endPrevious.setHours(23, 59, 59, 999);
                         break;
                     }
+
                     case 'year': {
                         startCurrent = new Date(today.getFullYear(), 0, 1);
+                        startCurrent.setHours(0, 0, 0, 0);
+
+                        endCurrent = new Date(today.getFullYear(), 11, 31);
+                        endCurrent.setHours(23, 59, 59, 999);
+
                         startPrevious = new Date(today.getFullYear() - 1, 0, 1);
+                        startPrevious.setHours(0, 0, 0, 0);
+
                         endPrevious = new Date(today.getFullYear() - 1, 11, 31);
+                        endPrevious.setHours(23, 59, 59, 999);
                         break;
                     }
+
                     default: {
+                        // fallback = month
                         startCurrent = new Date(today.getFullYear(), today.getMonth(), 1);
+                        endCurrent = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                        endCurrent.setHours(23, 59, 59, 999);
+
                         startPrevious = new Date(today.getFullYear(), today.getMonth() - 1, 1);
                         endPrevious = new Date(today.getFullYear(), today.getMonth(), 0);
+                        endPrevious.setHours(23, 59, 59, 999);
                     }
                 }
 
-                return {
-                    startCurrent,
-                    endCurrent,
-                    startPrevious,
-                    endPrevious
-                };
+                return {startCurrent, endCurrent, startPrevious, endPrevious};
             }
             ,
 
@@ -1007,8 +1060,7 @@ document.addEventListener('alpine:init', () => {
 
         getPeriodRangeWithPrevious(period = 'month') {
             const today = new Date();
-            let startCurrent, endCurrent = today;
-            let startPrevious, endPrevious;
+            let startCurrent, endCurrent, startPrevious, endPrevious;
 
             switch (period) {
                 case 'today': {
@@ -1020,55 +1072,94 @@ document.addEventListener('alpine:init', () => {
 
                     startPrevious = new Date(startCurrent);
                     startPrevious.setDate(startPrevious.getDate() - 1);
+                    startPrevious.setHours(0, 0, 0, 0);
 
                     endPrevious = new Date(startPrevious);
                     endPrevious.setHours(23, 59, 59, 999);
                     break;
                 }
+
                 case 'week': {
-                    const dayOfWeek = today.getDay() || 7; // Sunday = 0 → 7
+                    const dayOfWeek = today.getDay() || 7; // CN=0 → 7
                     startCurrent = new Date(today);
-                    startCurrent.setDate(today.getDate() - dayOfWeek + 1); // Monday
+                    startCurrent.setDate(today.getDate() - dayOfWeek + 1); // thứ 2
+                    startCurrent.setHours(0, 0, 0, 0);
+
+                    endCurrent = new Date(startCurrent);
+                    endCurrent.setDate(startCurrent.getDate() + 6); // CN
+                    endCurrent.setHours(23, 59, 59, 999);
 
                     startPrevious = new Date(startCurrent);
                     startPrevious.setDate(startPrevious.getDate() - 7);
+                    startPrevious.setHours(0, 0, 0, 0);
+
                     endPrevious = new Date(startCurrent);
                     endPrevious.setDate(endPrevious.getDate() - 1);
+                    endPrevious.setHours(23, 59, 59, 999);
                     break;
                 }
+
                 case 'month': {
                     startCurrent = new Date(today.getFullYear(), today.getMonth(), 1);
+                    startCurrent.setHours(0, 0, 0, 0);
+
+                    endCurrent = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                    endCurrent.setHours(23, 59, 59, 999);
+
                     startPrevious = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-                    endPrevious = new Date(today.getFullYear(), today.getMonth(), 0); // cuối tháng trước
+                    startPrevious.setHours(0, 0, 0, 0);
+
+                    endPrevious = new Date(today.getFullYear(), today.getMonth(), 0);
+                    endPrevious.setHours(23, 59, 59, 999);
                     break;
                 }
+
                 case 'quarter': {
                     const quarter = Math.floor(today.getMonth() / 3);
                     startCurrent = new Date(today.getFullYear(), quarter * 3, 1);
+                    startCurrent.setHours(0, 0, 0, 0);
+
+                    endCurrent = new Date(today.getFullYear(), quarter * 3 + 3, 0);
+                    endCurrent.setHours(23, 59, 59, 999);
+
                     startPrevious = new Date(today.getFullYear(), quarter * 3 - 3, 1);
-                    endPrevious = new Date(today.getFullYear(), quarter * 3, 0); // cuối quý trước
+                    startPrevious.setHours(0, 0, 0, 0);
+
+                    endPrevious = new Date(today.getFullYear(), quarter * 3, 0);
+                    endPrevious.setHours(23, 59, 59, 999);
                     break;
                 }
+
                 case 'year': {
                     startCurrent = new Date(today.getFullYear(), 0, 1);
+                    startCurrent.setHours(0, 0, 0, 0);
+
+                    endCurrent = new Date(today.getFullYear(), 11, 31);
+                    endCurrent.setHours(23, 59, 59, 999);
+
                     startPrevious = new Date(today.getFullYear() - 1, 0, 1);
+                    startPrevious.setHours(0, 0, 0, 0);
+
                     endPrevious = new Date(today.getFullYear() - 1, 11, 31);
+                    endPrevious.setHours(23, 59, 59, 999);
                     break;
                 }
+
                 default: {
+                    // fallback = month
                     startCurrent = new Date(today.getFullYear(), today.getMonth(), 1);
+                    endCurrent = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                    endCurrent.setHours(23, 59, 59, 999);
+
                     startPrevious = new Date(today.getFullYear(), today.getMonth() - 1, 1);
                     endPrevious = new Date(today.getFullYear(), today.getMonth(), 0);
+                    endPrevious.setHours(23, 59, 59, 999);
                 }
             }
 
-            return {
-                startCurrent,
-                endCurrent,
-                startPrevious,
-                endPrevious
-            };
-        },
+            return {startCurrent, endCurrent, startPrevious, endPrevious};
+        }
+        ,
 
 
         getPeriodRange(period = 'week') {
@@ -1857,8 +1948,7 @@ document.addEventListener('alpine:init', () => {
 
         getPeriodRangeWithPrevious(period = 'month') {
             const today = new Date();
-            let startCurrent, endCurrent = today;
-            let startPrevious, endPrevious;
+            let startCurrent, endCurrent, startPrevious, endPrevious;
 
             switch (period) {
                 case 'today': {
@@ -1870,55 +1960,94 @@ document.addEventListener('alpine:init', () => {
 
                     startPrevious = new Date(startCurrent);
                     startPrevious.setDate(startPrevious.getDate() - 1);
+                    startPrevious.setHours(0, 0, 0, 0);
 
                     endPrevious = new Date(startPrevious);
                     endPrevious.setHours(23, 59, 59, 999);
                     break;
                 }
+
                 case 'week': {
-                    const dayOfWeek = today.getDay() || 7; // Sunday = 0 → 7
+                    const dayOfWeek = today.getDay() || 7; // CN=0 → 7
                     startCurrent = new Date(today);
-                    startCurrent.setDate(today.getDate() - dayOfWeek + 1); // Monday
+                    startCurrent.setDate(today.getDate() - dayOfWeek + 1); // thứ 2
+                    startCurrent.setHours(0, 0, 0, 0);
+
+                    endCurrent = new Date(startCurrent);
+                    endCurrent.setDate(startCurrent.getDate() + 6); // CN
+                    endCurrent.setHours(23, 59, 59, 999);
 
                     startPrevious = new Date(startCurrent);
                     startPrevious.setDate(startPrevious.getDate() - 7);
+                    startPrevious.setHours(0, 0, 0, 0);
+
                     endPrevious = new Date(startCurrent);
                     endPrevious.setDate(endPrevious.getDate() - 1);
+                    endPrevious.setHours(23, 59, 59, 999);
                     break;
                 }
+
                 case 'month': {
                     startCurrent = new Date(today.getFullYear(), today.getMonth(), 1);
+                    startCurrent.setHours(0, 0, 0, 0);
+
+                    endCurrent = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                    endCurrent.setHours(23, 59, 59, 999);
+
                     startPrevious = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-                    endPrevious = new Date(today.getFullYear(), today.getMonth(), 0); // cuối tháng trước
+                    startPrevious.setHours(0, 0, 0, 0);
+
+                    endPrevious = new Date(today.getFullYear(), today.getMonth(), 0);
+                    endPrevious.setHours(23, 59, 59, 999);
                     break;
                 }
+
                 case 'quarter': {
                     const quarter = Math.floor(today.getMonth() / 3);
                     startCurrent = new Date(today.getFullYear(), quarter * 3, 1);
+                    startCurrent.setHours(0, 0, 0, 0);
+
+                    endCurrent = new Date(today.getFullYear(), quarter * 3 + 3, 0);
+                    endCurrent.setHours(23, 59, 59, 999);
+
                     startPrevious = new Date(today.getFullYear(), quarter * 3 - 3, 1);
-                    endPrevious = new Date(today.getFullYear(), quarter * 3, 0); // cuối quý trước
+                    startPrevious.setHours(0, 0, 0, 0);
+
+                    endPrevious = new Date(today.getFullYear(), quarter * 3, 0);
+                    endPrevious.setHours(23, 59, 59, 999);
                     break;
                 }
+
                 case 'year': {
                     startCurrent = new Date(today.getFullYear(), 0, 1);
+                    startCurrent.setHours(0, 0, 0, 0);
+
+                    endCurrent = new Date(today.getFullYear(), 11, 31);
+                    endCurrent.setHours(23, 59, 59, 999);
+
                     startPrevious = new Date(today.getFullYear() - 1, 0, 1);
+                    startPrevious.setHours(0, 0, 0, 0);
+
                     endPrevious = new Date(today.getFullYear() - 1, 11, 31);
+                    endPrevious.setHours(23, 59, 59, 999);
                     break;
                 }
+
                 default: {
+                    // fallback = month
                     startCurrent = new Date(today.getFullYear(), today.getMonth(), 1);
+                    endCurrent = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                    endCurrent.setHours(23, 59, 59, 999);
+
                     startPrevious = new Date(today.getFullYear(), today.getMonth() - 1, 1);
                     endPrevious = new Date(today.getFullYear(), today.getMonth(), 0);
+                    endPrevious.setHours(23, 59, 59, 999);
                 }
             }
 
-            return {
-                startCurrent,
-                endCurrent,
-                startPrevious,
-                endPrevious
-            };
-        },
+            return {startCurrent, endCurrent, startPrevious, endPrevious};
+        }
+        ,
 
 
         getPeriodRange(period = 'week') {
@@ -2715,8 +2844,7 @@ document.addEventListener('alpine:init', () => {
 
         getPeriodRangeWithPrevious(period = 'month') {
             const today = new Date();
-            let startCurrent, endCurrent = today;
-            let startPrevious, endPrevious;
+            let startCurrent, endCurrent, startPrevious, endPrevious;
 
             switch (period) {
                 case 'today': {
@@ -2728,55 +2856,94 @@ document.addEventListener('alpine:init', () => {
 
                     startPrevious = new Date(startCurrent);
                     startPrevious.setDate(startPrevious.getDate() - 1);
+                    startPrevious.setHours(0, 0, 0, 0);
 
                     endPrevious = new Date(startPrevious);
                     endPrevious.setHours(23, 59, 59, 999);
                     break;
                 }
+
                 case 'week': {
-                    const dayOfWeek = today.getDay() || 7; // Sunday = 0 → 7
+                    const dayOfWeek = today.getDay() || 7; // CN=0 → 7
                     startCurrent = new Date(today);
-                    startCurrent.setDate(today.getDate() - dayOfWeek + 1); // Monday
+                    startCurrent.setDate(today.getDate() - dayOfWeek + 1); // thứ 2
+                    startCurrent.setHours(0, 0, 0, 0);
+
+                    endCurrent = new Date(startCurrent);
+                    endCurrent.setDate(startCurrent.getDate() + 6); // CN
+                    endCurrent.setHours(23, 59, 59, 999);
 
                     startPrevious = new Date(startCurrent);
                     startPrevious.setDate(startPrevious.getDate() - 7);
+                    startPrevious.setHours(0, 0, 0, 0);
+
                     endPrevious = new Date(startCurrent);
                     endPrevious.setDate(endPrevious.getDate() - 1);
+                    endPrevious.setHours(23, 59, 59, 999);
                     break;
                 }
+
                 case 'month': {
                     startCurrent = new Date(today.getFullYear(), today.getMonth(), 1);
+                    startCurrent.setHours(0, 0, 0, 0);
+
+                    endCurrent = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                    endCurrent.setHours(23, 59, 59, 999);
+
                     startPrevious = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-                    endPrevious = new Date(today.getFullYear(), today.getMonth(), 0); // cuối tháng trước
+                    startPrevious.setHours(0, 0, 0, 0);
+
+                    endPrevious = new Date(today.getFullYear(), today.getMonth(), 0);
+                    endPrevious.setHours(23, 59, 59, 999);
                     break;
                 }
+
                 case 'quarter': {
                     const quarter = Math.floor(today.getMonth() / 3);
                     startCurrent = new Date(today.getFullYear(), quarter * 3, 1);
+                    startCurrent.setHours(0, 0, 0, 0);
+
+                    endCurrent = new Date(today.getFullYear(), quarter * 3 + 3, 0);
+                    endCurrent.setHours(23, 59, 59, 999);
+
                     startPrevious = new Date(today.getFullYear(), quarter * 3 - 3, 1);
-                    endPrevious = new Date(today.getFullYear(), quarter * 3, 0); // cuối quý trước
+                    startPrevious.setHours(0, 0, 0, 0);
+
+                    endPrevious = new Date(today.getFullYear(), quarter * 3, 0);
+                    endPrevious.setHours(23, 59, 59, 999);
                     break;
                 }
+
                 case 'year': {
                     startCurrent = new Date(today.getFullYear(), 0, 1);
+                    startCurrent.setHours(0, 0, 0, 0);
+
+                    endCurrent = new Date(today.getFullYear(), 11, 31);
+                    endCurrent.setHours(23, 59, 59, 999);
+
                     startPrevious = new Date(today.getFullYear() - 1, 0, 1);
+                    startPrevious.setHours(0, 0, 0, 0);
+
                     endPrevious = new Date(today.getFullYear() - 1, 11, 31);
+                    endPrevious.setHours(23, 59, 59, 999);
                     break;
                 }
+
                 default: {
+                    // fallback = month
                     startCurrent = new Date(today.getFullYear(), today.getMonth(), 1);
+                    endCurrent = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                    endCurrent.setHours(23, 59, 59, 999);
+
                     startPrevious = new Date(today.getFullYear(), today.getMonth() - 1, 1);
                     endPrevious = new Date(today.getFullYear(), today.getMonth(), 0);
+                    endPrevious.setHours(23, 59, 59, 999);
                 }
             }
 
-            return {
-                startCurrent,
-                endCurrent,
-                startPrevious,
-                endPrevious
-            };
-        },
+            return {startCurrent, endCurrent, startPrevious, endPrevious};
+        }
+        ,
 
 
         getTopSellers(period = 'week') {
@@ -2802,9 +2969,6 @@ document.addEventListener('alpine:init', () => {
                 })
                 .sort((a, b) => b.totalSold - a.totalSold);
         },
-
-
-
 
 
         initCharts() {

@@ -3,27 +3,49 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
 import cloudinary
-
+from flask_mail import Mail
+import os
+from dotenv import load_dotenv
 
 db = SQLAlchemy()
 migrate = Migrate()
 login = LoginManager()
+mail=Mail()
+load_dotenv()
+
+
+user = os.getenv('MAIL_USERNAME')
+password = os.getenv('MAIL_PASSWORD')
+
+user_db = os.getenv('DB_USER')
+password_db = os.getenv('DB_PASS')
+host = os.getenv('DB_HOST')
+name = os.getenv('DB_NAME')
+
+
 def create_app():
     app = Flask(__name__)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'mssql+pyodbc://sa:123456@BLUE\\BLUE/DBShopQuanAo?driver=ODBC+Driver+17+for+SQL+Server'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SECRET_KEY'] = '4205fa3231e2051d51250c956d63c15ad9d47825e1adf2f022cc24acb42c35fc'
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
     app.config['PAGE_SIZE'] = 6
+    app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+    app.config['MAIL_PORT'] = 465
+    app.config['MAIL_USE_SSL'] = True
+    app.config['MAIL_USERNAME'] = user
+    app.config['MAIL_PASSWORD'] = password
+
     cloudinary.config(
-            cloud_name= "dmwhvc8tc",
-            api_key= "525839167762569",
-            api_secret= "LIC1NABexeNrdyL9ect_0gabBcM"
-        )
+        cloud_name=os.getenv('CLOUD_NAME'),
+        api_key=os.getenv('CLOUD_API_KEY'),
+        api_secret=os.getenv('CLOUD_API_SECRET')
+    )
 
     login.login_view = 'main.login'
     db.init_app(app)
     migrate.init_app(app, db)
     login.init_app(app)
+    mail.init_app(app)
     from mywebapp import models
     @login.user_loader
     def load_user(user_id):
@@ -59,5 +81,3 @@ def create_app():
             g.admin = None
 
     return app
-
-

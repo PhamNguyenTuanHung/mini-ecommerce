@@ -375,8 +375,9 @@
                     </li>
                 </ul>
 
-                <div class="tab-content">
-                    <form @submit.prevent="saveProduct">
+
+                <form @submit.prevent="saveProduct">
+                    <div class="tab-content">
                         <!-- Thông tin sản phẩm -->
                         <div class="tab-pane fade show active" id="info-tab" role="tabpanel">
                             <div class="row g-3">
@@ -418,86 +419,115 @@
                                     </div>
                                     <input id="productImageInput" type="file" class="form-control" accept="image/*"
                                            @change="e => {
-                                                   const file = e.target.files[0];
-                                                   form.imagePre = file;
-                                                   if (file) {
-                                                       const reader = new FileReader();
-                                                       reader.onload = () => form.image_url = reader.result;
-                                                       reader.readAsDataURL(file);
-                                                   }
-                                               }">
+                                           const file = e.target.files[0];
+                                           form.imagePre = file;
+                                           if (file) {
+                                               const reader = new FileReader();
+                                               reader.onload = () => form.image_url = reader.result;
+                                               reader.readAsDataURL(file);
+                                           }
+                                       }">
+                                </div>
+                                <div class="col-12 mt-3">
+                                    <label class="form-label">Ảnh phụ</label>
+                                    <div class="preview border rounded p-2 mt-2"
+                                         style="min-height:120px; display:flex; gap:10px; flex-wrap:wrap; align-items:flex-start;">
+                                        <template x-for="(img, idx) in form.galleryImages" :key="idx">
+                                            <div style="position:relative;">
+                                                <img :src="img.url"
+                                                     style="width:100px; height:100px; object-fit:cover; border:1px solid #ddd; border-radius:5px;">
+                                                <button type="button"
+                                                        @click="form.galleryImages.splice(idx,1)"
+                                                        style="position:absolute; top:-5px; right:-5px; background:red; color:white; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer;">
+                                                    &times;
+                                                </button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <input type="file" class="form-control mt-2" name="gallery_images"
+                                           accept="image/*" multiple
+                                           @change="e => {
+                                               const files = Array.from(e.target.files);
+                                               files.forEach(file => {
+                                                   const reader = new FileReader();
+                                                   reader.onload = () => {
+                                                       form.galleryImages.push({file: file, url: reader.result});
+                                                   };
+                                                   reader.readAsDataURL(file);
+                                               });
+                                           }">
                                 </div>
                             </div>
                         </div>
-                        <div class=" mt-3">
-                            <button type="submit" class="btn btn-primary"
-                                    x-text="mode === 'view' ? 'Sửa' : (mode === 'add' ? 'Thêm' : 'Lưu thay đổi')">
-                            </button>
-                        </div>
-                    </form>
 
-                    <!-- Biến thể -->
-                    <div class="tab-pane fade" id="variants-tab" role="tabpanel">
-                        <template x-for="(variant, index) in form.variants" :key="index">
-                            <div class="row g-2 align-items-end mb-2">
-                                <div class="col-md-3">
-                                    <label class="form-label">Màu</label>
-                                    <select class="form-select" x-model="variant.color">
-                                        <option value="">Chọn màu</option>
-                                        <option value="Đỏ">Đỏ</option>
-                                        <option value="Xanh">Xanh</option>
-                                        <option value="Vàng">Vàng</option>
-                                        <option value="Đen">Đen</option>
-                                        <option value="Trắng">Trắng</option>
-                                    </select>
-                                </div>
 
-                                <div class="col-md-3">
-                                    <label class="form-label">Size</label>
-                                    <select class="form-select" x-model="variant.size">
-                                        <option value="">Chọn size</option>
-                                        <option value="S">S</option>
-                                        <option value="M">M</option>
-                                        <option value="L">L</option>
-                                        <option value="XL">XL</option>
-                                        <option value="XXL">XXL</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-2">
-                                    <label class="form-label">Tồn kho</label>
-                                    <input type="number" class="form-control" x-model="variant.stock">
-                                </div>
-                                <div class="col-md-1">
-                                    <button class="btn btn-danger" type="button"
-                                            @click="form.variants.splice(index, 1)">X
-                                    </button>
-                                </div>
-                            </div>
-                        </template>
-
-                        <div class="text-start mt-3">
-                            <button type="button" class="btn btn-outline-primary btn-sm"
-                                    :disabled="!isProductInfoValid()"
-                                    @click="form.variants.push({color:'', size:'', price:'', stock:''})">
-                                + Thêm biến thể
-                            </button>
-                            <template x-if="!isProductInfoValid()">
-                                <div class="form-text text-danger mt-1">Vui lòng nhập đầy đủ thông tin sản phẩm
-                                    trước
+                        <!-- Biến thể -->
+                        <div class="tab-pane fade" id="variants-tab" role="tabpanel">
+                            <!-- Nếu có biến thể thì render ra list -->
+                            <template x-for="(variant, index) in form.variants" :key="index">
+                                <div class="row g-2 align-items-end mb-2">
+                                    <div class="col-md-3">
+                                        <label class="form-label">Màu</label>
+                                        <select class="form-select" x-model="variant.color">
+                                            <option value="">Chọn màu</option>
+                                            <option value="Đỏ">Đỏ</option>
+                                            <option value="Xanh">Xanh</option>
+                                            <option value="Vàng">Vàng</option>
+                                            <option value="Đen">Đen</option>
+                                            <option value="Trắng">Trắng</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Size</label>
+                                        <select class="form-select" x-model="variant.size">
+                                            <option value="">Chọn size</option>
+                                            <option value="S">S</option>
+                                            <option value="M">M</option>
+                                            <option value="L">L</option>
+                                            <option value="XL">XL</option>
+                                            <option value="XXL">XXL</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Tồn kho</label>
+                                        <input type="number" class="form-control" x-model="variant.stock">
+                                    </div>
+                                    <div class="col-md-1">
+                                        <button class="btn btn-danger" type="button"
+                                                @click="form.variants.splice(index, 1)">X
+                                        </button>
+                                    </div>
                                 </div>
                             </template>
+
+
+                            <div class="text-start mt-3">
+                                <button type="button" class="btn btn-outline-primary btn-sm"
+                                        :disabled="!isProductInfoValid()"
+                                        @click="form.variants.push({color:'', size:'', price:'', stock:''})">
+                                    + Thêm biến thể
+                                </button>
+                                <template x-if="!isProductInfoValid()">
+                                    <div class="form-text text-danger mt-1">Vui lòng nhập đầy đủ thông tin sản phẩm
+                                        trước
+                                    </div>
+                                </template>
+                            </div>
+
                         </div>
 
+                        <!-- Footer -->
+
                     </div>
-                </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary"
+                                x-text="mode === 'view' ? 'Sửa' : (mode === 'add' ? 'Thêm' : 'Lưu thay đổi')">
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    </div>
 
-                <!-- Footer -->
-
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                </div>
-                </form>
             </div>
+            </form>
         </div>
     </div>
 </div>

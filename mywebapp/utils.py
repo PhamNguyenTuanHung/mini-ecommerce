@@ -1,12 +1,13 @@
-from datetime import datetime
+import random
+from datetime import datetime, timedelta
 import requests
 from sqlalchemy import func, false, desc
 from flask import current_app, session, request
+from unicodedata import category
 from werkzeug.security import check_password_hash, generate_password_hash
 from mywebapp import db
-from mywebapp.admin.routes import categories
 from mywebapp.models import Product, Category, Brand, CartItem, Cart, User, ProductVariant, Order, OrderDetail, Payment, \
-    ShippingInfo, UserAddress, ProductImage, ActivityLog, OrderLog, Review, Admin
+    ShippingInfo, UserAddress, ProductImage, ActivityLog, OrderLog, Review, Admin, OTP
 from decimal import Decimal
 from sqlalchemy import or_
 from sqlalchemy.orm import joinedload
@@ -14,6 +15,7 @@ from humanize import naturaltime
 import hmac, hashlib, uuid
 
 
+#Category
 def get_categories(product_id=None, quantity=None):
     q = db.session.query(
         Category.MaDanhMuc,
@@ -99,10 +101,12 @@ def delete_category(category_id):
     return True
 
 
+
+#Brand
 def get_brands():
     return Brand.query.all()
 
-
+#Product
 def load_products(cate_id=None, brand_id=None, kw=None, from_price=None, to_price=None, page=1):
     query = db.session.query(Product)
 
@@ -130,11 +134,13 @@ def load_products(cate_id=None, brand_id=None, kw=None, from_price=None, to_pric
     return query.slice(start, end).all()
 
 
-from sqlalchemy import func
+def get_gallery(product_id):
+    images = ProductImage.query.filter_by(MaSanPham=product_id).all()
+    return [img.DuongDan for img in images]
 
 
 def get_products():
-    products = db.session.query(Product).all()
+    products = Product.query.all()
     sales_data = dict(db.session.query(
         OrderDetail.MaSanPham,
         func.sum(OrderDetail.SoLuong)
@@ -202,7 +208,7 @@ def get_order_products_with_user_reviews(order_id, user_id):
     return products_with_review
 
 
-def get_all_products_with_stock():
+def get_products_full():
     products = (
         Product.query
         .options(
@@ -225,6 +231,8 @@ def get_all_products_with_stock():
             for variant in product.product_variants
         ]
 
+        gallery_images = get_gallery(product.MaSanPham)
+
         result.append({
             'id': product.MaSanPham,
             'name': product.TenSanPham,
@@ -240,7 +248,8 @@ def get_all_products_with_stock():
                 'id': product.category.MaDanhMuc,
                 'name': product.category.TenDanhMuc
             },
-            'variants': variants
+            'variants': variants,
+            'gallery_images': gallery_images
         })
 
     return result
@@ -285,6 +294,55 @@ def delete_product_by_id(product_id):
         return False
 
 
+def create_products(name, price, description, category_id, brand_id):
+    new_product = Product(
+        TenSanPham=name,
+        Gia=price,
+        MoTa=description,
+        MaDanhMuc=category_id,
+        MaThuongHieu=brand_id,
+        HinhAnh=None
+    )
+    db.session.add(new_product)
+    db.session.commit()
+    return new_product
+
+
+def update_product_image(product_id, img):
+    product = Product.query.get(product_id)
+    product.HinhAnh = img
+    db.session.commit()
+
+
+def add_product_variants(product_id, variants):
+    for v in variants:
+        kich_thuoc = v.get('size') or v.get('KichThuoc')
+        mau_sac = v.get('color') or v.get('MauSac')
+        so_luong = v.get('stock') or v.get('SoLuongTon', 0)
+
+        if not kich_thuoc or not mau_sac:
+            return {"success": False, "error": "Biến thể phải có cả Màu sắc và Kích thước"}
+
+        variant = ProductVariant(
+            MaSanPham=product_id,
+            KichThuoc=kich_thuoc,
+            MauSac=mau_sac,
+            SoLuongTon=so_luong
+        )
+        db.session.add(variant)
+    db.session.commit()
+
+
+def add_product_images(product_id, images):
+    for image in images:
+        product_image = ProductImage(
+            MaSanPham=product_id,
+            DuongDan=image
+        )
+        db.session.add(product_image)
+    db.session.commit()
+
+
 def add_product(name, price, description, category_id, brand_id, img, variants):
     try:
         if not variants or not isinstance(variants, list) or len(variants) == 0:
@@ -318,38 +376,51 @@ def add_product(name, price, description, category_id, brand_id, img, variants):
             db.session.add(variant)
 
         db.session.commit()
-        return True
+        return {"success": True, "id": new_product.MaSanPham, "product": new_product}
 
     except Exception as e:
         db.session.rollback()
-        return False
+        return {"success": False, "error": str(e)}
 
 
-def update_product(product_id, name, price, description, category_id, brand_id, img=None, variants=[]):
+def update_product(product_id, name, price, description, category_id, brand_id, main_img=None, variants=[], gallery=[]):
     try:
         product = Product.query.get(product_id)
         if not product:
             return {"success": False, "error": "Không tìm thấy sản phẩm"}
 
+        # Cập nhật thông tin cơ bản
         product.TenSanPham = name
         product.Gia = price
         product.MoTa = description
         product.MaDanhMuc = category_id
         product.MaThuongHieu = brand_id
 
-        if img:  # Chỉ cập nhật ảnh nếu có
-            product.HinhAnh = img
+        if main_img:
+            product.HinhAnh = main_img
 
-        # Xử lý biến thể
-        existing_variants = {(v.MaSanPham, v.KichThuoc, v.MauSac): v
-                             for v in ProductVariant.query.filter_by(MaSanPham=product_id).all()}
+        old_gallery = ProductImage.query.filter_by(MaSanPham=product_id).all()
+        for img in old_gallery:
+            db.session.delete(img)
+
+        for img_url in gallery:
+            img = ProductImage(MaSanPham=product_id, DuongDan=img_url)
+            db.session.add(img)
+
+        # Cập nhật variants
+        existing_variants = {(v.KichThuoc, v.MauSac): v for v in
+                             ProductVariant.query.filter_by(MaSanPham=product_id).all()}
         updated_keys = set()
 
         for v in variants:
             size = v.get('size') or v.get('KichThuoc')
             color = v.get('color') or v.get('MauSac')
-            stock = v.get('stock') or v.get('SoLuongTon', 0)
-            key = (product_id, size, color)
+            stock = int(v.get('stock') or v.get('SoLuongTon', 0))
+
+            if not size or not color:
+                raise ValueError("Biến thể phải có cả Màu sắc và Kích thước")
+
+            key = (size, color)
             updated_keys.add(key)
 
             if key in existing_variants:
@@ -363,21 +434,71 @@ def update_product(product_id, name, price, description, category_id, brand_id, 
                 )
                 db.session.add(new_variant)
 
-        # Xóa các biến thể không còn tồn tại trong dữ liệu mới
         for key, variant in existing_variants.items():
             if key not in updated_keys:
                 db.session.delete(variant)
 
         db.session.commit()
-        return True
+        return {"success": True, "id": product_id}
 
     except Exception as e:
         db.session.rollback()
-        return False
+        return {"success": False, "error": str(e)}
 
 
 def count_products():
     return db.session.query(Product).count()
+
+
+def related_products(product_id, limit=10):
+    product = Product.query.get(product_id)
+    if not product:
+        return []
+
+    category_id = product.category.MaDanhMuc if product.category else None
+    brand_id = product.brand.MaThuongHieu if product.brand else None
+
+    query = Product.query.filter(Product.MaSanPham != product.MaSanPham)
+
+    if category_id or brand_id:
+        query = query.filter(
+            or_(
+                Product.MaDanhMuc == category_id,
+                Product.MaThuongHieu == brand_id
+            )
+        )
+
+    return query.limit(limit).all()
+
+
+# User
+
+def create_otp(email, minutes_valid=5):
+    code = str(random.randint(100000, 999999))
+    expires_at = datetime.utcnow() + timedelta(minutes=minutes_valid)
+    otp_entry = OTP(email=email, code=code, expires_at=expires_at)
+    db.session.add(otp_entry)
+    db.session.commit()
+    return code
+
+
+def verify_otp(email, code):
+    otp_entry = OTP.query.filter_by(email=email, code=code).first()
+    if otp_entry and otp_entry.expires_at > datetime.utcnow():
+        return True
+    return False
+
+
+def update_password(email, new_password):
+    user = get_user_by_email(email)
+    if user:
+        user.MatKhau = generate_password_hash(new_password)
+        db.session.commit()
+
+        OTP.query.filter_by(email=email).delete()
+        db.session.commit()
+        return True
+    return False
 
 
 def get_users():
@@ -401,6 +522,16 @@ def get_users():
             'totalOrders': len(user.orders)
         })
     return result
+
+
+def get_user_by_email(email):
+    user = User.query.filter_by(Email=email).first()
+    return user
+
+
+def delete_otp(email):
+    OTP.query.filter_by(email=email).delete()
+    db.session.commit()
 
 
 def get_user_detail_by_id(user_id):
@@ -477,6 +608,7 @@ def update_user(user_id, name=None, email=None, phone=None, avatar=None, status=
         db.session.rollback()
         print(f"Error updating user: {e}")
         return None
+
 
 def change_password(user_id, old_pass, new_pass):
     user = User.query.get(user_id)
@@ -582,7 +714,33 @@ def get_user_by_id(user_id):
 def get_status_user_by_id(user_id):
     user = get_user_detail_by_id(user_id)
 
+def get_product_by_id(id):
+    return Product.query.filter_by(MaSanPham=id).first()
 
+
+def get_sizes_and_colors_by_product_id(product_id):
+    variants = ProductVariant.query.filter_by(MaSanPham=product_id).all()
+
+    sizes = sorted(set(v.KichThuoc for v in variants))
+    colors = sorted(set(v.MauSac for v in variants))
+
+    return {
+        'sizes': sizes,
+        'colors': colors
+    }
+
+
+def count_stock_product(product_id, size=None, color=None):
+    query = ProductVariant.query.filter_by(MaSanPham=product_id)
+    if size:
+        query = query.filter(ProductVariant.KichThuoc == size.strip())
+    if color:
+        query = query.filter(ProductVariant.MauSac == color.strip())
+
+    variant = query.first()
+    return variant.SoLuongTon if variant else 0
+
+#Cart
 def get_cart(user_id=None, key=None):
     cart_dict = {}
 
@@ -759,34 +917,7 @@ def save_cart(user_id: int, cart: dict):
 
     db.session.commit()
 
-
-def get_product_by_id(id):
-    return Product.query.filter_by(MaSanPham=id).first()
-
-
-def get_sizes_and_colors_by_product_id(product_id):
-    variants = ProductVariant.query.filter_by(MaSanPham=product_id).all()
-
-    sizes = sorted(set(v.KichThuoc for v in variants))
-    colors = sorted(set(v.MauSac for v in variants))
-
-    return {
-        'sizes': sizes,
-        'colors': colors
-    }
-
-
-def count_stock_product(product_id, size=None, color=None):
-    query = ProductVariant.query.filter_by(MaSanPham=product_id)
-    if size:
-        query = query.filter(ProductVariant.KichThuoc == size.strip())
-    if color:
-        query = query.filter(ProductVariant.MauSac == color.strip())
-
-    variant = query.first()
-    return variant.SoLuongTon if variant else 0
-
-
+#Order
 def get_orders_by_user_id(user_id):
     orders = Order.query.options(
         joinedload(Order.user),
@@ -1024,6 +1155,8 @@ def update_order(order_id, status):
         return {"success": False, "message": "Đơn hàng không tồn tại"}, 404
 
     order.TrangThai = status
+    if status=='delivered':
+        order.payment.TrangThaiThanhToan='Đã thanh toán'
     db.session.commit()
     return {"success": True}
 
@@ -1047,8 +1180,8 @@ def generate_momo_payment_url(order_id, amount):
 
     request_id = str(uuid.uuid4())
     order_info = "Thanh toán đơn hàng MoMo"
-    redirect_url = "http://localhost:5000/payment/return"
-    ipn_url = "http://localhost:5000/api/payment/ipn"
+    redirect_url = "https://0423eace85b6.ngrok-free.app/payment/return"
+    ipn_url = "https://0423eace85b6.ngrok-free.app/user/api/payment/ipn"
     request_type = "captureWallet"
     extra_data = ""  # Có thể để thông tin thêm nếu cần
 
@@ -1091,6 +1224,8 @@ def generate_momo_payment_url(order_id, amount):
         raise Exception(f"Lỗi tạo link MoMo: {result}")
 
 
+
+#Log activity
 def log_activity(user_id: int, action: str, message: str = ''):
     log = ActivityLog(
         MaNguoiDung=user_id,
@@ -1209,6 +1344,7 @@ def get_system_logs(limit=10):
     return results[:limit]
 
 
+#Review
 def add_product_reviews(user_id, product_id, comment, rating):
     review = Review(
         MaSanPham=product_id,
@@ -1238,6 +1374,7 @@ def get_product_reviews(product_id):
     return result
 
 
+#admin
 def check_admin_login(username, password):
     admin = Admin.query.filter(
         or_(
@@ -1268,6 +1405,3 @@ def add_admin(fullname, username, password, email, sdt, avatar):
 def get_admin(admin_id):
     admin = Admin.query.get(admin_id)
     return admin
-
-
-

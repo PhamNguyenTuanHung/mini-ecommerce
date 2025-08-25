@@ -163,7 +163,7 @@
                 <div class="card-header">
                     <div class="row align-items-center">
                         <div class="col">
-                            <h5 class="card-title mb-0">Category Catalog</h5>
+                            <h5 class="card-title mb-0">Quản lý danh mục</h5>
                         </div>
                         <div class="col-auto">
                             <div class="d-flex gap-2">
@@ -332,8 +332,6 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
             </div>
             <div class="modal-body" x-data="categoryForm">
-
-
                 <div class="tab-content">
                     <form @submit.prevent="saveCategory">
                         <!-- Thông tin sản phẩm -->
@@ -365,117 +363,4 @@
     </div>
 </div>
 
-
-<div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content" >
-            <div class="modal-header">
-                <h5 class="modal-title" >Thông tin danh mục</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
-            </div>
-            <div class="modal-body" x-data="categoryForm">
-                    <!-- Tabs -->
-                    <ul class="nav nav-tabs mb-3" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#info-tab"
-                                    type="button" role="tab">Thông tin
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#variants-tab" type="button"
-                                    role="tab">Các sản phẩm
-                            </button>
-                        </li>
-                    </ul>
-
-                    <div class="tab-content">
-                        <form @submit.prevent="saveCategory">
-                            <!-- Thông tin sản phẩm -->
-                            <div class="tab-pane fade show active" id="info-tab" role="tabpanel">
-                                <div class="row g-3">
-                                    <div class="col-12">
-                                        <label class="form-label">Tên danh mục</label>
-                                        <input type="text" class="form-control" x-model="form.name" required>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class=" mt-3">
-                                <button type="submit" class="btn btn-primary"
-                                        x-text="mode === 'view' ? 'Sửa' : (mode === 'add' ? 'Thêm' : 'Lưu thay đổi')">
-                                </button>
-                            </div>
-                        </form>
-
-                        <!-- Biến thể -->
-                        <div class="tab-pane fade" id="variants-tab" role="tabpanel">
-                            <template x-for="(product, index) in form.variants" :key="index">
-                                <div class="row g-3">
-                                    <div class="col-12">
-                                        <label class="form-label">Tên sản phẩm</label>
-                                        <input type="text" class="form-control" x-model="form.name" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Thương hiệu</label>
-                                        <select class="form-select" x-model="form.brand" required>
-                                            <option value="">Chọn thương hiệu</option>
-                                            {% for brand in brands %}
-                                            <option value="{{ brand.MaThuongHieu }}">{{ brand.TenThuongHieu }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Danh mục</label>
-
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Giá</label>
-
-                                    </div>
-                                    <div class="col-12">
-                                        <label class="form-label">Mô tả</label>
-                                        <textarea class="form-control" rows="3" x-model="form.description"></textarea>
-                                    </div>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-
-                    <!-- Footer -->
-
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- Import Modal -->
-<div class="modal fade" id="importModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Import Categories</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label">Upload CSV File</label>
-                    <input type="file" class="form-control" accept=".csv">
-                    <div class="form-text">Upload a CSV file with columns: name, sku, category, price, stock, status
-                    </div>
-                </div>
-                <div class="alert alert-info">
-                    <i class="bi bi-info-circle me-2"></i>
-                    <strong>CSV Format:</strong> name, sku, category, price, stock, status<br>
-                    <small>Example: iPhone 14, IPHONE14-128, electronics, 799.99, 50, published</small>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary">Import Categories</button>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}

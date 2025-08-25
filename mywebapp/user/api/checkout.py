@@ -19,9 +19,7 @@ def checkout_selected_items():
     utils.log_activity(
         current_user.MaNguoiDung,
         action='prepare_checkout',
-        message=f'Chọn {len(selected_keys)} sản phẩm để thanh toán',
-        ip=request.remote_addr
-    )
+        message=f'Chọn {len(selected_keys)} sản phẩm để thanh toán'    )
     return jsonify({
         'success': True,
         'redirect_url': url_for('main.checkout')
@@ -39,7 +37,7 @@ def create_checkout_items():
     session['checkout_items'] = selected_keys
     return jsonify({'success': True})
 
-@user_api.route('/api/checkout-items', methods=['DELETE'])
+@user_api.route('/checkout-items', methods=['DELETE'])
 @login_required
 def delete_checkout_items():
     data = request.get_json()

@@ -7,39 +7,39 @@
         <div class="row">
             <div class="col-md-3">
                 <div class="sidebar-menu">
-    <ul class="list-unstyled">
-        <li>
-            <a href="{{ url_for('main.profile_details') }}"
-               class="menu-item {% if request.path.startswith(url_for('main.profile_details')) %}active{% endif %}">
-                <i class="fas fa-user"></i> Hồ sơ của tôi
-            </a>
-        </li>
-        <li>
-            <a href="{{ url_for('main.order') }}"
-               class="menu-item {% if request.path.startswith(url_for('main.order')) %}active{% endif %}">
-                <i class="fas fa-file-alt"></i> Đơn hàng của tôi
-            </a>
-        </li>
-        <li>
-            <a href="{{ url_for('main.view_address') }}"
-               class="menu-item {% if request.path.startswith(url_for('main.view_address')) %}active{% endif %}">
-                <i class="fas fa-map-marker-alt"></i> Sổ địa chỉ
-            </a>
-        </li>
-        <li>
-            <a href="#" class="menu-item voucher">
-                <i class="fas fa-tag"></i> Vouchers
-                <span class="badge bg-danger">New</span>
-            </a>
-        </li>
-        <li>
-            <a href="{{ url_for('main.change_password_view') }}"
-               class="menu-item {% if request.path.startswith(url_for('main.change_password_view')) %}active{% endif %}">
-                <i class="fas fa-lock"></i> Đổi mật khẩu
-            </a>
-        </li>
-    </ul>
-</div>
+                    <ul class="list-unstyled">
+                        <li>
+                            <a href="{{ url_for('main.profile_details') }}"
+                               class="menu-item {% if request.path.startswith(url_for('main.profile_details')) %}active{% endif %}">
+                                <i class="fas fa-user"></i> Hồ sơ của tôi
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('main.order') }}"
+                               class="menu-item {% if request.path.startswith(url_for('main.order')) %}active{% endif %}">
+                                <i class="fas fa-file-alt"></i> Đơn hàng của tôi
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('main.view_address') }}"
+                               class="menu-item {% if request.path.startswith(url_for('main.view_address')) %}active{% endif %}">
+                                <i class="fas fa-map-marker-alt"></i> Sổ địa chỉ
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="menu-item voucher">
+                                <i class="fas fa-tag"></i> Vouchers
+                                <span class="badge bg-danger">New</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('main.change_password_view') }}"
+                               class="menu-item {% if request.path.startswith(url_for('main.change_password_view')) %}active{% endif %}">
+                                <i class="fas fa-lock"></i> Đổi mật khẩu
+                            </a>
+                        </li>
+                    </ul>
+                </div>
 
             </div>
             <div class="col-md-9">
@@ -50,7 +50,7 @@
                             <th>Mã đơn hàng</th>
                             <th>Sản phẩm</th>
                             <th>Ngày đặt</th>
-                            <th>Giảm giá</th>
+                            <th>Thanh toán</th>
                             <th>Trạng thái</th>
                             <th>Tổng đơn hàng</th>
                             <th></th>
@@ -77,7 +77,14 @@
                                 </td>
                                 <td x-text=" order.orderDate"></td>
                                 <td x-text="order.payment"></td>
-                                <td x-text="order.status"></td>
+                                <td x-text="{
+                                        'pending': 'Chờ xử lý',
+                                        'paid': 'Đã thanh toán',
+                                        'cancelled': 'Đã hủy',
+                                        'shipping': 'Đang giao',
+                                        'delivered': 'Hoàn thành'
+                                    }[order.status] || order.status">
+                                </td>
                                 <td class="fw-medium" x-text="`$${order.total}`"></td>
                                 <td><!-- Nút hủy đơn -->
                                     <template x-if="order.status === 'pending' || order.status === 'processing'">

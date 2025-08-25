@@ -15,27 +15,12 @@
                                     <img src="{{ product.HinhAnh }}"
                                          alt='' data-zoom-image="{{ product.HinhAnh }}"/>
                                 </div>
+                                {% for g in gallery %}
                                 <div class='item'>
-                                    <img src="{{ url_for('static', filename='user/images/shop/single-products/product-2.jpg') }}"
-                                         alt='' data-zoom-image="images/shop/single-products/product-2.jpg"/>
+                                    <img src="{{g}}"
+                                         alt='' data-zoom-image="{{g}}"/>
                                 </div>
-
-                                <div class='item'>
-                                    <img src="{{ url_for('static', filename='user/images/shop/single-products/product-3.jpg') }}"
-                                         alt='' data-zoom-image="images/shop/single-products/product-3.jpg"/>
-                                </div>
-                                <div class='item'>
-                                    <img src="{{ url_for('static', filename='user/images/shop/single-products/product-4.jpg') }}"
-                                         alt='' data-zoom-image="images/shop/single-products/product-4.jpg"/>
-                                </div>
-                                <div class='item'>
-                                    <img src="{{ url_for('static', filename='user/images/shop/single-products/product-5.jpg') }}"
-                                         alt='' data-zoom-image="images/shop/single-products/product-5.jpg"/>
-                                </div>
-                                <div class='item'>
-                                    <img src="{{ url_for('static', filename='user/images/shop/single-products/product-6.jpg') }}"
-                                         alt='' data-zoom-image="images/shop/single-products/product-6.jpg"/>
-                                </div>
+                                {% endfor %}
 
                             </div>
 
@@ -54,26 +39,11 @@
                                 <img src="{{ product.HinhAnh }}"
                                      alt=''/>
                             </li>
-                            <li data-target='#carousel-custom' data-slide-to='1'>
-                                <img src="{{ url_for('static', filename='user/images/shop/single-products/product-2.jpg') }}"
-                                     alt=''/>
+                            {% for g in gallery %}
+                            <li data-target="#carousel-custom" data-slide-to="{{ loop.index }}">
+                                <img src="{{ g }}" alt="gallery image {{ loop.index }}">
                             </li>
-                            <li data-target='#carousel-custom' data-slide-to='2'>
-                                <img src="{{ url_for('static', filename='user/images/shop/single-products/product-3.jpg') }}"
-                                     alt=''/>
-                            </li>
-                            <li data-target='#carousel-custom' data-slide-to='3'>
-                                <img src="{{ url_for('static', filename='user/images/shop/single-products/product-4.jpg') }}"
-                                     alt=''/>
-                            </li>
-                            <li data-target='#carousel-custom' data-slide-to='4'>
-                                <img src="{{ url_for('static', filename='user/images/shop/single-products/product-5.jpg') }}"
-                                     alt=''/>
-                            </li>
-                            <li data-target='#carousel-custom' data-slide-to='5'>
-                                <img src="{{ url_for('static', filename='user/images/shop/single-products/product-6.jpg') }}"
-                                     alt=''/>
-                            </li>
+                            {% endfor %}
                         </ol>
                     </div>
                 </div>

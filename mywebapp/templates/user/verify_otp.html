@@ -12,14 +12,13 @@
                         <img src="{{ url_for('static', filename='user/images/logo.png') }}" alt="">
                     </a>
                     <h2 class="text-center">Welcome Back</h2>
-                    <form method="POST" class="text-left clearfix">
-                        <p>Email</p>
+                     <form method="POST" class="text-left clearfix">
+                        <p>Nhập mã OTP</p>
                         <div class="form-group">
-                            <input type="email" class="form-control" name="email"
-                                   placeholder="Nhập địa chỉ email của bạn">
+                            <input class="form-control" name="otp">
                         </div>
                         <div class="text-center">
-                            <button type="submit" class="btn btn-main text-center">Gửi mã OTP</button>
+                            <button type="submit" class="btn btn-main text-center">Nhập mã OTP</button>
                         </div>
                     </form>
                     <p class="mt-20"><a href="{{ url_for('main.login') }}">Về trang đăng nhập</a></p>
