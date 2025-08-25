@@ -87,24 +87,6 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="card">
-                                <div class="card-heading">
-                                    <a data-toggle="collapse" data-target="#collapseThree">Filter Price</a>
-                                </div>
-                                <div id="collapseThree" class="collapse show" data-parent="#accordionExample">
-                                    <div class="card-body">
-                                        <div class="shop__sidebar__price">
-                                            <input type="range" id="minPrice" min="0" max="2000000" step="10000"
-                                                   value="200000">
-                                            <input type="range" id="maxPrice" min="0" max="2000000" step="10000"
-                                                   value="1000000">
-                                            <div class="price-display">
-                                                <span id="minPriceLabel"></span> - <span id="maxPriceLabel"></span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -140,11 +122,6 @@
                                     <a :href="`/product/${product.MaSanPham}`"></a>
                                     <div class="preview-meta">
                                         <ul>
-                                            <li>
-                                            <span @click="openModal(product)">
-                                                <i class="tf-ion-ios-search-strong"></i>
-                                            </span>
-                                            </li>
                                             <li>
                                                 <a href="javascript:void(0);"><i class="tf-ion-ios-heart"></i></a>
                                             </li>
@@ -197,40 +174,6 @@
     </div>
 </section>
 
-<!-- Modal -->
-<div class="modal product-modal fade" id="product-modal">
-    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-        <i class="tf-ion-close"></i>
-    </button>
-    <div class="modal-dialog " role="document">
-        <div class="modal-content">
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-md-8 col-sm-6 col-xs-12">
-                        <div class="modal-image">
-                            <img class="img-responsive"
-                                 src="{{ url_for('static', filename='user/images/shop/products/modal-product.jpg') }}"
-                                 alt="product-img"/>
-                        </div>
-                    </div>
-                    <div class="col-md-4 col-sm-6 col-xs-12">
-                        <div class="product-short-details">
-                            <h2 class="product-title">GM Pendant, Basalt Grey</h2>
-                            <p class="product-price">$200</p>
-                            <p class="product-short-description">
-                                Lorem ipsum dolor sit amet, consectetur adipisicing elit. Rem iusto nihil
-                                cum. Illo laborum numquam rem aut officia dicta cumque.
-                            </p>
-                            <a href="{{ url_for('main.cart') }}" class="btn btn-main">Add To Cart</a>
-                            Product Details</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- /.modal -->
 <script type="module" src="{{ url_for('static', filename='user/js/components/product.js') }}" defer></script>
 
 

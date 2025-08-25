@@ -1,39 +1,24 @@
 # admin/api/orders.py
 from flask import jsonify, request, session
-from flask_login import login_required, current_user
 from mywebapp.admin.api import admin_api
 from mywebapp import utils
+from mywebapp.admin.routes import admin_required
 
 
-def admin_required(f):
-    from functools import wraps
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if not current_user.is_authenticated or not current_user.is_admin:
-            return jsonify({'error': 'Unauthorized'}), 403
-        return f(*args, **kwargs)
-
-    return decorated
-
-
-# ✔ GET /admin/api/orders
 @admin_api.route('/orders', methods=['GET'])
-# @login_required
-# @admin_required
+@admin_required
 def get_orders():
     orders = utils.get_order_detail()
     return jsonify(orders)
 
 @admin_api.route('/orders/<int:order_id>', methods=['GET'])
-# @login_required
-# @admin_required
+@admin_required
 def get_order_by_id(order_id):
     order = utils.get_order_detail_by_id(order_id)
     return jsonify(order)
 
 @admin_api.route('/orders/<int:order_id>/cancel', methods=['POST'])
-# @login_required
-# @admin_required
+@admin_required
 def cancel_order(order_id):
 
     admin_id=session['admin_id']
@@ -57,8 +42,7 @@ def cancel_order(order_id):
 
 
 @admin_api.route('/orders/<int:order_id>', methods=['PATCH'])
-# @login_required
-# @admin_required
+@admin_required
 def update_order_status(order_id):
     admin_id = session['admin_id']
     admin_name = session['admin_name']
@@ -78,12 +62,14 @@ def update_order_status(order_id):
 
 
 @admin_api.route('/order-logs', methods=["GET"])
+@admin_required
 def get_order_logs():
     result = utils.get_order_logs()
     return result
 
 
 @admin_api.route('/system-logs', methods=['GET'])
+@admin_required
 def get_system_logs():
     result = utils.get_system_logs(10)
     return result

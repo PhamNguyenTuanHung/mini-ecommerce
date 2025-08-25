@@ -107,12 +107,12 @@ def create_COD_order():
 @user_api.route('/payments/momo/init', methods=['POST'])
 @login_required
 def init_momo_payment():
+    print("init_momo_payment")
     data = request.get_json()
     order_info = data.get('order_info')
     order_details = data.get('order_details')
 
     momo_order_id = str(uuid.uuid4())
-    print(momo_order_id)
 
     pending = PendingOrder(
         MaDonHangTam=momo_order_id,
@@ -131,19 +131,21 @@ def init_momo_payment():
         action='init_online_payment',
         message=f'Khởi tạo thanh toán MoMo đơn #{momo_order_id}, tổng tiền {total_amount}'    )
     pay_url = utils.generate_momo_payment_url(momo_order_id, total_amount)
-    print(pay_url)
 
-    return jsonify({'success': True, 'pay_url': pay_url}) if pay_url else \
-        jsonify({'success': False, 'message': 'Không tạo được URL MoMo'}), 500
+    if pay_url:
+        return jsonify({'success': True, 'pay_url': pay_url}), 200
+    else:
+        return jsonify({'success': False, 'message': 'Không tạo được URL MoMo'}), 500
 
 
-@user_api.route('/api/payment/ipn', methods=['POST'])
+@user_api.route('/payment/ipn', methods=['POST'])
 def momo_ipn():
     data = request.get_json()
+    print(data)
     momo_order_id = data.get("orderId")  # UUID string
-    result_code = data.get("resultCode")
-    print(momo_order_id)
+    result_code = int(data.get("resultCode", -1))
     if result_code == 0:
+        print("Thanh toán nè")
         pending = PendingOrder.query.get(momo_order_id)
         if not pending:
             return jsonify({'message': 'Không tìm thấy đơn hàng tạm'}), 400
@@ -179,8 +181,7 @@ def momo_ipn():
         utils.db.session.delete(pending)
         utils.db.session.commit()
 
-        return jsonify({'message': 'success'}), 200
-
+        return jsonify({'resultCode': 0, 'message': 'Confirm Success'}), 200
     return jsonify({'message': 'fail'}), 400
 
 

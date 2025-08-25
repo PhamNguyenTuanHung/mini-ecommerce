@@ -2,11 +2,11 @@ import math
 import uuid
 from datetime import datetime, timedelta
 from flask import render_template, request, redirect, flash, session, current_app, jsonify, url_for, g
-from mywebapp import utils
+from flask_mail import Message
+
+from mywebapp import utils, mail
 from flask_login import login_user, current_user, logout_user, login_required
-from decimal import Decimal
 from cloudinary import uploader
-from mywebapp.models import PendingOrder
 from flask import Blueprint
 
 main = Blueprint('main', __name__, template_folder='../templates/user')
@@ -131,34 +131,6 @@ def profile_details():
     return render_template('profile_details.html')
 
 
-@main.route('/user/api/change-password', methods=['GET', 'POST'])
-def change_password():
-    if request.method == 'POST':
-        old_password = request.form.get('old_password', '').strip()
-        new_password = request.form.get('new_password', '').strip()
-        confirm_password = request.form.get('confirm_password', '').strip()
-        if new_password != confirm_password:
-            return {"success": False, "error": "Mật khẩu xác nhận không khớp"}, 400
-
-        result = utils.change_password(
-            user_id=current_user.MaNguoiDung,
-            old_pass=old_password,
-            new_pass=new_password
-        )
-
-        if result is True:
-            utils.log_activity(
-                current_user.MaNguoiDung,
-                action='change_password',
-                message=f"User {current_user.MaNguoiDung} đổi mật khẩu"
-            )
-            return {"success": True, "message": "Đổi mật khẩu thành công"}, 200
-
-        if result == "wrong_old_password":
-            return {"success": False, "error": "Mật khẩu cũ không đúng"}, 401
-
-        return {"success": False, "error": "Có lỗi xảy ra, vui lòng thử lại"}, 500
-
 @main.route('/user/change-password')
 def change_password_view():
     return render_template('change_password.html')
@@ -237,7 +209,6 @@ def api_update_user():
 @main.route('/user/address')
 @login_required
 def view_address():
-    print("🔎 Debug request.path:", request.path)
     addresses = utils.get_user_addresses_by_id(user_id=current_user.MaNguoiDung)
     return render_template('address.html', addresses=addresses)
 
@@ -277,12 +248,14 @@ def cart():
 @main.route('/product_single/<int:product_id>')
 def product_single(product_id):
     product = utils.get_product_by_id(product_id)
-    related_products = utils.load_products(cate_id=product.MaDanhMuc, brand_id=product.MaThuongHieu)
+    related_products = utils.related_products(product_id=product_id)
     reviews = utils.get_product_reviews(product_id)
 
     variants_data = utils.get_sizes_and_colors_by_product_id(product_id)
     sizes = variants_data.get('sizes', [])
     colors = variants_data.get('colors', [])
+
+    gallery = utils.get_gallery(product_id)
 
     return render_template(
         'product_single.html',
@@ -290,7 +263,8 @@ def product_single(product_id):
         related_products=related_products,
         sizes=sizes,
         colors=colors,
-        reviews=reviews
+        reviews=reviews,
+        gallery=gallery
     )
 
 
@@ -325,109 +299,18 @@ def home():
     return render_template('index.html', products=products, categories=categories)
 
 
-@main.route('/api/orders/checkout', methods=['POST'])
-@login_required
-def create_online_checkout():
-    data = request.get_json()
-    order_info = data.get('order_info')
-    order_details = data.get('order_details')
+@main.route('/payment/return')
+def momo_return():
+    result_code = request.args.get("resultCode")
+    order_id = request.args.get("orderId")
+    message = request.args.get("message")
 
-    momo_order_id = str(uuid.uuid4())
-    print(momo_order_id)
-
-    pending = PendingOrder(
-        MaDonHangTam=momo_order_id,
-        MaNguoiDung=current_user.MaNguoiDung,
-        ThongTinDonHang=order_info,
-        ChiTietDonHang=order_details
-    )
-
-    utils.db.session.add(pending)
-    utils.db.session.commit()
-
-    # 3. Gọi hàm tạo link thanh toán
-    total_amount = order_info.get("total_amount")
-    utils.log_activity(
-        user_id=current_user.MaNguoiDung,
-        action='init_online_payment',
-        message=f'Khởi tạo thanh toán MoMo đơn #{momo_order_id}, tổng tiền {total_amount}')
-    pay_url = utils.generate_momo_payment_url(momo_order_id, total_amount)
-    print(pay_url)
-
-    return jsonify({'success': True, 'pay_url': pay_url}) if pay_url else \
-        jsonify({'success': False, 'message': 'Không tạo được URL MoMo'}), 500
-
-
-@main.route('/api/payment/ipn', methods=['POST'])
-def momo_ipn():
-    data = request.get_json()
-    momo_order_id = data.get("orderId")  # UUID string
-    result_code = data.get("resultCode")
-    print(momo_order_id)
-    if result_code == 0:
-        pending = PendingOrder.query.get(momo_order_id)
-        if not pending:
-            return jsonify({'message': 'Không tìm thấy đơn hàng tạm'}), 400
-
-        order = utils.create_order(
-            user_id=pending.MaNguoiDung,
-            order_info=pending.ThongTinDonHang,
-            order_details=pending.ChiTietDonHang,
-            status='pending'
-        )
-
-        utils.create_payment(
-            order_id=order.MaDonHang,
-            payment_method="MOMO",
-            payment_status="Đã thanh toán",
-            payment_date=datetime.now()
-        )
-
-        # Cập nhật kho và giỏ hàng
-        cart = utils.get_cart(user_id=pending.MaNguoiDung)
-        for item in pending.ChiTietDonHang:
-            key = f"{item['product_id']}_{item['size']}_{item['color']}"
-            quantity = item['quantity']
-            utils.update_stock(key, quantity)
-            cart = utils.delete_item_from_cart(cart, key)
-        utils.save_cart(user_id=pending.MaNguoiDung, cart=cart)
-
-        utils.log_activity(
-            user_id=pending.MaNguoiDung,
-            action='payment_success',
-            message=f'Thanh toán MoMo thành công đơn #{order.MaDonHang}'
-        )
-        # Xóa bản ghi đơn tạm
-        utils.db.session.delete(pending)
-        utils.db.session.commit()
-
-        return jsonify({'message': 'success'}), 200
-
-    return jsonify({'message': 'fail'}), 400
-
-
-@main.route('/payment-success', methods=['GET'])
-def payment_success():
-    result_code = request.args.get('resultCode')
-    if result_code == '0':
-        return redirect(url_for('main.confirmation'))
-    return jsonify({'message': 'fail'}), 400
-
-
-@main.route('/confirmation')
-def confirmation():
-    return render_template('confirmation.html')
-
-
-@main.route('/about')
-def about():
-    return render_template('about.html')
-
-
-@main.route('/blog')
-def blog():
-    return render_template('blog.html')
-
+    if result_code == "0":
+        # Thanh toán thành công
+        return render_template('confirmation.html')
+    else:
+        # Thanh toán thất bại
+        return f"Thanh toán thất bại! Đơn hàng {order_id} - {message}"
 
 @main.route('/shop')
 def shop():
@@ -449,19 +332,71 @@ def shop():
                            pages=math.ceil(products_count / current_app.config['PAGE_SIZE']))
 
 
-@main.route('/contact')
-def contact():
-    return render_template('contact.html')
 
-
-@main.route('/blog_details')
-def blog_details():
-    return render_template('blog_details.html')
-
-
-@main.route('/forget_password')
+@main.route('/forget-password', methods=['GET', 'POST'])
 def forget_password():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        print(email)
+        if not email:
+            flash('Vui lòng nhập email!', 'danger')
+            return redirect(url_for('main.forget_password'))
+
+        session['email'] = email
+        otp = utils.create_otp(email)
+
+        msg = Message(
+            subject="Lấy lại mật khẩu",
+            sender=current_app.config['MAIL_USERNAME'],
+            recipients=[email],
+            body=f"Mã OTP của bạn là: {otp}"
+        )
+        mail.send(msg)
+
+        flash('OTP đã được gửi vào email của bạn', 'success')
+        return redirect(url_for('main.verify_otp'))
+
     return render_template('forget_password.html')
+
+
+@main.route('/verify-otp', methods=['GET', 'POST'])
+def verify_otp():
+    email = session.get('email')
+    if not email:
+        flash('Vui lòng nhập email trước', 'danger')
+        return redirect(url_for('forget_password'))
+    if request.method == 'POST':
+        otp_input = request.form.get('otp')
+        if utils.verify_otp(email, otp_input):
+            flash('OTP hợp lệ! Vui lòng đặt mật khẩu mới.', 'success')
+            return redirect(url_for('main.reset_password'))
+        else:
+            flash('OTP không đúng hoặc đã hết hạn', 'danger')
+    return render_template('verify_otp.html', email=email)
+
+
+@main.route('/reset-password', methods=['GET', 'POST'])
+def reset_password():
+    email = session.get('email')
+    if not email:
+        flash('Vui lòng nhập email trước', 'danger')
+        return redirect(url_for('main.forget_password'))
+    if request.method == 'POST':
+        new_password = request.form.get('password')
+        utils.update_password(email, new_password)
+        user = utils.get_user_by_email(email)
+        utils.delete_otp(email)
+        session.pop('email', None)
+
+        utils.log_activity(
+            user_id=user.MaNguoiDung,
+            action='Reset password',
+            message=f"{user.HoTen} đã đổi mật khẩu"
+        )
+
+        flash('Đổi mật khẩu thành công!', 'success')
+        return redirect(url_for('main.login'))
+    return render_template('reset_password.html', email=email)
 
 
 @main.route('/alerts')

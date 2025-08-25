@@ -29,7 +29,7 @@ def add_address():
         return {'success': False}
 
 
-@user_api.route('address', methods=['PATCH'])
+@user_api.route('/address', methods=['PATCH'])
 def update_address():
     data = request.get_json()
     address_id = data.get('id')
@@ -62,10 +62,9 @@ def delete_address(address_id):
         return jsonify({'success': False})
 
 
-@user_api.route('/api/user/profile', methods=['POST'])
+@user_api.route('/profile', methods=['POST'])
 @login_required
 def update_profile():
-    # Lưu giá trị cũ
     old_name = current_user.HoTen
     old_email = current_user.Email
     old_phone = current_user.SoDienThoai
@@ -131,3 +130,34 @@ def update_profile():
         }
     else:
         return {'success': False, 'error': 'Cập nhật thất bại'}, 500
+
+
+
+@user_api.route('/change-password', methods=['GET', 'POST'])
+def change_password():
+    if request.method == 'POST':
+        old_password = request.form.get('old_password', '').strip()
+        new_password = request.form.get('new_password', '').strip()
+        confirm_password = request.form.get('confirm_password', '').strip()
+        if new_password != confirm_password:
+            return {"success": False, "error": "Mật khẩu xác nhận không khớp"}, 400
+
+        result = utils.change_password(
+            user_id=current_user.MaNguoiDung,
+            old_pass=old_password,
+            new_pass=new_password
+        )
+
+        if result is True:
+            utils.log_activity(
+                current_user.MaNguoiDung,
+                action='change_password',
+                message=f"User {current_user.MaNguoiDung} đổi mật khẩu"
+            )
+            return {"success": True, "message": "Đổi mật khẩu thành công"}, 200
+
+        if result == "wrong_old_password":
+            return {"success": False, "error": "Mật khẩu cũ không đúng"}, 401
+
+        return {"success": False, "error": "Có lỗi xảy ra, vui lòng thử lại"}, 500
+

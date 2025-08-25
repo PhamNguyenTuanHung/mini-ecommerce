@@ -9,6 +9,7 @@ from sqlalchemy import Float
 
 from mywebapp import db
 
+
 class Admin(db.Model):
     __tablename__ = 'Admins'
     __table_args__ = (
@@ -21,7 +22,8 @@ class Admin(db.Model):
     MatKhau: Mapped[str] = mapped_column(Unicode(255, 'Vietnamese_CI_AS'))
     Email: Mapped[Optional[str]] = mapped_column(Unicode(100, 'Vietnamese_CI_AS'))
 
-class User(db.Model,UserMixin):
+
+class User(db.Model, UserMixin):
     __tablename__ = 'Users'
     __table_args__ = (
         PrimaryKeyConstraint('MaNguoiDung', name='PK__Users__C539D7627230A36B'),
@@ -36,10 +38,12 @@ class User(db.Model,UserMixin):
     MatKhau: Mapped[str] = mapped_column(Unicode(255, 'Vietnamese_CI_AS'))
     SoDienThoai: Mapped[Optional[str]] = mapped_column(Unicode(20, 'Vietnamese_CI_AS'))
     NgayTao: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('(getdate())'))
-    AnhDaiDien: Mapped[Optional[str]] = mapped_column(Unicode(255, 'Vietnamese_CI_AS'),server_default=text("(N'unknown')"))
+    AnhDaiDien: Mapped[Optional[str]] = mapped_column(Unicode(255, 'Vietnamese_CI_AS'),
+                                                      server_default=text("(N'unknown')"))
     VaiTro: Mapped[Optional[str]] = mapped_column(Unicode(20, 'Vietnamese_CI_AS'), server_default=text("('Customer')"))
     KichHoat: Mapped[Optional[bool]] = mapped_column(Boolean, server_default=text('((1))'))
-    LanCuoiHoatDong: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime,server_default=text("CURRENT_TIMESTAMP"))
+    LanCuoiHoatDong: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime,
+                                                                         server_default=text("CURRENT_TIMESTAMP"))
 
     activity_logs: Mapped[List['ActivityLog']] = relationship('ActivityLog', back_populates='user')
     user_addresses: Mapped[List['UserAddress']] = relationship('UserAddress', back_populates='user')
@@ -49,26 +53,25 @@ class User(db.Model,UserMixin):
     wishlists: Mapped[List['Wishlist']] = relationship('Wishlist', back_populates='user')
     order_logs: Mapped[List['OrderLog']] = relationship('OrderLog', back_populates='user')
 
-
     def get_id(self):
         return str(self.MaNguoiDung)
 
 
 class ActivityLog(db.Model):
-        __tablename__ = 'ActivityLogs'
-        __table_args__ = (
-            ForeignKeyConstraint(['MaNguoiDung'], ['Users.MaNguoiDung'], name='FK__ActivityL__MaNgu__76969D2E'),
-            PrimaryKeyConstraint('MaNhatKy', name='PK__Activity__E42EF42E3A6451C9')
-        )
+    __tablename__ = 'ActivityLogs'
+    __table_args__ = (
+        ForeignKeyConstraint(['MaNguoiDung'], ['Users.MaNguoiDung'], name='FK__ActivityL__MaNgu__76969D2E'),
+        PrimaryKeyConstraint('MaNhatKy', name='PK__Activity__E42EF42E3A6451C9')
+    )
 
-        MaNhatKy: Mapped[int] = mapped_column(Integer, Identity(start=1, increment=1), primary_key=True)
-        MaNguoiDung: Mapped[Optional[int]] = mapped_column(Integer)
-        HanhDong: Mapped[Optional[str]] = mapped_column(Unicode(255, 'Vietnamese_CI_AS'))
-        MoTa: Mapped[Optional[str]] = mapped_column(Unicode(255, 'Vietnamese_CI_AS'))
-        DiaChiIP: Mapped[Optional[str]] = mapped_column(Unicode(50, 'Vietnamese_CI_AS'))  # ✔️ giữ lại
-        ThoiGian: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('(getdate())'))
+    MaNhatKy: Mapped[int] = mapped_column(Integer, Identity(start=1, increment=1), primary_key=True)
+    MaNguoiDung: Mapped[Optional[int]] = mapped_column(Integer)
+    HanhDong: Mapped[Optional[str]] = mapped_column(Unicode(255, 'Vietnamese_CI_AS'))
+    MoTa: Mapped[Optional[str]] = mapped_column(Unicode(255, 'Vietnamese_CI_AS'))
+    DiaChiIP: Mapped[Optional[str]] = mapped_column(Unicode(50, 'Vietnamese_CI_AS'))  # ✔️ giữ lại
+    ThoiGian: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('(getdate())'))
 
-        user: Mapped[Optional['User']] = relationship('User', back_populates='activity_logs')
+    user: Mapped[Optional['User']] = relationship('User', back_populates='activity_logs')
 
 
 class UserAddress(db.Model):
@@ -90,6 +93,7 @@ class UserAddress(db.Model):
     user: Mapped["User"] = relationship("User", back_populates="user_addresses")
     orders: Mapped[List["Order"]] = relationship("Order", back_populates="user_address")
 
+
 class Brand(db.Model):
     __tablename__ = 'Brands'
     __table_args__ = (
@@ -101,6 +105,7 @@ class Brand(db.Model):
 
     products: Mapped[List['Product']] = relationship('Product', back_populates='brand')
 
+
 class Category(db.Model):
     __tablename__ = 'Categories'
     __table_args__ = (
@@ -111,6 +116,7 @@ class Category(db.Model):
     TenDanhMuc: Mapped[str] = mapped_column(Unicode(100, 'Vietnamese_CI_AS'))
 
     products: Mapped[List['Product']] = relationship('Product', back_populates='category')
+
 
 class Product(db.Model):
     __tablename__ = 'Products'
@@ -128,7 +134,7 @@ class Product(db.Model):
     MaDanhMuc: Mapped[Optional[int]] = mapped_column(Integer)
     MaThuongHieu: Mapped[Optional[int]] = mapped_column(Integer)
     HinhAnh: Mapped[Optional[str]] = mapped_column(Unicode(255, 'Vietnamese_CI_AS'))
-    DiemDanhGia: Mapped[Optional[float]] = mapped_column( Float ,nullable=True )
+    DiemDanhGia: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
 
     brand: Mapped[Optional['Brand']] = relationship('Brand', back_populates='products')
     category: Mapped[Optional['Category']] = relationship('Category', back_populates='products')
@@ -140,9 +146,10 @@ class Product(db.Model):
     wishlists: Mapped[List['Wishlist']] = relationship('Wishlist', back_populates='product')
 
     def get_rating(self):
-        reviews =  Review.query.filter_by(MaSanPham=self.MaSanPham).all()
-        avg_rating = sum(reviews.DiemDanhGia)/len(reviews)
+        reviews = Review.query.filter_by(MaSanPham=self.MaSanPham).all()
+        avg_rating = sum(reviews.DiemDanhGia) / len(reviews)
         return avg_rating
+
 
 class ProductImage(db.Model):
     __tablename__ = 'ProductImages'
@@ -154,10 +161,9 @@ class ProductImage(db.Model):
     MaHinhAnh: Mapped[int] = mapped_column(Integer, Identity(start=1, increment=1), primary_key=True)
     DuongDan: Mapped[str] = mapped_column(Unicode(255, 'Vietnamese_CI_AS'))
     MaSanPham: Mapped[Optional[int]] = mapped_column(Integer)
-    LaChinh: Mapped[Optional[bool]] = mapped_column(Boolean, server_default=text('((0))'))
-    ThuTu: Mapped[Optional[int]] = mapped_column(Integer)
 
     product: Mapped[Optional['Product']] = relationship('Product', back_populates='product_images')
+
 
 class ProductVariant(db.Model):
     __tablename__ = 'ProductVariants'
@@ -172,6 +178,7 @@ class ProductVariant(db.Model):
     SoLuongTon: Mapped[int] = mapped_column(Integer, server_default=text('((0))'))
 
     product: Mapped[Optional['Product']] = relationship('Product', back_populates='product_variants')
+
 
 class Review(db.Model):
     __tablename__ = 'Reviews'
@@ -191,6 +198,7 @@ class Review(db.Model):
     user: Mapped[Optional['User']] = relationship('User', back_populates='reviews')
     product: Mapped[Optional['Product']] = relationship('Product', back_populates='reviews')
 
+
 class Wishlist(db.Model):
     __tablename__ = 'Wishlists'
     __table_args__ = (
@@ -207,6 +215,7 @@ class Wishlist(db.Model):
     user: Mapped[Optional['User']] = relationship('User', back_populates='wishlists')
     product: Mapped[Optional['Product']] = relationship('Product', back_populates='wishlists')
 
+
 class Cart(db.Model):
     __tablename__ = 'Carts'
     __table_args__ = (
@@ -220,6 +229,7 @@ class Cart(db.Model):
 
     user: Mapped[Optional['User']] = relationship('User', back_populates='carts')
     cart_items: Mapped[List['CartItem']] = relationship('CartItem', back_populates='cart')
+
 
 class CartItem(db.Model):
     __tablename__ = 'CartItems'
@@ -239,6 +249,7 @@ class CartItem(db.Model):
     cart: Mapped[Optional['Cart']] = relationship('Cart', back_populates='cart_items')
     product: Mapped[Optional['Product']] = relationship('Product', back_populates='cart_items')
 
+
 class Order(db.Model):
     __tablename__ = 'Orders'
     __table_args__ = (
@@ -252,7 +263,8 @@ class Order(db.Model):
     MaNguoiDung: Mapped[Optional[int]] = mapped_column(Integer)
     MaDiaChi: Mapped[Optional[int]] = mapped_column(Integer)
     NgayDat: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('(getdate())'))
-    TrangThai: Mapped[Optional[str]] = mapped_column(Unicode(50, 'Vietnamese_CI_AS'), server_default=text("(N'Pending')"))
+    TrangThai: Mapped[Optional[str]] = mapped_column(Unicode(50, 'Vietnamese_CI_AS'),
+                                                     server_default=text("(N'Pending')"))
     PhiVanChuyen: Mapped[Optional[decimal.Decimal]] = mapped_column(DECIMAL(10, 2), server_default=text('((0))'))
     GiamGia: Mapped[Optional[decimal.Decimal]] = mapped_column(DECIMAL(10, 2), server_default=text('((0))'))
 
@@ -263,6 +275,7 @@ class Order(db.Model):
     shipping_infos: Mapped[List['ShippingInfo']] = relationship('ShippingInfo', back_populates='order')
     user_address: Mapped[Optional["UserAddress"]] = relationship("UserAddress", back_populates="orders")
 
+
 class OrderLog(db.Model):
     __tablename__ = 'OrderLogs'
     __table_args__ = (
@@ -272,15 +285,15 @@ class OrderLog(db.Model):
     )
 
     LogID: Mapped[int] = mapped_column(Integer, Identity(start=1, increment=1), primary_key=True)
-    MaNguoiDung :Mapped[int] = mapped_column(Integer, nullable=False)
+    MaNguoiDung: Mapped[int] = mapped_column(Integer, nullable=False)
     MaDonHang: Mapped[int] = mapped_column(Integer, nullable=False)
     HanhDong: Mapped[str] = mapped_column(Unicode(100, 'Vietnamese_CI_AS'), nullable=False)
-    MoTa: Mapped[Optional[str]] = mapped_column(Unicode(100,'Vietnamese_CI_AS'))
+    MoTa: Mapped[Optional[str]] = mapped_column(Unicode(100, 'Vietnamese_CI_AS'))
     ThoiGian: Mapped[datetime.datetime] = mapped_column(DateTime, server_default=text('(getdate())'))
-
 
     order: Mapped['Order'] = relationship('Order', back_populates='order_logs')
     user: Mapped[Optional['User']] = relationship('User', back_populates='order_logs')
+
 
 class PendingOrder(db.Model):
     __tablename__ = 'PendingOrders'
@@ -296,6 +309,7 @@ class PendingOrder(db.Model):
     NgayTao: Mapped[datetime.datetime] = mapped_column(DateTime, server_default=text('(getdate())'))
 
     user: Mapped[Optional['User']] = relationship('User')
+
 
 class OrderDetail(db.Model):
     __tablename__ = 'OrderDetails'
@@ -347,10 +361,12 @@ class ShippingInfo(db.Model):
     TenNguoiNhan: Mapped[Optional[str]] = mapped_column(Unicode(100, 'Vietnamese_CI_AS'))
     SoDienThoai: Mapped[Optional[str]] = mapped_column(Unicode(20, 'Vietnamese_CI_AS'))
     DiaChi: Mapped[Optional[str]] = mapped_column(Unicode(collation='Vietnamese_CI_AS'))
-    TrangThaiVanChuyen: Mapped[Optional[str]] = mapped_column(Unicode(50, 'Vietnamese_CI_AS'), server_default=text("(N'Chờ giao')"))
+    TrangThaiVanChuyen: Mapped[Optional[str]] = mapped_column(Unicode(50, 'Vietnamese_CI_AS'),
+                                                              server_default=text("(N'Chờ giao')"))
     NgayGiao: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
 
     order: Mapped[Optional['Order']] = relationship('Order', back_populates='shipping_infos')
+
 
 class Coupon(db.Model):
     __tablename__ = 'Coupons'
@@ -379,11 +395,22 @@ class Sysdiagram(db.Model):
     definition: Mapped[Optional[bytes]] = mapped_column(LargeBinary)
 
 
+from datetime import datetime, timedelta
 
 
+class OTP(db.Model):
+    __tablename__ = 'otp'
 
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), nullable=False, index=True)
+    code = db.Column(db.String(6), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False)
 
+    def is_expired(self):
+        return datetime.utcnow() > self.expires_at
 
-
+    def __repr__(self):
+        return f"<OTP {self.code} cho {self.email} hết hạn {self.expires_at}>"
 
 

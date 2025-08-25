@@ -41,6 +41,7 @@ document.addEventListener('alpine:init', () => {
                 })
                     .then(response => response.json())
                     .then(data => {
+                        console.log(123);
                         this.products = data.products;
                         this.salesData = data.sales_data;
                         this.topSellerData = this.getTopSellers(7);
@@ -587,6 +588,7 @@ document.addEventListener('alpine:init', () => {
             description: '',
             variants: [],
             image_url: null,
+            galleryImages: [],
             imagePre: null
         },
 
@@ -609,6 +611,12 @@ document.addEventListener('alpine:init', () => {
                     size: v.size,
                     stock: v.stock
                 }));
+                if (product.gallery_images && product.gallery_images.length > 0) {
+                    this.form.galleryImages = product.gallery_images.map(url => ({
+                        file: null,
+                        url: url
+                    }));
+                }
 
             }
             const modal = new bootstrap.Modal(document.getElementById('productModal'));
@@ -625,7 +633,8 @@ document.addEventListener('alpine:init', () => {
                 description: '',
                 variants: [],
                 image_url: null,
-                imagePre: null
+                imagePre: null,
+                galleryImages: []
             };
             this.productId = null;
             this.originalImg = null;
@@ -668,6 +677,10 @@ document.addEventListener('alpine:init', () => {
                 formData.append('image_url', this.form.image_url);
             }
 
+            this.form.galleryImages.forEach((img) => {
+                if (img.file) formData.append('gallery_images', img.file);
+            });
+
             const url = this.editMode
                 ? `/admin/api/products/${this.productId}`
                 : `/admin/api/products`;
@@ -683,12 +696,10 @@ document.addEventListener('alpine:init', () => {
                             title: this.editMode ? 'Cập nhật thành công!' : 'Đã thêm sản phẩm!',
                             icon: 'success'
                         });
-
                         this.resetForm();
-
                         const productTable = Alpine.store('productTableStore');
-                        if (productTable && typeof productTable.loadDataProduct === 'function') {
-                            productTable.loadDataProduct();
+                        if (productTable) {
+                            productTable.loadDataProducts();
                         }
                     } else {
                         Swal.fire({

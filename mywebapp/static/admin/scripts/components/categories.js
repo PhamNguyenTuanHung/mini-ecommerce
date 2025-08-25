@@ -442,7 +442,7 @@ document.addEventListener('alpine:init', () => {
             const formData = new FormData();
             formData.append('name', this.form.name);
 
-            const url = this.editMode
+            const url = this.mode==='edit'
                 ? `/admin/api/categories/${this.categoryId}`
                 : `/admin/api/categories`;
 
@@ -454,7 +454,7 @@ document.addEventListener('alpine:init', () => {
                 .then(data => {
                     if (data.success) {
                         Swal.fire({
-                            title: this.editMode ? 'Cập nhật thành công!' : 'Đã thêm danh mục!',
+                            title: this.mode ==='edit' ? 'Cập nhật thành công!' : 'Đã thêm danh mục!',
                             icon: 'success'
                         });
 

@@ -288,7 +288,7 @@ function createOrderFromCheckout() {
 
     // Nếu là thanh toán online (MOMO, ZaloPay,...)
     else {
-        fetch('user/api/orders/checkout', {
+        fetch('user/api/payments/momo/init', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
