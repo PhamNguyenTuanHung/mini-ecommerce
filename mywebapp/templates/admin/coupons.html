@@ -1,0 +1,241 @@
+{% extends 'admin/layout/base.html' %}
+{% block title %} Mã giảm giá {%endblock%}
+<!-- Main Content -->
+{% block content %}
+<main class="admin-main">
+    <div class="container-fluid p-4 p-lg-5">
+
+        <!-- Page Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4 mb-lg-5">
+            <div>
+                <h1 class="h3 mb-0">Quản lý mã giảm giá</h1>
+                <p class="text-muted mb-0"></p>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-secondary" @click="exportCoupon()">
+                    <i class="bi bi-download me-2"></i>Xuất danh sách mã giảm giá
+                </button>
+
+                <div>
+                    <button type="button" class="btn btn-primary"
+                            x-data="couponForm"
+                            @click="$store.couponFormStore.openModal('add',null)">
+                        <i class="bi bi-plus-lg me-2"></i>Thêm mã giảm giá
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- category Management Container -->
+        <div x-data="couponTable">
+            <!-- Coupon Table -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="card-title mb-0">Quản lý mã giảm giá</h5>
+                        </div>
+                        <div class="col-auto">
+                            <div class="d-flex gap-2">
+                                <!-- Search -->
+                                <div class="position-relative">
+                                    <input type="search" class="form-control form-control-sm"
+                                           placeholder="Tìm kiếm mã giảm giá..." x-model="searchQuery"
+                                           @input="filterCoupons()" style="width: 200px;">
+                                    <i class="bi bi-search position-absolute top-50 end-0 translate-middle-y me-2 text-muted"></i>
+                                </div>
+
+                                <!-- Loại giảm giá -->
+                                <select class="form-select form-select-sm" x-model="discountTypeFilter"
+                                        @change="filterCoupons()" style="width: 150px;">
+                                    <option value="">Tất cả loại</option>
+                                    <option value="percent">Giảm theo %</option>
+                                    <option value="fixed">Giảm theo số tiền</option>
+                                </select>
+
+                                <!-- Trạng thái -->
+                                <select class="form-select form-select-sm" x-model="statusFilter"
+                                        @change="filterCoupons()" style="width: 150px;">
+                                    <option value="">Tất cả trạng thái</option>
+                                    <option value="active">Đang hoạt động</option>
+                                    <option value="expired">Hết hạn</option>
+                                    <option value="scheduled">Chưa bắt đầu</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Bulk Actions Bar -->
+                    <div class="bulk-actions-bar p-3 bg-light border-bottom" x-show="selectedCoupons.length > 0"
+                         x-transition>
+                        <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted">
+                        <span x-text="selectedCoupons.length"></span> mã được chọn
+                    </span>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-secondary" @click="bulkAction('activate')">
+                                    <i class="bi bi-check-circle me-1"></i>Kích hoạt
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" @click="bulkAction('deactivate')">
+                                    <i class="bi bi-slash-circle me-1"></i>Ngừng
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" @click="bulkAction('delete')">
+                                    <i class="bi bi-trash me-1"></i>Xóa
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th style="width: 40px;">
+                                    <input type="checkbox"
+                                           class="form-check-input"
+                                           @change="toggleAll($event.target.checked)"
+                                           :checked="selectedCoupons.length === filteredCoupons.length && filteredCoupons.length > 0">
+                                </th>
+                                <th>Mã giảm giá</th>
+                                <th @click="sortBy('code')" class="sortable">Mã Code</th>
+                                <th @click="sortBy('discount')" class="sortable">Giảm giá</th>
+                                <th>Mô tả</th>
+                                <th @click="sortBy('expiry')" class="sortable">Ngày hết hạn</th>
+                                <th style="width: 120px;">Thao tác</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <template x-for="coupon in paginatedCoupons" :key="coupon.id">
+                                <tr>
+                                    <td>
+                                        <input type="checkbox"
+                                               class="form-check-input"
+                                               :value="coupon.id"
+                                               x-model="selectedCoupons">
+                                    </td>
+                                    <td x-text="coupon.id"></td>
+                                    <td x-text="coupon.code"></td>
+                                    <td x-text="coupon.discount + '%'"></td>
+                                    <td x-text="coupon.description">
+                                    <td x-text="coupon.expiry_date"></td>
+                                    </td>
+                                    <td class="position-relative">
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary"
+                                                    type="button"
+                                                    data-bs-toggle="dropdown"
+                                                    data-bs-display="static"
+                                                    aria-expanded="false">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end">
+                                                <li><a class="dropdown-item" href="#"
+                                                       @click.prevent="editCoupon(coupon)">✏️ Sửa</a></li>
+                                                <li>
+                                                    <hr class="dropdown-divider">
+                                                </li>
+                                                <li><a class="dropdown-item text-danger" href="#"
+                                                       @click.prevent="deleteCoupon(coupon)">🗑 Xóa</a></li>
+                                            </ul>
+                                        </div>
+                                    </td>
+
+                                </tr>
+                            </template>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="d-flex justify-content-between align-items-center p-3">
+                        <div class="text-muted">
+                            Hiển thị <span x-text="(currentPage - 1) * itemsPerPage + 1"></span> đến
+                            <span x-text="Math.min(currentPage * itemsPerPage, filteredCoupons.length)"></span>
+                            trong tổng <span x-text="filteredCoupons.length"></span> kết quả
+                        </div>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0">
+                                <li class="page-item" :class="{ 'disabled': currentPage === 1 }">
+                                    <a class="page-link" href="#"
+                                       @click.prevent="goToPage(currentPage - 1)">Trước</a>
+                                </li>
+                                <template x-for="(page, index) in visiblePages" :key="`page-${index}`">
+                                    <li class="page-item" :class="{ 'active': page === currentPage }">
+                                        <a class="page-link" href="#"
+                                           @click.prevent="page !== '...' && goToPage(page)"
+                                           x-text="page"></a>
+                                    </li>
+                                </template>
+                                <li class="page-item" :class="{ 'disabled': currentPage === totalPages }">
+                                    <a class="page-link" href="#"
+                                       @click.prevent="goToPage(currentPage + 1)">Tiếp</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div> <!-- End Coupon Management Container -->
+
+
+    </div>
+</main>
+{%endblock%}
+{% block Modal %}
+<!-- category Modal (Add/Edit) -->
+<div class="modal fade" id="couponModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thông tin mã giảm giá</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body" x-data="couponForm">
+                <div class="tab-content">
+                    <!-- Thông tin sản phẩm -->
+                    <div class="tab-pane fade show active">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">Mã giảm</label>
+                                <input type="text" class="form-control" x-model="form.code" required>
+                            </div>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">Phần trăm giảm</label>
+                                <input type="number" class="form-control" x-model="form.discount" required>
+                            </div>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">Mô tả</label>
+                                <input type="text" class="form-control" x-model="form.description" required>
+                            </div>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">Ngày hết hạn</label>
+                                <input type="date" class="form-control" x-model="form.expiry_date" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-primary"
+                            @click="saveCoupon"
+                            x-text="mode === 'view' ? 'Sửa' : (mode === 'add' ? 'Thêm' : 'Lưu thay đổi')">
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,15 +1,42 @@
 # user/api/products.py
-import uuid
-from datetime import datetime
-from flask import jsonify, request, session, url_for
-from flask_login import login_required, current_user
+
+from flask import jsonify, request
 from mywebapp.user.api import user_api
 from mywebapp import utils
 
 
 @user_api.route('/products', methods=['GET'])
 def get_products():
-    products = utils.get_products()
+    cate_id = request.args.get("cate_id")
+    brand_id = request.args.get("brand_id")
+    kw = request.args.get("kw")
+    page = request.args.get("page", default=1, type=int)
+    sort_by = request.args.get("sort_by")
+
+    data = utils.load_products(
+        cate_id=cate_id,
+        brand_id=brand_id,
+        kw=kw,
+        page=page,
+        sort_by=sort_by
+    )
+    return jsonify(data)
+
+
+@user_api.route('/products/best-sellers')
+def get_best_sellers():
+    products = utils.get_best_sellers()
+    return jsonify(products)
+
+
+@user_api.route('/products/newest')
+def get_newest():
+    products = utils.get_newest_products()
+    return jsonify(products)
+
+@user_api.route('/products/best-rated')
+def get_best_rated():
+    products = utils.get_best_rated()
     return jsonify(products)
 
 
@@ -35,4 +62,3 @@ def get_brands():
     return jsonify([
         {'name': b.TenThuongHieu, 'id': b.MaThuongHieu} for b in brands
     ])
-

@@ -6,3 +6,4 @@ from . import products
 from . import orders
 from . import user_info
 from . import carts
+from . import checkout

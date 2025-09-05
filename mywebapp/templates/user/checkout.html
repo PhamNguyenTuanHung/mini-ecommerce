@@ -1,6 +1,8 @@
 {% extends 'user/layout/base.html' %}
 {% block title %} Trang chủ {% endblock %}
 {% block content %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet"/>
+
 
 <div class="page-wrapper">
     <div class="checkout shopping">
@@ -8,7 +10,7 @@
             <div class="row">
                 <div class="col-md-8">
                     <div class="block billing-details">
-                        <h4 class="widget-title">Billing Details</h4>
+                        <h4 class="widget-title">Thông tin người nhận</h4>
                         <form class="checkout-form">
                             <div class="form-group">
                                 <select id="saved_address" onchange="changeAddress(this)" class="form-control">
@@ -26,17 +28,17 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="full_name">Full Name</label>
+                                <label for="full_name">Tên người nhận</label>
                                 <input type="text" class="form-control" id="full_name" placeholder="">
                             </div>
 
                             <div class="form-group">
-                                <label for="user_address">Address</label>
+                                <label for="user_address">Địa chỉ</label>
                                 <input type="text" class="form-control" id="user_address" placeholder="">
                             </div>
 
                             <div class="form-group">
-                                <label for="user_phone">SDT</label>
+                                <label for="user_phone">Số điện thoại</label>
                                 <input type="text" class="form-control" id="user_phone" name="phone" value="">
                             </div>
 
@@ -59,8 +61,7 @@
                                 <div class="card-details">
                                     <form class="checkout-form">
                                         <a href="javascript:void(0);" class="btn btn-main mt-20"
-                                           onclick="createOrderFromCheckout()">Place
-                                            Order</a>
+                                           onclick="createOrderFromCheckout()">Đặt hàng</a>
                                     </form>
                                 </div>
                             </div>
@@ -70,7 +71,7 @@
                 <div class="col-md-4">
                     <div class="product-checkout-details">
                         <div class="block">
-                            <h4 class="widget-title">Order Summary</h4>
+                            <h4 class="widget-title">Đơn hàng</h4>
                             {% for item in cart_items %}
                             <div class="media product-card"
                                  data-key="{{ item.get('key') }}"
@@ -97,30 +98,43 @@
                                         }}</p>
                                     <p class="price">{{ item.get('color') }} - {{ item.get('size') }}</p>
                                     <span class="remove"
-                                          onclick="removeFromCheckout(this, '{{ item.get('key') }}')">Remove</span>
+                                          onclick="removeFromCheckout(this, '{{ item.get('key') }}')">Xóa</span>
                                 </div>
                             </div>
                             {% endfor %}
 
                             <div class="discount-code">
-                                <p>Have a discount ? <a data-toggle="modal" data-target="#coupon-modal" href="#">enter
-                                    it here</a></p>
+                                <select id="discount-select" class="form-control" style="width:100%;">
+                                    <option value="">-- Chọn voucher --</option>
+                                    {% for voucher in vouchers %}
+                                    <option value="{{ voucher.id }}" data-percent="{{ voucher.discount_per }}">
+                                        {{ voucher.id }} - {{ voucher.description }} ({{ voucher.discount_per }}%)
+                                    </option>
+                                    {% endfor %}
+                                </select>
+
+                                <p id="applied-voucher" class="text-success mt-2" style="display:none;">
+                                    Đã áp dụng mã: <span></span>
+                                </p>
+
+
                             </div>
+
 
                             <ul class="summary-prices">
                                 <li>
-                                    <span>Subtotal:</span>
+                                    <span>Giá tiền:</span>
                                     <span class="price"
                                           id="subtotal">{{ "{:,.0f}".format(cart_summary.total_amount) }}</span>
                                 </li>
                                 <li>
-                                    <span>Shipping:</span>
-                                    <span>Free</span>
+                                    <span>Phí vận chuyển:</span>
+                                    <span>Miễn phí</span>
                                 </li>
                             </ul>
 
                             <div class="summary-total">
-                                <span>Total</span>
+                                <span>Tổng đơn hàng</span>
                                 <span id="total">{{ "{:,.0f}".format(cart_summary.total_amount) }}</span>
                             </div>
 
@@ -131,20 +145,9 @@
         </div>
     </div>
 </div>
-<!-- Modal -->
-<div class="modal fade" id="coupon-modal" tabhome="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-body">
-                <form>
-                    <div class="form-group">
-                        <input class="form-control" type="text" placeholder="Enter Coupon Code">
-                    </div>
-                    <button type="submit" class="btn btn-main">Apply Coupon</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+
+
+
+
 
 {% endblock %}

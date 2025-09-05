@@ -5,37 +5,43 @@
                 <li class="nav-item">
                     <a class="nav-link {% if page_name == 'dashboard' %}active{% endif %}" href="{{ url_for('admin.dashboard') }}">
                         <i class="bi bi-speedometer2"></i>
-                        <span>Dashboard</span>
+                        <span>Tổng quan</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link {% if page_name == 'analytics' %}active{% endif %}" href="{{ url_for('admin.analytics') }}">
                         <i class="bi bi-graph-up"></i>
-                        <span>Analytics</span>
+                        <span>Phân tích</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link {% if page_name == 'users' %}active{% endif %}" href="{{ url_for('admin.users') }}">
                         <i class="bi bi-people"></i>
-                        <span>Users</span>
+                        <span>Người dùng</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link {% if page_name == 'products' %}active{% endif %}" href="{{ url_for('admin.products') }}">
                         <i class="bi bi-box"></i>
-                        <span>Products</span>
+                        <span>Sản phẩm</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link {% if page_name == 'orders' %}active{% endif %}" href="{{ url_for('admin.orders') }}">
                         <i class="bi bi-bag-check"></i>
-                        <span>Orders</span>
+                        <span>Đơn hàng</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link {% if page_name == 'categories' %}active{% endif %}" href="{{ url_for('admin.categories') }}">
                         <i class="bi bi-list"></i>
-                        <span>Categories</span>
+                        <span>Danh mục</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if page_name == 'brands' %}active{% endif %}" href="{{ url_for('admin.brands') }}">
+                        <i class="bi bi-file-earmark-text"></i>
+                        <span>Thương hiệu</span>
                     </a>
                 </li>
 
@@ -100,11 +106,17 @@
 <!--                        </ul>-->
 <!--                    </div>-->
 <!--                </li>-->
+                <li class="nav-item">
+                    <a class="nav-link {% if page_name == 'coupons' %}active{% endif %}" href="{{ url_for('admin.coupons') }}">
+                        <i class="bi bi-file-earmark-text"></i>
+                        <span>Mã giảm giá</span>
+                    </a>
+                </li>
 
                 <li class="nav-item">
                     <a class="nav-link {% if page_name == 'reports' %}active{% endif %}" href="{{ url_for('admin.reports') }}">
                         <i class="bi bi-file-earmark-text"></i>
-                        <span>Reports</span>
+                        <span>Báo cáo</span>
                     </a>
                 </li>
 <!--                <li class="nav-item">-->

@@ -123,6 +123,12 @@ class AdminApp {
             case 'categories':
                 await this.initCategoriesPage();
                 break;
+            case 'coupons':
+                await this.initCouponsPage();
+                break;
+            case 'brands':
+                await this.initBrandsPage();
+                break;
             case 'dashboard':
                 await this.initDashBoardPage();
                 break;
@@ -226,9 +232,24 @@ class AdminApp {
         }
     }
 
+    async initBrandsPage() {
+        try {
+            await import('./components/brands.js');
+        } catch (error) {
+            console.error('Failed to load orders page script:', error);
+        }
+    }
+
     async initReportsPage() {
         try {
             await import('./components/reports.js');
+        } catch (error) {
+            console.error('Failed to load reports page script:', error);
+        }
+    }
+    async initCouponsPage() {
+        try {
+            await import('./components/coupons.js');
         } catch (error) {
             console.error('Failed to load reports page script:', error);
         }

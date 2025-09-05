@@ -1,13 +1,13 @@
+import math
 import random
 from datetime import datetime, timedelta
 import requests
 from sqlalchemy import func, false, desc
 from flask import current_app, session, request
-from unicodedata import category
 from werkzeug.security import check_password_hash, generate_password_hash
 from mywebapp import db
 from mywebapp.models import Product, Category, Brand, CartItem, Cart, User, ProductVariant, Order, OrderDetail, Payment, \
-    ShippingInfo, UserAddress, ProductImage, ActivityLog, OrderLog, Review, Admin, OTP
+    ShippingInfo, UserAddress, ProductImage, ActivityLog, OrderLog, Review, Admin, OTP, AdminLog, Coupon, UserCoupon
 from decimal import Decimal
 from sqlalchemy import or_
 from sqlalchemy.orm import joinedload
@@ -15,7 +15,7 @@ from humanize import naturaltime
 import hmac, hashlib, uuid
 
 
-#Category
+# Category
 def get_categories(product_id=None, quantity=None):
     q = db.session.query(
         Category.MaDanhMuc,
@@ -101,14 +101,64 @@ def delete_category(category_id):
     return True
 
 
+# Brand
 
-#Brand
+def get_brands_summary():
+    rows = (
+        db.session.query(
+            Brand.MaThuongHieu,
+            Brand.TenThuongHieu,
+            func.coalesce(func.sum(OrderDetail.DonGia * OrderDetail.SoLuong), 0).label('revenue')
+        )
+        .outerjoin(Product, Product.MaThuongHieu == Brand.MaThuongHieu)
+        .outerjoin(OrderDetail, OrderDetail.MaSanPham == Product.MaSanPham)
+        .group_by(Brand.MaThuongHieu, Brand.TenThuongHieu)
+        .all()
+    )
+
+    return [
+        {'id': brand_id, 'name': name, 'revenue': revenue or 0}
+        for brand_id, name, revenue in rows
+    ]
+
 def get_brands():
-    return Brand.query.all()
+    brands = Brand.query.all()
+    return [
+        {
+            "id": brand.MaThuongHieu,
+            "name": brand.TenThuongHieu,
+        }
+        for brand in brands
+    ]
 
-#Product
-def load_products(cate_id=None, brand_id=None, kw=None, from_price=None, to_price=None, page=1):
-    query = db.session.query(Product)
+def delete_brand(brand_id):
+    brand = db.session.query(Brand).get(brand_id)
+    if brand:
+        db.session.delete(brand)
+        db.session.commit()
+        return True
+    return False
+
+def update_brand(brand_id, name):
+    brand = db.session.query(Brand).get(brand_id)
+    if brand:
+        brand.TenThuongHieu = name
+        db.session.commit()
+        return True
+    return False
+
+# Product
+
+def load_products(cate_id=None, brand_id=None, kw=None, page=1, sort_by=None):
+    query = db.session.query(Product).options(
+        joinedload(Product.brand),
+        joinedload(Product.category)
+    )
+
+    sales_data = dict(db.session.query(
+        OrderDetail.MaSanPham,
+        func.sum(OrderDetail.SoLuong)
+    ).group_by(OrderDetail.MaSanPham).all())
 
     if cate_id:
         query = query.filter(Product.MaDanhMuc == cate_id)
@@ -119,19 +169,49 @@ def load_products(cate_id=None, brand_id=None, kw=None, from_price=None, to_pric
     if kw:
         query = query.filter(Product.TenSanPham.ilike(f"%{kw}%"))
 
-    if from_price is not None:
-        query = query.filter(Product.Gia >= from_price)
+    if sort_by == "priceLowHigh":
+        query = query.order_by(Product.Gia.asc())
+    elif sort_by == "priceHighLow":
+        query = query.order_by(Product.Gia.desc())
+    elif sort_by == "newest":
+        query = query.order_by(Product.MaSanPham.desc())
+    else:
+        query = query.order_by(Product.TenSanPham.asc())
 
-    if to_price is not None:
-        query = query.filter(Product.Gia <= to_price)
+    page_size = current_app.config.get('PAGE_SIZE', 12)
+    total_items = query.count()
+    total_pages = math.ceil(total_items / page_size) if total_items > 0 else 1
 
-    page_size = current_app.config.get('PAGE_SIZE', 10)
-    start = (page - 1) * page_size
-    end = start + page_size
+    items = query.offset((page - 1) * page_size).limit(page_size).all()
 
-    query = query.order_by(Product.TenSanPham)
+    products = []
+    for item in items:
+        products.append({
+            'id': item.MaSanPham,
+            'name': item.TenSanPham,
+            'price': item.Gia,
+            'image': item.HinhAnh,
+            'description': item.MoTa,
+            'brand': {
+                'id': item.brand.MaThuongHieu,
+                'name': item.brand.TenThuongHieu
+            } if item.brand else None,
+            'category': {
+                'id': item.category.MaDanhMuc,
+                'name': item.category.TenDanhMuc
+            } if item.category else None,
+            'rating': item.DiemDanhGia,
+        })
 
-    return query.slice(start, end).all()
+    if sort_by == "bestseller":
+        query.sort(key=lambda p: p["quantity_sold"], reverse=True)
+
+    return {
+        "products": products,
+        "total_items": total_items,
+        "total_pages": total_pages,
+        "current_page": page
+    }
 
 
 def get_gallery(product_id):
@@ -273,6 +353,159 @@ def get_all_sales():
         for row in rows
     ]
     return result
+
+
+def get_product_by_id(product_id):
+    product = Product.query.get(product_id)
+    return {
+        'id': product.MaSanPham,
+        'name': product.TenSanPham,
+        'price': product.Gia,
+        'image': product.HinhAnh,
+        'description': product.MoTa,
+        'brand': {
+            'id': product.brand.MaThuongHieu,
+            'name': product.brand.TenThuongHieu
+        },
+        'category': {
+            'id': product.category.MaDanhMuc,
+            'name': product.category.TenDanhMuc
+        },
+        'rating': get_average_rating(product=product),
+    }
+
+
+def get_sizes_and_colors_by_product_id(product_id):
+    variants = ProductVariant.query.filter_by(MaSanPham=product_id).all()
+
+    sizes = sorted(set(v.KichThuoc for v in variants))
+    colors = sorted(set(v.MauSac for v in variants))
+
+    return {
+        'sizes': sizes,
+        'colors': colors
+    }
+
+
+def count_stock_product(product_id, size=None, color=None):
+    query = ProductVariant.query.filter_by(MaSanPham=product_id)
+    if size:
+        query = query.filter(ProductVariant.KichThuoc == size.strip())
+    if color:
+        query = query.filter(ProductVariant.MauSac == color.strip())
+
+    variant = query.first()
+    return variant.SoLuongTon if variant else 0
+
+
+def get_best_sellers(limit=4):
+    sales_subq = (
+        db.session.query(
+            OrderDetail.MaSanPham,
+            func.sum(OrderDetail.SoLuong).label("quantity_sold")
+        )
+        .group_by(OrderDetail.MaSanPham)
+        .subquery()
+    )
+    query = (
+        db.session.query(
+            Product,
+            func.coalesce(sales_subq.c.quantity_sold, 0).label("quantity_sold")
+        )
+        .outerjoin(sales_subq, Product.MaSanPham == sales_subq.c.MaSanPham)
+        .order_by(func.coalesce(sales_subq.c.quantity_sold, 0).desc())
+        .limit(limit)
+    )
+
+    results = []
+    for product, quantity_sold in query.all():
+        results.append({
+            'id': product.MaSanPham,
+            'name': product.TenSanPham,
+            'price': product.Gia,
+            'image': product.HinhAnh,
+            'description': product.MoTa,
+            'brand': {
+                'id': product.brand.MaThuongHieu,
+                'name': product.brand.TenThuongHieu
+            },
+            'category': {
+                'id': product.category.MaDanhMuc,
+                'name': product.category.TenDanhMuc
+            },
+            'rating': product.DiemDanhGia,
+            'quantity_sold': quantity_sold
+        })
+    return results
+
+
+def get_best_rated(limit=4):
+    query = (
+        Product.query
+        .order_by(Product.DiemDanhGia.desc())
+        .limit(limit)
+        .all()
+    )
+
+    results = []
+    for product in query:
+        results.append({
+            'id': product.MaSanPham,
+            'name': product.TenSanPham,
+            'price': product.Gia,
+            'image': product.HinhAnh,
+            'description': product.MoTa,
+            'brand': {
+                'id': product.brand.MaThuongHieu,
+                'name': product.brand.TenThuongHieu
+            },
+            'category': {
+                'id': product.category.MaDanhMuc,
+                'name': product.category.TenDanhMuc
+            },
+            'rating': get_average_rating(product=product)
+        })
+    return results
+
+
+def get_newest_products(limit=4):
+    query = (
+        Product.query
+        .order_by(Product.MaSanPham.desc())
+        .limit(limit)
+        .all()
+    )
+
+    results = []
+    for product in query:
+        results.append({
+            'id': product.MaSanPham,
+            'name': product.TenSanPham,
+            'price': product.Gia,
+            'image': product.HinhAnh,
+            'description': product.MoTa,
+            'brand': {
+                'id': product.brand.MaThuongHieu,
+                'name': product.brand.TenThuongHieu
+            },
+            'category': {
+                'id': product.category.MaDanhMuc,
+                'name': product.category.TenDanhMuc
+            },
+            'rating': product.DiemDanhGia,
+        })
+    return results
+
+
+def get_average_rating(product):
+    reviews = product.reviews
+    if not reviews:
+        return 0
+
+    score = sum(review.DiemDanhGia for review in reviews)
+    avg_rating = score / len(reviews)
+
+    return round(avg_rating, 2)
 
 
 def delete_product_by_id(product_id):
@@ -714,33 +947,8 @@ def get_user_by_id(user_id):
 def get_status_user_by_id(user_id):
     user = get_user_detail_by_id(user_id)
 
-def get_product_by_id(id):
-    return Product.query.filter_by(MaSanPham=id).first()
 
-
-def get_sizes_and_colors_by_product_id(product_id):
-    variants = ProductVariant.query.filter_by(MaSanPham=product_id).all()
-
-    sizes = sorted(set(v.KichThuoc for v in variants))
-    colors = sorted(set(v.MauSac for v in variants))
-
-    return {
-        'sizes': sizes,
-        'colors': colors
-    }
-
-
-def count_stock_product(product_id, size=None, color=None):
-    query = ProductVariant.query.filter_by(MaSanPham=product_id)
-    if size:
-        query = query.filter(ProductVariant.KichThuoc == size.strip())
-    if color:
-        query = query.filter(ProductVariant.MauSac == color.strip())
-
-    variant = query.first()
-    return variant.SoLuongTon if variant else 0
-
-#Cart
+# Cart
 def get_cart(user_id=None, key=None):
     cart_dict = {}
 
@@ -917,7 +1125,8 @@ def save_cart(user_id: int, cart: dict):
 
     db.session.commit()
 
-#Order
+
+# Order
 def get_orders_by_user_id(user_id):
     orders = Order.query.options(
         joinedload(Order.user),
@@ -1155,8 +1364,8 @@ def update_order(order_id, status):
         return {"success": False, "message": "Đơn hàng không tồn tại"}, 404
 
     order.TrangThai = status
-    if status=='delivered':
-        order.payment.TrangThaiThanhToan='Đã thanh toán'
+    if status == 'delivered':
+        order.payment.TrangThaiThanhToan = 'Đã thanh toán'
     db.session.commit()
     return {"success": True}
 
@@ -1178,10 +1387,11 @@ def generate_momo_payment_url(order_id, amount):
     secret_key = "K951B6PE1waDMi640xX08PD3vg6EkVlz"
     endpoint = "https://test-payment.momo.vn/v2/gateway/api/create"
 
+    ngrok = ""
     request_id = str(uuid.uuid4())
     order_info = "Thanh toán đơn hàng MoMo"
-    redirect_url = "https://0423eace85b6.ngrok-free.app/payment/return"
-    ipn_url = "https://0423eace85b6.ngrok-free.app/user/api/payment/ipn"
+    redirect_url = f"{ngrok}/payment/return"
+    ipn_url = f"{ngrok}/user/api/payment/ipn"
     request_type = "captureWallet"
     extra_data = ""  # Có thể để thông tin thêm nếu cần
 
@@ -1224,11 +1434,21 @@ def generate_momo_payment_url(order_id, amount):
         raise Exception(f"Lỗi tạo link MoMo: {result}")
 
 
-
-#Log activity
+# Log activity
 def log_activity(user_id: int, action: str, message: str = ''):
     log = ActivityLog(
         MaNguoiDung=user_id,
+        HanhDong=action,
+        MoTa=(f" | {message}" if message else ''),
+        ThoiGian=datetime.now()
+    )
+    db.session.add(log)
+    db.session.commit()
+
+
+def admin_log_activity(admin_id: int, action: str, message: str = ''):
+    log = AdminLog(
+        MaAdmin=admin_id,
         HanhDong=action,
         MoTa=(f" | {message}" if message else ''),
         ThoiGian=datetime.now()
@@ -1262,6 +1482,21 @@ def get_activity_logs():
         results.append({
             'id': log.MaNhatKy,
             'user': log.user.HoTen,
+            'action': log.HanhDong or '',
+            'time': naturaltime(datetime.now() - log.ThoiGian) if log.ThoiGian else '',
+            'type': extract_action_type(log.HanhDong),
+            'details': log.MoTa or ''
+        })
+    return results
+
+
+def get_admin_activity_logs():
+    logs = ActivityLog.query.order_by(ActivityLog.ThoiGian.desc()).limit(10).all()
+    results = []
+    for log in logs:
+        results.append({
+            'id': log.MaNhatKy,
+            'admin': log.admin.HoTen,
             'action': log.HanhDong or '',
             'time': naturaltime(datetime.now() - log.ThoiGian) if log.ThoiGian else '',
             'type': extract_action_type(log.HanhDong),
@@ -1317,7 +1552,19 @@ def get_system_logs(limit=10):
     for log in user_logs:
         results.append({
             'id': log.MaNhatKy,
-            'user': log.user.HoTen if log.user else 'System',
+            'name': log.user.HoTen if log.user else 'System',
+            'order': None,
+            'action': log.HanhDong or '',
+            'time': log.ThoiGian,
+            'type': extract_action_type(log.HanhDong),
+            'details': log.MoTa or ''
+        })
+
+    admin_logs = AdminLog.query.order_by(AdminLog.ThoiGian.desc()).all()
+    for log in admin_logs:
+        results.append({
+            'id': log.MaNhatKy,
+            'name': log.admin.HoTen if log.admin else 'System',
             'order': None,
             'action': log.HanhDong or '',
             'time': log.ThoiGian,
@@ -1330,7 +1577,7 @@ def get_system_logs(limit=10):
     for log in order_logs:
         results.append({
             'id': log.LogID,
-            'user': log.user.HoTen if log.user else 'System',
+            'name': log.user.HoTen if log.user else 'System',
             'order': getattr(log.order, 'MaNhatKy', None),
             'action': log.HanhDong or '',
             'time': log.ThoiGian,
@@ -1344,7 +1591,7 @@ def get_system_logs(limit=10):
     return results[:limit]
 
 
-#Review
+# Review
 def add_product_reviews(user_id, product_id, comment, rating):
     review = Review(
         MaSanPham=product_id,
@@ -1374,7 +1621,7 @@ def get_product_reviews(product_id):
     return result
 
 
-#admin
+# admin
 def check_admin_login(username, password):
     admin = Admin.query.filter(
         or_(
@@ -1405,3 +1652,70 @@ def add_admin(fullname, username, password, email, sdt, avatar):
 def get_admin(admin_id):
     admin = Admin.query.get(admin_id)
     return admin
+
+
+def get_user_vouchers(user_id: int):
+    vouchers = (
+        db.session.query(Coupon)
+        .join(UserCoupon, Coupon.MaGiamGia == UserCoupon.MaGiamGia)
+        .filter(UserCoupon.MaNguoiDung == user_id)
+        .all()
+    )
+    return [
+        {
+            "id": v.MaGiam,
+            "discount_per": v.PhanTramGiam,
+            "expires_at": v.NgayHetHan,
+            "description": v.MoTa
+        }
+        for v in vouchers
+    ]
+
+
+def get_voucher_by_code(code):
+    voucher = Coupon.query.filter_by(MaGiam=code).first()
+    return voucher
+
+
+def get_coupons():
+    coupons = Coupon.query.all()
+    data = []
+    for c in coupons:
+        data.append({
+            "id": c.MaGiamGia,
+            "code": c.MaGiam,
+            "discount": c.PhanTramGiam,
+            "expiry_date": c.NgayHetHan.strftime("%Y-%m-%d") if c.NgayHetHan else None,
+            "description": c.MoTa
+        })
+
+    return data
+
+
+def update_coupon(coupon_id, code, discount, expiry_date, description):
+    coupon = Coupon.query.get(coupon_id)
+    if coupon:
+        coupon.MaGiam = code
+        coupon.PhanTramGiam = discount
+        coupon.NgayHetHan = expiry_date
+        coupon.MoTa = description
+        db.session.commit()
+        return True
+    return False
+
+
+def add_coupon(code, discount, expiry_date, description):
+    try:
+        coupon = Coupon(
+            MaGiam=code,
+            PhanTramGiam=discount,
+            NgayHetHan=expiry_date,
+            MoTa=description
+        )
+        db.session.add(coupon)
+        db.session.commit()
+        return True
+    except Exception as e:
+        db.session.rollback()
+        print("Lỗi khi thêm coupon:", e)
+        return False

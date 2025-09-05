@@ -29,82 +29,89 @@
     {% endblock %}
 </head>
 <body>
-{% with messages = get_flashed_messages(with_categories=true) %}
-{% if messages %}
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        var container = document.getElementById('toast-container');
-        {% for category, message in messages %}
-        var toast = document.createElement('div');
-        toast.className = 'alert alert-{{ category }} alert-dismissible';
-        toast.style.cssText = `
+<div class="page-wrapper">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var container = document.getElementById('toast-container');
+            {%for category, message in messages %}
+            var toast = document.createElement('div');
+            toast.className = 'alert alert-{{ category }} alert-dismissible';
+            toast.style.cssText = `
             min-width: 250px;
             margin-top: 10px;
             opacity: 1;
             transition: opacity 0.5s ease;
           `;
-        toast.innerHTML = `
+            toast.innerHTML = `
             <button type="button" class="close" data-dismiss="alert">&times;</button>
             {{ message }}`;
-        container.appendChild(toast);
+            container.appendChild(toast);
 
-        setTimeout(function () {
-            toast.style.opacity = '0';
             setTimeout(function () {
-                toast.remove();
-            }, 500);
-        }, 2000);
-        {% endfor %}
+                toast.style.opacity = '0';
+                setTimeout(function () {
+                    toast.remove();
+                }, 500);
+            }, 2000);
+            {% endfor %}
+        });
+    </script>
+    {% endif %}
+    {% endwith %}
+
+
+    {% block header %}
+    {% include 'user/layout/header.html' %}
+    {% endblock %}
+
+    <main class="page-content">
+        {% block content %}{% endblock %}
+    </main>
+
+
+    {% block js %}
+
+    <div id="toast-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;"></div>
+    <!-- Core JS -->
+    <script src="{{ url_for('static', filename='user/plugins/jquery/dist/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='user/plugins/bootstrap/js/bootstrap.min.js') }}"></script>
+    <!-- Plugin JS -->
+    <script src="{{ url_for('static', filename='user/plugins/bootstrap-touchspin/dist/jquery.bootstrap-touchspin.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+    <script src="{{ url_for('static', filename='user/js/components/variant.js') }}"></script>
+    <script src="{{ url_for('static', filename='user/js/components/product_details.js') }}"></script>
+    <script src="{{ url_for('static', filename='user/js/script.js') }}"></script>
+    <script src="{{ url_for('static', filename='user/js/components/cart.js') }}"></script>
+    <script src="{{ url_for('static', filename='user/js/components/user.js') }}"></script>
+    <script src="{{ url_for('static', filename='user/js/components/checkout.js') }}"></script>
+
+
+    <script> setTimeout(function () {
+        var alerts = document.querySelectorAll('#flash-messages .alert');
+        alerts.forEach(function (alert) {
+            alert.style.transition = 'opacity 0.5s ease';
+            alert.style.opacity = '0';
+            setTimeout(function () {
+                if (alert.parentNode) {
+                    alert.parentNode.removeChild(alert);
+                }
+            }, 500)
+        })
     });
-</script>
-{% endif %}
-{% endwith %}
+    </script>
 
 
-{% block header %}
-{% include 'user/layout/header.html' %}
-{% endblock %}
+    {% endblock %}
 
-
-{% block content %}{% endblock %}
-
-{% block js %}
-
-<div id="toast-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;"></div>
-<!-- Core JS -->
-<script src="{{ url_for('static', filename='user/plugins/jquery/dist/jquery.min.js') }}"></script>
-<script src="{{ url_for('static', filename='user/plugins/bootstrap/js/bootstrap.min.js') }}"></script>
-<!-- Plugin JS -->
-<script src="{{ url_for('static', filename='user/plugins/bootstrap-touchspin/dist/jquery.bootstrap-touchspin.js') }}"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-<script src="{{ url_for('static', filename='user/js/components/variant.js') }}"></script>
-<script src="{{ url_for('static', filename='user/js/components/product_details.js') }}"></script>
-<script src="{{ url_for('static', filename='user/js/script.js') }}"></script>
-<script src="{{ url_for('static', filename='user/js/components/cart.js') }}"></script>
-<script src="{{ url_for('static', filename='user/js/components/user.js') }}"></script>
-
-
-
-<script> setTimeout(function () {
-    var alerts = document.querySelectorAll('#flash-messages .alert');
-    alerts.forEach(function (alert) {
-        alert.style.transition = 'opacity 0.5s ease';
-        alert.style.opacity = '0';
-        setTimeout(function () {
-            if (alert.parentNode) {
-                alert.parentNode.removeChild(alert);
-            }
-        }, 500)
-    })
-});
-</script>
-
-
-{% endblock %}
-
-{% block footer %}
-{% include 'user/layout/footer.html' %}
-{% endblock %}
+    {% block footer %}
+    {% include 'user/layout/footer.html' %}
+    {% endblock %}
+</div>
 </body>
 </html>

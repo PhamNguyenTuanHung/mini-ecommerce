@@ -19,64 +19,60 @@
     </div>
 </div>
 
-<section class="product-category section">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="title text-center">
-                    <h2>Product Category</h2>
-                </div>
-            </div>
-            {% if categories %}
-            <div class="col-md-6">
-                {% for i in range(0,2) %}
-                <div class="category-box">
-                    <a href="{{ url_for('main.shop',cate_id=categories[i].MaDanhMuc) }}">
-                        <img src="{{ url_for('static', filename='user/images/shop/category/category-' + (i+1)|string + '.jpg') }}"
-                             alt=""/>
-                        <div class="content">
-                            <h3>{{categories[i].TenDanhMuc}}</h3>
-                            <p>Shop New Season Clothing</p>
-                        </div>
-                    </a>
-                </div>
-                {% endfor %}
-            </div>
-            <div class="col-md-6">
-                <div class="category-box category-box-2">
-                    <a href="{{ url_for('main.shop',cate_id=categories[2].MaDanhMuc) }}">
-                        <img src="{{ url_for('static', filename='user/images/shop/category/category-3.jpg') }}" alt=""/>
-                        <div class="content">
-                            <h3>{{categories[2].TenDanhMuc}}</h3>
-                            <p>Special Design Comes First</p>
-                        </div>
-                    </a>
-                </div>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-</section>
+<!--<section class="product-category section">-->
+<!--    <div class="container">-->
+<!--        <div class="row">-->
+<!--            <div class="col-md-12">-->
+<!--                <div class="title text-center">-->
+<!--                    <h2>Product Category</h2>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--            {% if categories %}-->
+<!--            <div class="col-md-6">-->
+<!--                {% for i in range(0,2) %}-->
+<!--                <div class="category-box">-->
+<!--                    <a href="{{ url_for('main.shop',cate_id=categories[i].MaDanhMuc) }}">-->
+<!--                        <img src="{{ url_for('static', filename='user/images/shop/category/category-' + (i+1)|string + '.jpg') }}"-->
+<!--                             alt=""/>-->
+<!--                        <div class="content">-->
+<!--                            <h3>{{categories[i].TenDanhMuc}}</h3>-->
+<!--                            <p>Shop New Season Clothing</p>-->
+<!--                        </div>-->
+<!--                    </a>-->
+<!--                </div>-->
+<!--                {% endfor %}-->
+<!--            </div>-->
+<!--            <div class="col-md-6">-->
+<!--                <div class="category-box category-box-2">-->
+<!--                    <a href="{{ url_for('main.shop',cate_id=categories[2].MaDanhMuc) }}">-->
+<!--                        <img src="{{ url_for('static', filename='user/images/shop/category/category-3.jpg') }}" alt=""/>-->
+<!--                        <div class="content">-->
+<!--                            <h3>{{categories[2].TenDanhMuc}}</h3>-->
+<!--                            <p>Special Design Comes First</p>-->
+<!--                        </div>-->
+<!--                    </a>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--            {% endif %}-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</section>-->
 
 <section class="products section bg-gray">
-    <div class="container" x-data="dataProducts" x-init="
-        $watch('products', (val) => {
-            if (val.length > 0) {
-                filteredProducts = bestSeller
-            }
-        })
-     ">
+    <div class="container" x-data="dataProducts">
         <div class="row">
             <div class="col-lg-12">
                 <ul class="filter__controls">
-                    <li @click="filteredProducts = bestSeller" class="active"
-                        data-filter=".best-seller">Best Sellers
+                    <li @click="filteredProducts = bestSeller"
+                        :class="{ 'active': filteredProducts === bestSeller }">Bán chạy nhất
                     </li>
+
+                    <li @click="filteredProducts = newest"
+                        :class="{ 'active': filteredProducts === newest }">Hàng mới về
+                    </li>
+
                     <li @click="filteredProducts = bestRating"
-                        data-filter=".new-arrivals">New Arrivals
-                    </li>
-                    <li
-                            data-filter=".hot-sales">Hot Sales
+                        :class="{ 'active': filteredProducts === bestRating }">Đánh giá cao
                     </li>
                 </ul>
             </div>
@@ -90,14 +86,9 @@
                             <img class="img-responsive"
                                  :src="product.image"
                                  alt="product-img"/>
-                            <a :href="`/product/${product.MaSanPham}`"></a>
+                            <a :href="`/product/${product.id}`"></a>
                             <div class="preview-meta">
                                 <ul>
-                                    <li>
-                                            <span @click="openModal(product)">
-                                                <i class="tf-ion-ios-search-strong"></i>
-                                            </span>
-                                    </li>
                                     <li>
                                         <a href="javascript:void(0);"><i class="tf-ion-ios-heart"></i></a>
                                     </li>
@@ -109,10 +100,10 @@
                                 </ul>
                             </div>
                         </div>
-                        <div class="product-content">
-                            <h4><a :href="`/product_single/${product.id}`" x-text="product.name"></a></h4>
+                        <a :href="`/product_single/${product.id}`" class="product-content">
+                            <h4 x-text="product.name"></h4>
                             <p class="price" x-text="`$${product.price}`"></p>
-                        </div>
+                        </a>
                     </div>
                 </div>
             </template>

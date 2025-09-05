@@ -1,34 +1,21 @@
 # admin/api/users.py
 from cloudinary import uploader
 from flask import jsonify, request, flash
-from flask_login import login_required, current_user
-
 from mywebapp.admin.api import admin_api
 from mywebapp import utils
+from mywebapp.admin.routes import admin_required
 
-
-def admin_required(f):
-    from functools import wraps
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if not current_user.is_authenticated or not current_user.is_admin:
-            return jsonify({'error': 'Unauthorized'}), 403
-        return f(*args, **kwargs)
-
-    return decorated
 
 
 @admin_api.route('/users', methods=['GET'])
-# @login_required
-# @admin_required
+@admin_required
 def get_users():
     users = utils.get_users()
     return jsonify(users)
 
 
 @admin_api.route('/users', methods=['POST'])
-# @login_required
-# @admin_required
+@admin_required
 def add_user():
     fullname = request.form.get('name', '').strip()
     email = request.form.get('email', '').strip()
@@ -74,16 +61,14 @@ def add_user():
 
 
 @admin_api.route('/users/<int:user_id>', methods=['GET'])
-# @login_required
-# @admin_required
+@admin_required
 def get_user_by_id(user_id):
     user = utils.get_user_detail_by_id(user_id)
     return jsonify(user)
 
 
 @admin_api.route('/users/<int:user_id>/deactivate', methods=['POST'])
-# @login_required
-# @admin_required
+@admin_required
 def deactivate_user(user_id):
     if utils.deactivate_user(user_id):
         utils.log_activity(
@@ -96,15 +81,12 @@ def deactivate_user(user_id):
 
 
 @admin_api.route('/users/<int:user_id>', methods=['PUT'])
-# @login_required
-# @admin_required
+@admin_required
 def update_user(user_id):
-    # Lấy thông tin user cũ
     old_user = utils.get_user_by_id(user_id)
     if not old_user:
         return {'success': False, 'error': 'User không tồn tại'}, 404
 
-    # Lấy dữ liệu từ form
     name = request.form.get('name', '').strip()
     email = request.form.get('email', '').strip()
     phone = request.form.get('phone', '').strip()
@@ -117,7 +99,6 @@ def update_user(user_id):
 
     new_avatar_url = old_user.AnhDaiDien
 
-    # Nếu có file ảnh mới → upload
     if avatar_file and avatar_file.filename != '' and avatar_file.mimetype.startswith('image/'):
         try:
             res = uploader.upload(
@@ -149,7 +130,7 @@ def update_user(user_id):
             f"Trạng thái: {'Active' if old_user.KichHoat else 'Inactive'} → {'Active' if status else 'Inactive'}")
 
     change_message = "; ".join(changes) if changes else "Không có thay đổi"
-    # Cập nhật DB
+
     updated_user = utils.update_user(
         user_id=user_id,
         name=name,
@@ -159,13 +140,11 @@ def update_user(user_id):
         status=status
     )
 
-    # Ghi log
     if updated_user:
         utils.log_activity(
             user_id=user_id,
             action='update_profile',
-            message=f"User {user_id} cập nhật: {change_message}",
-            ip=request.remote_addr
+            message=f"User {user_id} cập nhật: {change_message}"
         )
         return {'success': True}
     else:
@@ -180,6 +159,7 @@ def update_user(user_id):
 
 
 @admin_api.route('/activity-logs', methods=["GET"])
+@admin_required
 def get_activity_logs():
     result = utils.get_activity_logs()
     return result

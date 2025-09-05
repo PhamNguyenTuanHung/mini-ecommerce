@@ -2945,7 +2945,6 @@ document.addEventListener('alpine:init', () => {
         }
         ,
 
-
         getTopSellers(period = 'week') {
             const {start, end} = this.getPeriodRange(period);
             const filteredSales = this.salesData.filter(sale => {

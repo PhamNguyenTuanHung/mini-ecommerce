@@ -10,37 +10,64 @@ document.addEventListener('alpine:init', () => {
         categories: [],
         brands: [],
         currentPage: 1,
+        totalPages: 0,
         itemsPerPage: 12,
         searchQuery: '',
         categoryFilter: '',
         brandFilter: '',
         sortField: 'name',
         sortDirection: 'asc',
-        isLoading: false,
         ratingFilter: '',
         quantitySoldFilter: '',
         priceFilter: '',
         newFilter: '',
         sortOption: 'priceLowHigh',
+        bestSeller: [],
+        bestRating: [],
+        newest:[],
 
-        init() {
-            this.loadDataProducts();
+
+        async init() {
+            await this.loadDataProducts();
             this.loadCategories();
             this.loadBrands();
+            await this.loadBestSeller();
+            await this.loadBestRating();
+            await this.loadNewest();
+            this.filteredProducts = this.bestSeller;
         },
 
-        loadDataProducts() {
-            fetch('/user/api/products', {
-                method: 'GET'
-            })
-                .then(response => response.json())
+        // loadDataProducts() {
+        //     fetch('/user/api/products', {
+        //         method: 'GET'
+        //     })
+        //         .then(response => response.json())
+        //         .then(data => {
+        //             this.products = data;
+        //             this.filterProducts();
+        //         })
+        //         .catch(error => {
+        //             console.error('Lỗi khi load sản phẩm:', error);
+        //         })
+        // },
+
+
+        async loadDataProducts() {
+            const params = new URLSearchParams({
+                page: this.currentPage,
+                kw: this.searchQuery,
+                cate_id: this.categoryFilter,
+                brand_id: this.brandFilter,
+                sort_by: this.sortOption
+            });
+
+            await fetch(`/user/api/products?${params}`)
+                .then(res => res.json())
                 .then(data => {
-                    this.products = data;
-                    this.filterProducts();
-                })
-                .catch(error => {
-                    console.error('Lỗi khi load sản phẩm:', error);
-                })
+                    this.products = data.products;
+                    this.totalPages = data.total_pages;
+                    this.currentPage = data.current_page;
+                });
         },
 
         loadCategories() {
@@ -50,10 +77,9 @@ document.addEventListener('alpine:init', () => {
             ).then(res => res.json()
             ).then(data => {
                 this.categories = data;
-            })
-                .catch(err => {
-                    console.error('Lỗi khi load danh mục:', err);
-                });
+            }).catch(err => {
+                console.error('Lỗi khi load danh mục:', err);
+            });
         },
 
 
@@ -70,48 +96,59 @@ document.addEventListener('alpine:init', () => {
         },
 
 
-        get bestSeller() {
-            const sorted = this.products.slice().sort((a, b) => b.quantity_sold - a.quantity_sold);
-            return sorted.slice(0, 4);
+        async loadBestSeller() {
+            let res = await fetch('/user/api/products/best-sellers');
+            this.bestSeller = await res.json();
+            console.log(this.bestSeller)
         },
 
-        get bestRating() {
-            const sorted = this.products.slice().sort((a, b) => b.rating - a.rating);
-            return sorted.slice(0, 4);
+        async loadBestRating() {
+            let res = await fetch('/user/api/products/best-rated');
+            this.bestRating = await res.json();
         },
 
+        async loadNewest(){
+             let res = await fetch('/user/api/products/newest');
+            this.newest = await res.json();
+        },
 
-        filterProducts() {
-            this.filteredProducts = this.products.filter(product => {
-                const matchesSearch = !this.searchQuery || product.name.toLowerCase().includes(this.searchQuery.toLowerCase());
-                const matchesCategory = !this.categoryFilter || (product.category && product.category.name === this.categoryFilter);
-                const matchesBrand = !this.brandFilter || (product.brand && product.brand.name === this.brandFilter);
-                return matchesSearch && matchesCategory && matchesBrand;
-            });
-            switch (this.sortOption) {
-                case 'priceLowHigh':
-                    this.filteredProducts.sort((a, b) => a.price - b.price);
-                    break;
-                case 'priceHighLow':
-                    this.filteredProducts.sort((a, b) => b.price - a.price);
-                    break;
-                case 'newest':
-                    this.filteredProducts.sort((a, b) => b.product_id-a.product_id);
-                    break;
-                case 'bestseller':
-                    this.filteredProducts.sort((a, b) => (b.quantity_sold || 0) - (a.quantity_sold || 0));
-                    break;
-                // case 'discount':
-                //     // giả sử có trường product.discountPercent
-                //     this.filteredProducts.sort((a, b) => (b.discountPercent || 0) - (a.discountPercent || 0));
-                //     break;
-                default:
-                    break;
-            }
-            this.sortProducts();
+        async filterProducts() {
             this.currentPage = 1;
-        }
-        ,
+            await this.loadDataProducts();
+        },
+
+
+        // filterProducts() {
+        //     this.filteredProducts = this.products.filter(product => {
+        //         const matchesSearch = !this.searchQuery || product.name.toLowerCase().includes(this.searchQuery.toLowerCase());
+        //         const matchesCategory = !this.categoryFilter || (product.category && product.category.name === this.categoryFilter);
+        //         const matchesBrand = !this.brandFilter || (product.brand && product.brand.name === this.brandFilter);
+        //         return matchesSearch && matchesCategory && matchesBrand;
+        //     });
+        //     switch (this.sortOption) {
+        //         case 'priceLowHigh':
+        //             this.filteredProducts.sort((a, b) => a.price - b.price);
+        //             break;
+        //         case 'priceHighLow':
+        //             this.filteredProducts.sort((a, b) => b.price - a.price);
+        //             break;
+        //         case 'newest':
+        //             this.filteredProducts.sort((a, b) => b.product_id - a.product_id);
+        //             break;
+        //         case 'bestseller':
+        //             this.filteredProducts.sort((a, b) => (b.quantity_sold || 0) - (a.quantity_sold || 0));
+        //             break;
+        //         // case 'discount':
+        //         //     // giả sử có trường product.discountPercent
+        //         //     this.filteredProducts.sort((a, b) => (b.discountPercent || 0) - (a.discountPercent || 0));
+        //         //     break;
+        //         default:
+        //             break;
+        //     }
+        //     this.sortProducts();
+        //     this.currentPage = 1;
+        // }
+        // ,
 
         sortProducts() {
             this.filteredProducts.sort((a, b) => {
@@ -155,10 +192,10 @@ document.addEventListener('alpine:init', () => {
         }
         ,
 
-        get totalPages() {
-            return Math.ceil(this.filteredProducts.length / this.itemsPerPage);
-        }
-        ,
+        // get totalPages() {
+        //     return Math.ceil(this.filteredProducts.length / this.itemsPerPage);
+        // }
+        // ,
 
         get visiblePages() {
             if (this.totalPages <= 1) return [1];
@@ -204,9 +241,10 @@ document.addEventListener('alpine:init', () => {
         }
         ,
 
-        goToPage(page) {
+        async goToPage(page) {
             if (page >= 1 && page <= this.totalPages) {
                 this.currentPage = page;
+                await this.loadDataProducts();
             }
         }
     }))

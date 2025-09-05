@@ -5,33 +5,33 @@
         <div class="container-fluid">
             <a class="navbar-brand d-flex align-items-center" href="./index.html">
                 <img src="{{ url_for('static', filename='admin/assets/images/logo.svg') }}" alt="Logo" height="32" class="d-inline-block align-text-top me-2">
-                <h1 class="h4 mb-0 fw-bold text-primary">Metis</h1>
+                <h1 class="h4 mb-0 fw-bold text-primary">BLUE</h1>
             </a>
 
-            <!-- Search Bar with Alpine.js -->
-            <div class="search-container flex-grow-1 mx-4" x-data="searchComponent">
-                <div class="position-relative">
-                    <input type="search" class="form-control" placeholder="Search... (Ctrl+K)" x-model="query"
-                        @input="search()" data-search-input aria-label="Search">
-                    <i class="bi bi-search position-absolute top-50 end-0 translate-middle-y me-3"></i>
+<!--            &lt;!&ndash; Search Bar with Alpine.js &ndash;&gt;-->
+<!--            <div class="search-container flex-grow-1 mx-4" x-data="searchComponent">-->
+<!--                <div class="position-relative">-->
+<!--                    <input type="search" class="form-control" placeholder="Search... (Ctrl+K)" x-model="query"-->
+<!--                        @input="search()" data-search-input aria-label="Search">-->
+<!--                    <i class="bi bi-search position-absolute top-50 end-0 translate-middle-y me-3"></i>-->
 
-                    <!-- Search Results Dropdown -->
-                    <div x-show="results.length > 0" x-transition:enter="transition ease-out duration-100"
-                        x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-                        class="position-absolute top-100 start-0 w-100 bg-white border rounded-2 shadow-lg mt-1 z-3">
-                        <template x-for="result in results" :key="result.title">
-                            <a :href="result.url"
-                                class="d-block px-3 py-2 text-decoration-none text-dark border-bottom">
-                                <div class="d-flex align-items-center">
-                                    <i class="bi bi-file-text me-2 text-muted"></i>
-                                    <span x-text="result.title"></span>
-                                    <small class="ms-auto text-muted" x-text="result.type"></small>
-                                </div>
-                            </a>
-                        </template>
-                    </div>
-                </div>
-            </div>
+<!--                    &lt;!&ndash; Search Results Dropdown &ndash;&gt;-->
+<!--                    <div x-show="results.length > 0" x-transition:enter="transition ease-out duration-100"-->
+<!--                        x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"-->
+<!--                        class="position-absolute top-100 start-0 w-100 bg-white border rounded-2 shadow-lg mt-1 z-3">-->
+<!--                        <template x-for="result in results" :key="result.title">-->
+<!--                            <a :href="result.url"-->
+<!--                                class="d-block px-3 py-2 text-decoration-none text-dark border-bottom">-->
+<!--                                <div class="d-flex align-items-center">-->
+<!--                                    <i class="bi bi-file-text me-2 text-muted"></i>-->
+<!--                                    <span x-text="result.title"></span>-->
+<!--                                    <small class="ms-auto text-muted" x-text="result.type"></small>-->
+<!--                                </div>-->
+<!--                            </a>-->
+<!--                        </template>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </div>-->
 
             <!-- Right Side Icons -->
             <div class="navbar-nav flex-row">
@@ -51,27 +51,27 @@
                 </button>
 
                 <!-- Notifications -->
-                <div class="dropdown me-2">
-                    <button class="btn btn-outline-secondary position-relative" type="button" data-bs-toggle="dropdown"
-                        aria-expanded="false">
-                        <i class="bi bi-bell"></i>
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                            3
-                        </span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li>
-                            <h6 class="dropdown-header">Notifications</h6>
-                        </li>
-                        <li><a class="dropdown-item" href="#">New user registered</a></li>
-                        <li><a class="dropdown-item" href="#">Server status update</a></li>
-                        <li><a class="dropdown-item" href="#">New message received</a></li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li><a class="dropdown-item text-center" href="#">View all notifications</a></li>
-                    </ul>
-                </div>
+<!--                <div class="dropdown me-2">-->
+<!--                    <button class="btn btn-outline-secondary position-relative" type="button" data-bs-toggle="dropdown"-->
+<!--                        aria-expanded="false">-->
+<!--                        <i class="bi bi-bell"></i>-->
+<!--                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">-->
+<!--                            3-->
+<!--                        </span>-->
+<!--                    </button>-->
+<!--&lt;!&ndash;                    <ul class="dropdown-menu dropdown-menu-end">&ndash;&gt;-->
+<!--&lt;!&ndash;                        <li>&ndash;&gt;-->
+<!--&lt;!&ndash;                            <h6 class="dropdown-header">Notifications</h6>&ndash;&gt;-->
+<!--&lt;!&ndash;                        </li>&ndash;&gt;-->
+<!--&lt;!&ndash;                        <li><a class="dropdown-item" href="#">New user registered</a></li>&ndash;&gt;-->
+<!--&lt;!&ndash;                        <li><a class="dropdown-item" href="#">Server status update</a></li>&ndash;&gt;-->
+<!--&lt;!&ndash;                        <li><a class="dropdown-item" href="#">New message received</a></li>&ndash;&gt;-->
+<!--&lt;!&ndash;                        <li>&ndash;&gt;-->
+<!--&lt;!&ndash;                            <hr class="dropdown-divider">&ndash;&gt;-->
+<!--&lt;!&ndash;                        </li>&ndash;&gt;-->
+<!--&lt;!&ndash;                        <li><a class="dropdown-item text-center" href="#">View all notifications</a></li>&ndash;&gt;-->
+<!--&lt;!&ndash;                    </ul>&ndash;&gt;-->
+<!--                </div>-->
 
                 <!-- User Menu -->
                 <div class="dropdown">

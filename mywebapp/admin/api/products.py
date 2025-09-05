@@ -1,5 +1,5 @@
 from cloudinary import uploader
-from flask import jsonify, request, json
+from flask import jsonify, request, json, g
 from mywebapp.admin.api import admin_api
 from mywebapp import utils
 from mywebapp.admin.routes import admin_required
@@ -36,6 +36,12 @@ def create_product():
 
     # Thêm variants
     utils.add_product_variants(product_id, variants)
+
+    utils.admin_log_activity(
+        g.admin_id,
+        action="create_product",
+        message=f"Admin {g.admin_name} tạo sản phẩm {name}, giá={price}"
+    )
 
     # Upload main image
     if image_file and image_file.filename and image_file.mimetype.startswith('image/'):
@@ -97,8 +103,6 @@ def update_product(product_id):
     # Gallery ảnh phụ
     gallery_files = request.files.getlist("gallery_images")
 
-    print(gallery_files)
-
     new_avatar_url = old_product.HinhAnh
 
     # Nếu có file ảnh upload
@@ -133,23 +137,6 @@ def update_product(product_id):
             except Exception as e:
                 print("Upload gallery error:", e)
 
-
-    # changes = []
-    # if old_product.TenSanPham != name:
-    #     changes.append(f"Tên: '{old_product.TenSanPham}' → '{name}'")
-    # if str(old_product.Gia) != str(price):
-    #     changes.append(f"Giá: '{old_product.Gia}' → '{price}'")
-    # if old_product.HinhAnh != new_avatar_url:
-    #     changes.append("Ảnh đại diện thay đổi")
-    # if str(old_product.MaThuongHieu) != str(brand):
-    #     changes.append(f"Thương hiệu: '{old_product.MaThuongHieu}' → '{brand}'")
-    # if str(old_product.MaDanhMuc) != str(category):
-    #     changes.append(f"Danh mục: '{old_product.MaDanhMuc}' → '{category}'")
-    # if new_gallery:
-    #     changes.append(f"Cập nhật {len(new_gallery)} ảnh gallery mới")
-    # change_message = "; ".join(changes) if changes else "Không có thay đổi"
-    print(new_gallery)
-
     result = utils.update_product(
         product_id=product_id,
         name=name,
@@ -162,7 +149,14 @@ def update_product(product_id):
         gallery=new_gallery
     )
 
+
+
     if result:
+        utils.admin_log_activity(
+            g.admin_id,
+            action="update_product",
+            message=f"admin {g.admin_name} cập nhật sản phẩm id={product_id}, name={name}, giá={price}"
+        )
         return jsonify({'success': True})
     return jsonify({'success': False, 'error': 'Cập nhật thất bại'})
 
@@ -170,6 +164,11 @@ def update_product(product_id):
 @admin_api.route('/products/<int:product_id>', methods=['DELETE'])
 @admin_required
 def delete_product(product_id):
-    if (utils.delete_product_by_id(product_id)):
+    if utils.delete_product_by_id(product_id):
+        utils.admin_log_activity(
+            g.admin_id,
+            action="delete_product",
+            message=f"admin {g.admin_name} xóa sản phẩm id={product_id}"
+        )
         return jsonify({'success': 'True'})
     return jsonify({'success': 'False'})
