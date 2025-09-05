@@ -9,7 +9,7 @@ from . import orders
 from . import users
 from . import categories
 from . import export
-
-
+from . import coupons
+from . import brands
 
 

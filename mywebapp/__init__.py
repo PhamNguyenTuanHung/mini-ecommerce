@@ -28,7 +28,7 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = 'mssql+pyodbc://sa:123456@BLUE\\BLUE/DBShopQuanAo?driver=ODBC+Driver+17+for+SQL+Server'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-    app.config['PAGE_SIZE'] = 6
+    app.config['PAGE_SIZE'] = 8
     app.config['MAIL_SERVER'] = 'smtp.gmail.com'
     app.config['MAIL_PORT'] = 465
     app.config['MAIL_USE_SSL'] = True

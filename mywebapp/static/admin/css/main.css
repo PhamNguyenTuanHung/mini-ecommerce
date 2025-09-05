@@ -4173,7 +4173,7 @@ textarea.form-control-lg {
 }
 
 .dropdown-toggle::after {
-    display: inline-block;
+    display: none !important;
     margin-left: 0.255em;
     vertical-align: 0.255em;
     content: "";

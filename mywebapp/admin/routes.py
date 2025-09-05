@@ -1,5 +1,5 @@
 from functools import wraps
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, g
 from mywebapp import utils
 
 
@@ -11,6 +11,8 @@ def admin_required(f):
         if not session.get('admin_logged_in'):
             flash('Bạn cần đăng nhập để truy cập', 'warning')
             return redirect(url_for('admin.login'))
+        g.admin_id = session.get('admin_id')
+        g.admin_name = session.get('admin_name')
         return f(*args, **kwargs)
     return decorated_function
 
@@ -29,9 +31,9 @@ def login():
             session['admin_id'] = admin_user.MaAdmin
             session['admin_name'] = admin_user.TenDangNhap
 
-
-            flash('Đăng nhập admin thành công!', 'success')
-            utils.log_activity(admin_user.MaAdmin, action='login', message=f'Admin {username} đăng nhập thành công')
+            utils.admin_log_activity(admin_user.MaAdmin,
+                               action='login',
+                               message=f'Admin {username} đăng nhập thành công')
 
             if not next_page or not next_page.startswith('/'):
                 next_page = url_for('admin.dashboard')
@@ -45,7 +47,9 @@ def login():
 def logout():
     admin_id = session.get('admin_id')
     if admin_id:
-        utils.log_activity(admin_id, action='logout', message='Admin đã đăng xuất')
+        utils.admin_log_activity(admin_id,
+                           action='logout',
+                           message='Admin đã đăng xuất')
 
     session.pop('admin_logged_in', None)
     session.pop('admin_id', None)
@@ -96,20 +100,25 @@ def analytics():
     return render_template('analytics.html', page_name='analytics', body_class='analytics-page')
 
 
-
-
-
-
-
 @admin.route('/categories')
 @admin_required
 def categories():
     return render_template('categories.html', page_name='categories', body_class='categories-page')
 
+@admin.route('/brands')
+@admin_required
+def brands():
+    return render_template('brands.html', page_name='brands', body_class='brands-page')
+
 @admin.route('/reports')
 @admin_required
 def reports():
     return render_template('reports.html', page_name='reports', body_class='reports-page')
+
+@admin.route('/coupons')
+@admin_required
+def coupons():
+    return render_template('coupons.html', page_name='coupons', body_class='coupons-page')
 
 @admin.route('/calendar')
 def calendar():

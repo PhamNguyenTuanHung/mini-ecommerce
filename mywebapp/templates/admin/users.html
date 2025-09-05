@@ -8,22 +8,18 @@
         <!-- Page Header -->
         <div class="d-flex justify-content-between align-items-center mb-4 mb-lg-5 mb-xl-6">
             <div>
-                <h1 class="h3 mb-0">User Management</h1>
-                <p class="text-muted mb-0">Manage users, roles, and permissions</p>
+                <h1 class="h3 mb-0">Quản lý người dùng</h1>
+                <p class="text-muted mb-0"></p>
             </div>
             <div class="d-flex gap-2">
-                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
-                        data-bs-target="#importModal">
-                    <i class="bi bi-upload me-2"></i>Import Users
-                </button>
                 <button type="button" class="btn btn-outline-secondary" @click="exportUsers()">
-                    <i class="bi bi-download me-2"></i>Export
+                    <i class="bi bi-download me-2"></i>Xuất file danh sách người dùng
                 </button>
                 <div>
                     <button type="button" class="btn btn-primary"
                             x-data="userForm"
                             @click="$store.userFormStore.openModal('add')">
-                        <i class="bi bi-person-plus me-2"></i>Add User
+                        <i class="bi bi-person-plus me-2"></i>Thêm người dùng
                     </button>
                 </div>
 
@@ -31,7 +27,7 @@
         </div>
 
         <!-- Users Management Container -->
-        <div >
+        <div>
             <!-- User Stats Widgets -->
             <div class="row g-4 g-lg-5 g-xl-6 mb-5 mb-lg-5 mb-xl-6">
                 <div class="col-xl-4 col-lg-6">
@@ -70,7 +66,7 @@
                                     <i class="bi bi-person-check-fill"></i>
                                 </div>
                                 <div>
-                                    <h6 class="mb-0 ">Active Users</h6>
+                                    <h6 class="mb-0 ">Người dùng kích hoạt</h6>
                                     <h3 class="mb-0" x-text="stats.active"></h3>
                                     <small class="text-success">
                                         <i class="bi bi-arrow-up"></i> +8% from last week
@@ -145,7 +141,7 @@
                 <div class="col-lg-6">
                     <div class="card h-100">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="card-title mb-0">Recent Activity</h5>
+                            <h5 class="card-title mb-0">Hoạt động gần đây</h5>
                             <button class="btn btn-sm btn-outline-secondary" @click="getRecentActivities()">
                                 <i class="bi bi-arrow-clockwise"></i>
                             </button>
@@ -185,7 +181,7 @@
                 <div class="card-header">
                     <div class="row align-items-center">
                         <div class="col">
-                            <h5 class="card-title mb-0">Users Directory</h5>
+                            <h5 class="card-title mb-0">Người dùng</h5>
                         </div>
                         <div class="col-auto">
                             <div class="d-flex gap-2">
@@ -193,7 +189,7 @@
                                 <div class="position-relative">
                                     <input type="search"
                                            class="form-control form-control-sm"
-                                           placeholder="Search users..."
+                                           placeholder="Tìm kiếm người dùng..."
                                            x-model="searchQuery"
                                            @input="filterUsers()"
                                            style="width: 200px;">
@@ -205,22 +201,11 @@
                                         x-model="statusFilter"
                                         @change="filterUsers()"
                                         style="width: 150px;">
-                                    <option value="">All Status</option>
-                                    <option value="active">Active</option>
-                                    <option value="inactive">Inactive</option>
-                                    <option value="pending">Pending</option>
+                                    <option value="">Tất cả</option>
+                                    <option value="active">Hoạt động</option>
+                                    <option value="inactive">Bị vô hiệu</option>
                                 </select>
 
-                                <!-- Role Filter -->
-                                <select class="form-select form-select-sm"
-                                        x-model="roleFilter"
-                                        @change="filterUsers()"
-                                        style="width: 150px;">
-                                    <option value="">All Roles</option>
-                                    <option value="admin">Admin</option>
-                                    <option value="user">User</option>
-                                    <option value="moderator">Moderator</option>
-                                </select>
                             </div>
                         </div>
                     </div>
@@ -236,19 +221,19 @@
                             <div class="d-flex align-items-center">
                                 <i class="bi bi-check-circle-fill text-primary me-2"></i>
                                 <span class="fw-medium text-primary">
-                                                <span x-text="selectedUsers.length"></span> user<span
-                                        x-show="selectedUsers.length !== 1">s</span> selected
+                                                <span x-text="selectedUsers.length"></span> người dùng<span
+                                        x-show="selectedUsers.length !== 1">s</span> chọn
                                             </span>
                             </div>
                             <div class="d-flex gap-2">
                                 <button class="btn btn-sm btn-success" @click="bulkAction('activate')">
-                                    <i class="bi bi-check-circle me-1"></i>Activate
+                                    <i class="bi bi-check-circle me-1"></i>Kích Hoạt
                                 </button>
                                 <button class="btn btn-sm btn-warning" @click="bulkAction('deactivate')">
-                                    <i class="bi bi-x-circle me-1"></i>Deactivate
+                                    <i class="bi bi-x-circle me-1"></i>Vô hiệu
                                 </button>
                                 <button class="btn btn-sm btn-danger" @click="bulkAction('delete')">
-                                    <i class="bi bi-trash me-1"></i>Delete
+                                    <i class="bi bi-trash me-1"></i>Xóa
                                 </button>
                                 <button class="btn btn-sm btn-outline-secondary" @click="selectedUsers = []"
                                         title="Clear selection">
@@ -270,7 +255,7 @@
                                            :checked="selectedUsers.length === filteredUsers.length && filteredUsers.length > 0">
                                 </th>
                                 <th @click="sortBy('name')" class="sortable">
-                                    Name
+                                    Họ tên
                                     <i class="bi bi-arrow-up"
                                        x-show="sortField === 'name' && sortDirection === 'asc'"></i>
                                     <i class="bi bi-arrow-down"
@@ -283,10 +268,9 @@
                                     <i class="bi bi-arrow-down"
                                        x-show="sortField === 'email' && sortDirection === 'desc'"></i>
                                 </th>
-                                <th>Role</th>
-                                <th>Status</th>
+                                <th>Trạng thái</th>
                                 <th @click="sortBy('lastActive')" class="sortable">
-                                    Last Active
+                                    Lần cuối hoạt động
                                     <i class="bi bi-arrow-up"
                                        x-show="sortField === 'lastActive' && sortDirection === 'asc'"></i>
                                     <i class="bi bi-arrow-down"
@@ -320,15 +304,6 @@
                                     <td>
                                         <span class="badge"
                                               :class="{
-                                                  'bg-danger': user.role === 'admin',
-                                                  'bg-primary': user.role === 'user',
-                                                  'bg-warning': user.role === 'moderator'
-                                              }"
-                                              x-text="user.role"></span>
-                                    </td>
-                                    <td>
-                                        <span class="badge"
-                                              :class="{
                                                   'bg-success': user.status === 'active',
                                                   'bg-secondary': user.status === 'inactive',
                                                   'bg-warning': user.status === 'pending'
@@ -344,18 +319,15 @@
                                                 <i class="bi bi-three-dots"></i>
                                             </button>
                                             <ul class="dropdown-menu">
-                                                <li><a class="dropdown-item" href="#" @click="viewUser(user)">
-                                                    <i class="bi bi-eye me-2"></i>View Profile
-                                                </a></li>
                                                 <li><a class="dropdown-item" href="#" @click="editUser(user)">
-                                                    <i class="bi bi-pencil me-2"></i>Edit Profile
+                                                    <i class="bi bi-pencil me-2"></i>Sửa
                                                 </a></li>
                                                 <li>
                                                     <hr class="dropdown-divider">
                                                 </li>
                                                 <li><a class="dropdown-item text-danger" href="#"
                                                        @click="deleteUser(user)">
-                                                    <i class="bi bi-trash me-2"></i>Delete
+                                                    <i class="bi bi-trash me-2"></i>Xóa
                                                 </a></li>
                                             </ul>
                                         </div>
@@ -368,32 +340,35 @@
 
                     <!-- Pagination -->
                     <div class="d-flex justify-content-between align-items-center p-3">
-                        <div class="text-muted">
-                            Showing <span x-text="(currentPage - 1) * itemsPerPage + 1"></span> to
-                            <span x-text="Math.min(currentPage * itemsPerPage, filteredUsers.length)"></span> of
-                            <span x-text="filteredUsers.length"></span> results
-                        </div>
                         <nav>
                             <ul class="pagination pagination-sm mb-0">
                                 <li class="page-item" :class="{ 'disabled': currentPage === 1 }">
                                     <a class="page-link" href="#"
-                                       @click.prevent="goToPage(currentPage - 1)">Previous</a>
+                                       @click.prevent="goToPage(currentPage - 1)">
+                                        <i class="bi bi-chevron-left"></i>
+                                    </a>
                                 </li>
+
                                 <template x-for="page in visiblePages" :key="page">
                                     <li class="page-item" :class="{ 'active': page === currentPage }">
                                         <a class="page-link" href="#" @click.prevent="goToPage(page)" x-text="page"></a>
                                     </li>
                                 </template>
+
                                 <li class="page-item" :class="{ 'disabled': currentPage === totalPages }">
-                                    <a class="page-link" href="#" @click.prevent="goToPage(currentPage + 1)">Next</a>
+                                    <a class="page-link" href="#"
+                                       @click.prevent="goToPage(currentPage + 1)">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </a>
                                 </li>
+
                             </ul>
                         </nav>
                     </div>
                 </div>
             </div>
 
-        </div> <!-- End Users Management Container -->
+        </div>
 
     </div>
 </main>
@@ -444,14 +419,14 @@
                                            :required="mode === 'add'">
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">First Name</label>
+                                    <label class="form-label">Họ</label>
                                     <input type="text" class="form-control"
                                            x-model="form.firstName"
                                            :readonly="mode==='view'"
                                            required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Last Name</label>
+                                    <label class="form-label">Tên</label>
                                     <input type="text" class="form-control"
                                            x-model="form.lastName"
                                            :readonly="mode==='view'"
@@ -465,30 +440,26 @@
                                            required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Role</label>
+                                    <label class="form-label">Vai trò</label>
                                     <select class="form-select"
                                             x-model="form.role"
                                             :disabled="mode==='view'"
                                             required>
-                                        <option value="">Select Role</option>
-                                        <option value="admin">Admin</option>
-                                        <option value="user">User</option>
-                                        <option value="moderator">Moderator</option>
+                                        <option value="user">Người dùng</option>
                                     </select>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Status</label>
+                                    <label class="form-label">Trạng thái</label>
                                     <select class="form-select"
                                             x-model="form.status"
                                             :disabled="mode==='view'"
                                             required>
-                                        <option value="">Select Status</option>
-                                        <option value="active">Active</option>
-                                        <option value="inactive">Inactive</option>
+                                        <option value="active">Kích hoạt</option>
+                                        <option value="inactive">Vô hiệu</option>
                                     </select>
                                 </div>
                                 <div class="col-12">
-                                    <label class="form-label">Phone</label>
+                                    <label class="form-label">Số điện thoại</label>
                                     <input type="tel" class="form-control"
                                            x-model="form.phone"
                                            :readonly="mode==='view'">

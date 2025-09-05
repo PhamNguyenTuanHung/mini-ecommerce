@@ -1,9 +1,9 @@
-availableStock = window.availableStock
+availableStock = window.availableStock;
 
-function addToCart(id, name, price, color, size,image) {
+function addToCart() {
     event?.preventDefault();
 
-    let input = document.getElementById('product-quantity-' + id);
+    let input = document.getElementById('product-quantity-' + productFromServer.id);
     const quantity = input ? parseInt(input.value) || 1 : 1;
 
     if (isNaN(quantity) || quantity <= 0) {
@@ -19,13 +19,13 @@ function addToCart(id, name, price, color, size,image) {
     fetch('/user/api/cart', {
         method: 'POST',
         body: JSON.stringify({
-            id: id,
+            id: productFromServer.id,
             quantity: quantity,
-            name: name,
-            price: price,
+            name: productFromServer.name,
+            price: productFromServer.price,
             color: color,
             size: size,
-            image:image
+            image:productFromServer.image
         }),
         headers: {
             'Content-Type': 'application/json'
@@ -233,11 +233,13 @@ function createOrderFromCheckout() {
     const orderDetails = [];
 
 
-    const rawSubtotal = document.getElementById('subtotal')?.innerText || '0';
+    const rawSubtotal = document.getElementById('total')?.innerText || '0';
     const cleaned = rawSubtotal.replace(/,/g, '');
     const subtotal = parseFloat(cleaned);
     const address_id = parseInt(document.querySelector('#saved_address').value);
     const pay_method = document.querySelector('#pay_method').value;
+    const appliedVoucher = document.querySelector("#applied-voucher span")?.innerText || "";
+
 
     productCards.forEach(card => {
         orderDetails.push({
@@ -335,6 +337,20 @@ document.addEventListener('DOMContentLoaded', function () {
             changeAddress(this);
         });
     }
+    const checkboxes = document.querySelectorAll('.checkout-item');
+
+    checkboxes.forEach(cb => {
+        const removeId = cb.id.replace('checkout', 'remove');
+        const removeLink = document.getElementById(removeId);
+
+
+        removeLink.style.display = cb.checked ? 'inline' : 'none';
+
+
+        cb.addEventListener('change', () => {
+            removeLink.style.display = cb.checked ? 'inline' : 'none';
+        });
+    });
 });
 
 

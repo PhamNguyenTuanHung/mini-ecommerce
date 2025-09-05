@@ -1,5 +1,5 @@
 {% extends 'admin/layout/base.html' %}
-{% block title %} Sản phẩm {%endblock%}
+{% block title %} Danh mục {%endblock%}
 <!-- Main Content -->
 {% block content %}
 <main class="admin-main">
@@ -8,22 +8,18 @@
         <!-- Page Header -->
         <div class="d-flex justify-content-between align-items-center mb-4 mb-lg-5">
             <div>
-                <h1 class="h3 mb-0">Category Management</h1>
-                <p class="text-muted mb-0">Manage your category</p>
+                <h1 class="h3 mb-0">Quản lý danh mục</h1>
+                <p class="text-muted mb-0"></p>
             </div>
             <div class="d-flex gap-2">
                 <button type="button" class="btn btn-outline-secondary" @click="exportCategories()">
-                    <i class="bi bi-download me-2"></i>Export
-                </button>
-                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
-                        data-bs-target="#importModal">
-                    <i class="bi bi-upload me-2"></i>Import
+                    <i class="bi bi-download me-2"></i>Xuất dữ liệu
                 </button>
                 <div>
                     <button type="button" class="btn btn-primary"
                             x-data="categoryForm"
                             @click="$store.categoryFormStore.openModal('add',null)">
-                        <i class="bi bi-plus-lg me-2"></i>Thêm sản phẩm
+                        <i class="bi bi-plus-lg me-2"></i>Thêm danh mục
                     </button>
                 </div>
             </div>
@@ -31,133 +27,6 @@
 
         <!-- category Management Container -->
         <div x-data="categoryTable">
-
-            <!-- category Stats Widgets -->
-            <div class="row g-4 g-lg-5 mb-5">
-                <div class="col-xl-3 col-lg-6">
-                    <div class="card stats-card">
-                        <div class="card-body p-3 p-lg-4">
-                            <div class="d-flex align-items-center">
-                                <div class="stats-icon bg-primary bg-opacity-10 text-primary me-3">
-                                    <i class="bi bi-box"></i>
-                                </div>
-                                <div>
-                                    <h6 class="mb-0 text-muted">Total Categories</h6>
-                                    <h3 class="mb-0" x-text="stats.total"></h3>
-                                    <small class="text-success">
-                                        <i class="bi bi-arrow-up"></i> +5% from last month
-                                    </small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6">
-                    <div class="card stats-card">
-                        <div class="card-body p-3 p-lg-4">
-                            <div class="d-flex align-items-center">
-                                <div class="stats-icon bg-success bg-opacity-10 text-success me-3">
-                                    <i class="bi bi-check-circle"></i>
-                                </div>
-                                <div>
-                                    <h6 class="mb-0 text-muted">In Stock</h6>
-                                    <h3 class="mb-0" x-text="stats.inStock"></h3>
-                                    <small class="text-success">
-                                        <i class="bi bi-arrow-up"></i> Well stocked
-                                    </small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6">
-                    <div class="card stats-card">
-                        <div class="card-body p-3 p-lg-4">
-                            <div class="d-flex align-items-center">
-                                <div class="stats-icon bg-warning bg-opacity-10 text-warning me-3">
-                                    <i class="bi bi-exclamation-triangle"></i>
-                                </div>
-                                <div>
-                                    <h6 class="mb-0 text-muted">Low Stock</h6>
-                                    <h3 class="mb-0" x-text="stats.lowStock"></h3>
-                                    <small class="text-warning">
-                                        <i class="bi bi-exclamation-circle"></i> Needs attention
-                                    </small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6">
-                    <div class="card stats-card">
-                        <div class="card-body p-3 p-lg-4">
-                            <div class="d-flex align-items-center">
-                                <div class="stats-icon bg-info bg-opacity-10 text-info me-3">
-                                    <i class="bi bi-currency-dollar"></i>
-                                </div>
-                                <div>
-                                    <h6 class="mb-0 text-muted">Total Value</h6>
-                                    <h3 class="mb-0" x-text="`$${stats.totalValue.toLocaleString()}`"></h3>
-                                    <small class="text-info">
-                                        <i class="bi bi-info-circle"></i> Inventory value
-                                    </small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Charts Row -->
-            <div class="row g-4 g-lg-5 mb-5">
-                <!-- Sales Performance Chart -->
-                <div class="col-lg-8">
-                    <div class="card h-100">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="card-title mb-0">Sales Performance</h5>
-                            <div class="btn-group btn-group-sm" role="group">
-                                <input type="radio" class="btn-check" name="salesPeriod" id="sales7d"
-                                       autocomplete="off" checked>
-                                <label class="btn btn-outline-secondary" for="sales7d">7D</label>
-                                <input type="radio" class="btn-check" name="salesPeriod" id="sales30d"
-                                       autocomplete="off">
-                                <label class="btn btn-outline-secondary" for="sales30d">30D</label>
-                                <input type="radio" class="btn-check" name="salesPeriod" id="sales90d"
-                                       autocomplete="off">
-                                <label class="btn btn-outline-secondary" for="sales90d">90D</label>
-                            </div>
-                        </div>
-                        <div class="card-body p-3 p-lg-4">
-                            <div id="salesChart" style="height: 300px;"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Category Distribution -->
-                <div class="col-lg-4">
-                    <div class="card h-100">
-                        <div class="card-header">
-                            <h5 class="card-title mb-0">Category Distribution</h5>
-                        </div>
-                        <div class="card-body p-3 p-lg-4">
-                            <div id="categoryChart" style="height: 200px;"></div>
-                            <div class="mt-3">
-                                <template x-for="category in categoriesStats" :key="category.name">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <span class="small" x-text="category.name"></span>
-                                        <div class="d-flex align-items-center">
-                                                        <span class="small text-muted me-2"
-                                                              x-text="`${category.percentage}%`"></span>
-                                            <span class="small fw-medium" x-text="category.count"></span>
-                                        </div>
-                                    </div>
-                                </template>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Categories Table -->
             <div class="card">
                 <div class="card-header">
@@ -170,26 +39,18 @@
                                 <!-- Search -->
                                 <div class="position-relative">
                                     <input type="search" class="form-control form-control-sm"
-                                           placeholder="Search Categories..." x-model="searchQuery"
-                                           @input="filterCategories()" style="width: 200px;">
+                                           placeholder="Tìm kiếm" x-model="searchQuery"
+                                           @input="filterCategories()" style="width: 150px;">
                                     <i class="bi bi-search position-absolute top-50 end-0 translate-middle-y me-2 text-muted"></i>
                                 </div>
 
                                 <!-- Category Filter -->
                                 <select class="form-select form-select-sm" x-model="categoryFilter"
                                         @change="filterCategories()" style="width: 150px;">
-                                    <option value="">All Categories</option>
-                                    {% for cate in categories %}
-                                    <option value="{{cate.TenDanhMuc}}">{{cate.TenDanhMuc}}</option>
-                                    {% endfor %}
-                                </select>
-                                <!-- Stock Filter -->
-                                <select class="form-select form-select-sm" x-model="stockFilter"
-                                        @change="filterCategories()" style="width: 150px;">
-                                    <option value="">All Stock</option>
-                                    <option value="in-stock">In Stock</option>
-                                    <option value="low-stock">Low Stock</option>
-                                    <option value="out-of-stock">Out of Stock</option>
+                                    <option value="">Tất cả</option>
+                                      <template x-for="cate in categories" :key="cate.id">
+                                            <option :value="cate.name" x-text="cate.name"></option>
+                                   </template>
                                 </select>
                             </div>
                         </div>
@@ -201,15 +62,9 @@
                          x-transition>
                         <div class="d-flex justify-content-between align-items-center">
                                         <span class="text-muted">
-                                            <span x-text="selectedCategories.length"></span> category(s) selected
+                                            <span x-text="selectedCategories.length"></span> chọn danh mục
                                         </span>
                             <div class="d-flex gap-2">
-                                <button class="btn btn-sm btn-outline-secondary" @click="bulkAction('publish')">
-                                    <i class="bi bi-eye me-1"></i>Publish
-                                </button>
-                                <button class="btn btn-sm btn-outline-secondary" @click="bulkAction('unpublish')">
-                                    <i class="bi bi-eye-slash me-1"></i>Unpublish
-                                </button>
                                 <button class="btn btn-sm btn-outline-danger" @click="bulkAction('delete')">
                                     <i class="bi bi-trash me-1"></i>Delete
                                 </button>
@@ -230,8 +85,8 @@
                                 </th>
                                 <th>Mã Danh Mục</th>
                                 <th @click="sortBy('category')" class="sortable">Tên mục</th>
-                                <th @click="sortBy('stock')" class="sortable">Số loại sản phẩm</th>
-                                <th style="width: 120px;">Actions</th>
+                                <th @click="sortBy('stock')" class="sortable">Doanh thu</th>
+                                <th style="width: 120px;">Hành động</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -252,7 +107,7 @@
                                                               x-text="category.name"></span>
                                     </td>
                                     <td>
-                                                        <span x-text="category.product_count + ' units'"></span>
+                                                        <span x-text="category.revenue"></span>
                                     </td>
                                     <td>
                                         <div class="dropdown">
@@ -264,10 +119,6 @@
                                             <ul class="dropdown-menu">
                                                 <li><a class="dropdown-item" href="#" @click="editCategory(category)">
                                                     <i class="bi bi-pencil me-2"></i>Sửa
-                                                </a></li>
-                                                <li><a class="dropdown-item" href="#"
-                                                       @click="viewCategory(category)">
-                                                    <i class="bi bi-eye me-2"></i>Xem chi tiết
                                                 </a></li>
                                                 <li>
                                                     <hr class="dropdown-divider">
@@ -288,11 +139,11 @@
                     <!-- Pagination -->
                     <div class="d-flex justify-content-between align-items-center p-3">
                         <div class="text-muted">
-                            Showing <span x-text="(currentPage - 1) * itemsPerPage + 1"></span> to
+                            Hiển thị <span x-text="(currentPage - 1) * itemsPerPage + 1"></span> đến
                             <span
                                     x-text="Math.min(currentPage * itemsPerPage, filteredCategories.length)"></span>
-                            of
-                            <span x-text="filteredCategories.length"></span> results
+                            của
+                            <span x-text="filteredCategories.length"></span> kết quả
                         </div>
                         <nav>
                             <ul class="pagination pagination-sm mb-0">
@@ -318,6 +169,7 @@
             </div>
 
         </div> <!-- End category Management Container -->
+
 
     </div>
 </main>

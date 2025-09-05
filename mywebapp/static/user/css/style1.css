@@ -921,13 +921,14 @@ ol {
 
 .filter__controls li {
 	color: gray;
-	font-size: 24px;
-	font-weight: 700;
+	font-size: 20px;
+	font-weight: 500;
 	list-style: none;
 	display: inline-block;
 	margin-right: 88px;
 	cursor: pointer;
 }
+
 
 .filter__controls li:last-child {
 	margin-right: 0;
@@ -3880,16 +3881,15 @@ ol {
 .shop-pagination .page-item.active .page-link {
     background-color: transparent;
     border: none;
-    color: #b38b39; /* vàng nâu giống hình */
+    color: #b38b39;
     font-weight: bold;
 }
 
 .shop-pagination .page-link:hover {
     background-color: transparent;
-    color: #333; /* xám đậm khi hover */
+    color: #333;
 }
 
-/* Giữ layout như hiện tại */
 .product-container {
     position: relative;
     padding-bottom: 50px;

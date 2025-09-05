@@ -1,5 +1,4 @@
 import math
-import uuid
 from datetime import datetime, timedelta
 from flask import render_template, request, redirect, flash, session, current_app, jsonify, url_for, g
 from flask_mail import Message
@@ -285,11 +284,13 @@ def checkout():
             selected_items.append(item)
 
     cart_summary = utils.count_cart(selected_items)
+    vouchers = utils.get_user_vouchers(current_user.MaNguoiDung)
 
     return render_template('checkout.html',
                            cart_items=selected_items,
                            cart_summary=cart_summary,
-                           addresses=addresses)
+                           addresses=addresses,
+                           vouchers=vouchers)
 
 
 @main.route('/')
@@ -314,24 +315,22 @@ def momo_return():
 
 @main.route('/shop')
 def shop():
-    categories = utils.get_categories()
-    brands = utils.get_brands()
-    cate_id = request.args.get('cate_id')
-    brand_id = request.args.get('brand_id')
-    kw = request.args.get('kw')
-    from_price = request.args.get('from_price')
-    to_price = request.args.get('to_price')
-    page = int(request.args.get('page', 1))
-    products = utils.load_products(cate_id=cate_id, brand_id=brand_id, kw=kw, from_price=from_price, to_price=to_price,
-                                   page=page)
-    products_count = utils.count_products()
-    return render_template('shop.html',
-                           brands=brands,
-                           categories=categories,
-                           products=products,
-                           pages=math.ceil(products_count / current_app.config['PAGE_SIZE']))
+    # categories = utils.get_categories()
+    # brands = utils.get_brands()
+    # cate_id = request.args.get('cate_id')
+    # brand_id = request.args.get('brand_id')
+    # kw = request.args.get('kw')
+    # from_price = request.args.get('from_price')
+    # to_price = request.args.get('to_price')
+    # page = int(request.args.get('page', 1))
+    # products = utils.load_products(cate_id=cate_id, brand_id=brand_id, kw=kw, from_price=from_price, to_price=to_price,
+    #                                page=page)
+    # products_count = utils.count_products()
+    return render_template('shop.html')
 
-
+@main.route('/confirmation')
+def confirmation():
+    return render_template('confirmation.html')
 
 @main.route('/forget-password', methods=['GET', 'POST'])
 def forget_password():

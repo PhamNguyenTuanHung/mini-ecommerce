@@ -1,5 +1,5 @@
 {% extends 'admin/layout/base.html' %}
-{% block title %} Đơn hàng{%endblock%}
+{% block title %} Đơn hàng {% endblock %}
 
 
 <!-- Main Content -->
@@ -10,20 +10,8 @@
         <!-- Page Header -->
         <div class="d-flex justify-content-between align-items-center mb-4 mb-lg-5">
             <div>
-                <h1 class="h3 mb-0">Order Management</h1>
-                <p class="text-muted mb-0">Track orders, manage fulfillment, and analyze sales</p>
-            </div>
-            <div class="d-flex gap-2">
-                <button type="button" class="btn btn-outline-secondary" @click="exportOrders()">
-                    <i class="bi bi-download me-2"></i>Export
-                </button>
-                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
-                        data-bs-target="#bulkUpdateModal">
-                    <i class="bi bi-arrow-repeat me-2"></i>Bulk Update
-                </button>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#orderModal">
-                    <i class="bi bi-plus-lg me-2"></i>New Order
-                </button>
+                <h1 class="h3 mb-0">Quản lý đơn hàng</h1>
+                <p class="text-muted mb-0"></p>
             </div>
         </div>
 
@@ -41,7 +29,7 @@
                                 </div>
                                 <div>
                                     <h6 class="mb-0 text-muted">Tổng đơn hàng</h6>
-                                    <h3 class="mb-0" x-text="stats.total"></h3>
+                                    <h3 class="mb-0" x-text="orders.length"></h3>
                                     <small class="text-success">
                                         <i class="bi bi-arrow-up"></i> +12% so với tháng trước
                                     </small>
@@ -59,7 +47,7 @@
                                 </div>
                                 <div>
                                     <h6 class="mb-0 text-muted"> Chờ xử lý</h6>
-                                    <h3 class="mb-0" x-text="stats.pending"></h3>
+                                    <h3 class="mb-0" x-text="orderStats.pending"></h3>
                                     <small class="text-warning">
                                         <i class="bi bi-exclamation-circle"></i> Chú ý
                                     </small>
@@ -77,7 +65,7 @@
                                 </div>
                                 <div>
                                     <h6 class="mb-0 text-muted">Vận chuyển</h6>
-                                    <h3 class="mb-0" x-text="stats.shipping"></h3>
+                                    <h3 class="mb-0" x-text="orderStats.shipping"></h3>
                                     <small class="text-info">
                                         <i class="bi bi-arrow-right"></i> Đang vận chuyển
                                     </small>
@@ -95,7 +83,7 @@
                                 </div>
                                 <div>
                                     <h6 class="mb-0 text-muted">Doanh thu</h6>
-                                    <h3 class="mb-0" x-text="`${stats.revenue.toLocaleString()}`"></h3>
+                                    <h3 class="mb-0" x-text="revenueCurrent"></h3>
                                     <small class="text-success">
                                         <i class="bi bi-arrow-up"></i> +8% so với tháng trước
                                     </small>
@@ -106,22 +94,23 @@
                 </div>
             </div>
 
-            <!-- Charts Row -->
             <div class="row g-4 g-lg-5 mb-5">
                 <!-- Order Trends Chart -->
                 <div class="col-lg-8">
                     <div class="card h-100">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="card-title mb-0">Order Trends</h5>
+                            <h5 class="card-title mb-0">Xu hướng đơn hàng</h5>
                             <div class="btn-group btn-group-sm" role="group">
                                 <input type="radio" class="btn-check" name="trendsPeriod" id="trends7d"
-                                       autocomplete="off" checked>
+                                       value="week" x-on:change="updatePeriod($event.target.value)" checked>
                                 <label class="btn btn-outline-secondary" for="trends7d">7D</label>
+
                                 <input type="radio" class="btn-check" name="trendsPeriod" id="trends30d"
-                                       autocomplete="off">
+                                       value="month" x-on:change="updatePeriod($event.target.value)">
                                 <label class="btn btn-outline-secondary" for="trends30d">30D</label>
+
                                 <input type="radio" class="btn-check" name="trendsPeriod" id="trends90d"
-                                       autocomplete="off">
+                                       value="quarter" x-on:change="updatePeriod($event.target.value)">
                                 <label class="btn btn-outline-secondary" for="trends90d">90D</label>
                             </div>
                         </div>
@@ -418,36 +407,36 @@
                                     </tbody>
                                 </table>
 
-<!--                                                                <template x-for="(item, index) in selectedOrder.items" :key="index">-->
-<!--                                                                    <div class="border rounded p-3 mb-2 bg-secondary bg-opacity-10">-->
-<!--                                                                        &lt;!&ndash; Dòng 1: Tên sản phẩm | Giá | Tổng &ndash;&gt;-->
-<!--                                                                        <div class="row">-->
-<!--                                                                            &lt;!&ndash; Tên sản phẩm (col-md-6) &ndash;&gt;-->
-<!--                                                                            <div class="col-md-3 d-flex align-items-center">-->
-<!--                                                                                <strong x-text="item.name"></strong>-->
-<!--                                                                            </div>-->
+                                <!--                                                                <template x-for="(item, index) in selectedOrder.items" :key="index">-->
+                                <!--                                                                    <div class="border rounded p-3 mb-2 bg-secondary bg-opacity-10">-->
+                                <!--                                                                        &lt;!&ndash; Dòng 1: Tên sản phẩm | Giá | Tổng &ndash;&gt;-->
+                                <!--                                                                        <div class="row">-->
+                                <!--                                                                            &lt;!&ndash; Tên sản phẩm (col-md-6) &ndash;&gt;-->
+                                <!--                                                                            <div class="col-md-3 d-flex align-items-center">-->
+                                <!--                                                                                <strong x-text="item.name"></strong>-->
+                                <!--                                                                            </div>-->
 
-<!--                                                                            &lt;!&ndash; Giá (col-md-3) &ndash;&gt;-->
-<!--                                                                            <div class="col-md-3 d-flex align-items-center justify-content-end">-->
-<!--                                                                                Giá: <span class="ms-1" x-text="formatCurrency(item.price)"></span>-->
-<!--                                                                            </div>-->
+                                <!--                                                                            &lt;!&ndash; Giá (col-md-3) &ndash;&gt;-->
+                                <!--                                                                            <div class="col-md-3 d-flex align-items-center justify-content-end">-->
+                                <!--                                                                                Giá: <span class="ms-1" x-text="formatCurrency(item.price)"></span>-->
+                                <!--                                                                            </div>-->
 
-<!--                                                                            &lt;!&ndash; Tổng (col-md-3), lệch sát phải &ndash;&gt;-->
-<!--                                                                            <div class="col-md-6 d-flex align-items-center justify-content-end pe-0">-->
-<!--                                                                                Tổng: <span class="ms-1"-->
-<!--                                                                                            x-text="formatCurrency(item.price * item.quantity)"></span>-->
-<!--                                                                            </div>-->
-<!--                                                                        </div>-->
+                                <!--                                                                            &lt;!&ndash; Tổng (col-md-3), lệch sát phải &ndash;&gt;-->
+                                <!--                                                                            <div class="col-md-6 d-flex align-items-center justify-content-end pe-0">-->
+                                <!--                                                                                Tổng: <span class="ms-1"-->
+                                <!--                                                                                            x-text="formatCurrency(item.price * item.quantity)"></span>-->
+                                <!--                                                                            </div>-->
+                                <!--                                                                        </div>-->
 
-<!--                                                                        &lt;!&ndash; Dòng 2: Màu - Size | SL &ndash;&gt;-->
-<!--                                                                        <div class="row mt-1">-->
-<!--                                                                            <div class="col-md-6 text-muted">-->
-<!--                                                                                <span x-text="`${item.color} - ${item.size} x ${item.quantity}`"></span>-->
-<!--                                                                            </div>-->
+                                <!--                                                                        &lt;!&ndash; Dòng 2: Màu - Size | SL &ndash;&gt;-->
+                                <!--                                                                        <div class="row mt-1">-->
+                                <!--                                                                            <div class="col-md-6 text-muted">-->
+                                <!--                                                                                <span x-text="`${item.color} - ${item.size} x ${item.quantity}`"></span>-->
+                                <!--                                                                            </div>-->
 
-<!--                                                                        </div>-->
-<!--                                                                    </div>-->
-<!--                                                                </template>-->
+                                <!--                                                                        </div>-->
+                                <!--                                                                    </div>-->
+                                <!--                                                                </template>-->
 
                                 <!-- Tổng đơn -->
                                 <div class="d-flex justify-content-between align-items-center mt-4">

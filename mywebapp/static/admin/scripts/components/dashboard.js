@@ -99,6 +99,163 @@ document.addEventListener('alpine:init', () => {
                     });
             },
 
+            getPeriodRange(period = 'week') {
+                const today = new Date();
+                let start, end;
+
+                switch (period) {
+                    case 'today': {
+                        start = new Date(today);
+                        start.setHours(0, 0, 0, 0);
+
+                        end = new Date(today);
+                        end.setHours(23, 59, 59, 999);
+                        break;
+                    }
+                    case 'week': {
+                        const dayOfWeek = today.getDay() || 7;
+                        start = new Date(today);
+                        start.setDate(today.getDate() - dayOfWeek + 1);
+                        start.setHours(0, 0, 0, 0);
+
+                        end = new Date(start);
+                        end.setDate(start.getDate() + 6);
+                        end.setHours(23, 59, 59, 999);
+                        break;
+                    }
+                    case 'month': {
+                        start = new Date(today.getFullYear(), today.getMonth(), 1);
+                        end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                        end.setHours(23, 59, 59, 999);
+                        break;
+                    }
+                    case 'quarter': {
+                        const quarter = Math.floor(today.getMonth() / 3);
+                        start = new Date(today.getFullYear(), quarter * 3, 1);
+                        end = new Date(today.getFullYear(), quarter * 3 + 3, 0);
+                        end.setHours(23, 59, 59, 999);
+                        break;
+                    }
+                    case 'year': {
+                        start = new Date(today.getFullYear(), 0, 1);
+                        end = new Date(today.getFullYear(), 11, 31);
+                        end.setHours(23, 59, 59, 999);
+                        break;
+                    }
+                    default: {
+                        start = today;
+                        end = today;
+                        break;
+                    }
+                }
+
+                return {start, end};
+            }
+            ,
+
+            getPeriodRangeWithPrevious(period = 'month') {
+                const today = new Date();
+                let startCurrent, endCurrent, startPrevious, endPrevious;
+
+                switch (period) {
+                    case 'today': {
+                        startCurrent = new Date(today);
+                        startCurrent.setHours(0, 0, 0, 0);
+
+                        endCurrent = new Date(today);
+                        endCurrent.setHours(23, 59, 59, 999);
+
+                        startPrevious = new Date(startCurrent);
+                        startPrevious.setDate(startPrevious.getDate() - 1);
+                        startPrevious.setHours(0, 0, 0, 0);
+
+                        endPrevious = new Date(startPrevious);
+                        endPrevious.setHours(23, 59, 59, 999);
+                        break;
+                    }
+
+                    case 'week': {
+                        const dayOfWeek = today.getDay() || 7; // CN=0 → 7
+                        startCurrent = new Date(today);
+                        startCurrent.setDate(today.getDate() - dayOfWeek + 1); // thứ 2
+                        startCurrent.setHours(0, 0, 0, 0);
+
+                        endCurrent = new Date(startCurrent);
+                        endCurrent.setDate(startCurrent.getDate() + 6); // CN
+                        endCurrent.setHours(23, 59, 59, 999);
+
+                        startPrevious = new Date(startCurrent);
+                        startPrevious.setDate(startPrevious.getDate() - 7);
+                        startPrevious.setHours(0, 0, 0, 0);
+
+                        endPrevious = new Date(startCurrent);
+                        endPrevious.setDate(endPrevious.getDate() - 1);
+                        endPrevious.setHours(23, 59, 59, 999);
+                        break;
+                    }
+
+                    case 'month': {
+                        startCurrent = new Date(today.getFullYear(), today.getMonth(), 1);
+                        startCurrent.setHours(0, 0, 0, 0);
+
+                        endCurrent = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                        endCurrent.setHours(23, 59, 59, 999);
+
+                        startPrevious = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                        startPrevious.setHours(0, 0, 0, 0);
+
+                        endPrevious = new Date(today.getFullYear(), today.getMonth(), 0);
+                        endPrevious.setHours(23, 59, 59, 999);
+                        break;
+                    }
+
+                    case 'quarter': {
+                        const quarter = Math.floor(today.getMonth() / 3);
+                        startCurrent = new Date(today.getFullYear(), quarter * 3, 1);
+                        startCurrent.setHours(0, 0, 0, 0);
+
+                        endCurrent = new Date(today.getFullYear(), quarter * 3 + 3, 0);
+                        endCurrent.setHours(23, 59, 59, 999);
+
+                        startPrevious = new Date(today.getFullYear(), quarter * 3 - 3, 1);
+                        startPrevious.setHours(0, 0, 0, 0);
+
+                        endPrevious = new Date(today.getFullYear(), quarter * 3, 0);
+                        endPrevious.setHours(23, 59, 59, 999);
+                        break;
+                    }
+
+                    case 'year': {
+                        startCurrent = new Date(today.getFullYear(), 0, 1);
+                        startCurrent.setHours(0, 0, 0, 0);
+
+                        endCurrent = new Date(today.getFullYear(), 11, 31);
+                        endCurrent.setHours(23, 59, 59, 999);
+
+                        startPrevious = new Date(today.getFullYear() - 1, 0, 1);
+                        startPrevious.setHours(0, 0, 0, 0);
+
+                        endPrevious = new Date(today.getFullYear() - 1, 11, 31);
+                        endPrevious.setHours(23, 59, 59, 999);
+                        break;
+                    }
+
+                    default: {
+                        // fallback = month
+                        startCurrent = new Date(today.getFullYear(), today.getMonth(), 1);
+                        endCurrent = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                        endCurrent.setHours(23, 59, 59, 999);
+
+                        startPrevious = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                        endPrevious = new Date(today.getFullYear(), today.getMonth(), 0);
+                        endPrevious.setHours(23, 59, 59, 999);
+                    }
+                }
+
+                return {startCurrent, endCurrent, startPrevious, endPrevious};
+            }
+            ,
+
             userGrowthData(daysCount = 7) {
                 const today = new Date();
 
@@ -358,23 +515,23 @@ document.addEventListener('alpine:init', () => {
                 yesterday.setDate(today.getDate() - 1);
 
                 const revenueToday = this.orders.reduce((sum, order) => {
-                        const d = new Date(order.orderDate);
-                        if (d.getDate() === today.getDate()
-                            && d.getMonth() === today.getMonth()
-                            && d.getFullYear() === today.getFullYear()) {
-                            return sum + (Number(order.total) || 0);
-                        }
-                        return sum;
-                    }, 0);
+                    const d = new Date(order.orderDate);
+                    if (d.getDate() === today.getDate()
+                        && d.getMonth() === today.getMonth()
+                        && d.getFullYear() === today.getFullYear()) {
+                        return sum + (Number(order.total) || 0);
+                    }
+                    return sum;
+                }, 0);
                 const revenueYesterday = this.orders.reduce((sum, order) => {
-                        const d = new Date(order.orderDate);
-                        if (d.getDate() === yesterday.getDate() &&
-                            d.getMonth() === yesterday.getMonth() &&
-                            d.getFullYear() === yesterday.getFullYear()) {
-                            return sum + (Number(order.total) || 0);
-                        }
-                        return sum;
-                    }, 0);
+                    const d = new Date(order.orderDate);
+                    if (d.getDate() === yesterday.getDate() &&
+                        d.getMonth() === yesterday.getMonth() &&
+                        d.getFullYear() === yesterday.getFullYear()) {
+                        return sum + (Number(order.total) || 0);
+                    }
+                    return sum;
+                }, 0);
 
                 const percentChange = revenueYesterday === 0
                     ? (revenueToday > 0 ? 100 : 0)
@@ -633,7 +790,6 @@ document.addEventListener('alpine:init', () => {
             }
             ,
 
-
             initInteractiveElements() {
                 // Chart period switcher
                 document.addEventListener('click', (e) => {
@@ -659,44 +815,10 @@ document.addEventListener('alpine:init', () => {
             ,
 
             updateChartPeriod(period) {
-                switch (period) {
-                    case '7d':
-                        this.loadWeeklyData();
-                        break;
-                    case '30d':
-                        this.loadMonthlyData();
-                        break;
-                    case '90d':
-                        this.loadQuarterlyData();
-                        break;
-                    case '1y':
-                        this.loadYearlyData();
-                        break;
-                }
+                this.period = period
+
             }
             ,
-
-            loadWeeklyData() {
-                this.userGrowData = this.userGrowthData(7);
-            }
-            ,
-
-            loadMonthlyData() {
-                this.userGrowData = this.userGrowthData(30);
-            }
-            ,
-
-            loadQuarterlyData() {
-                // Update charts with quarterly data
-                console.log('Loading quarterly data...');
-            }
-            ,
-
-            loadYearlyData() {
-                this.userGrowData = this.userGrowthData(365);
-            }
-            ,
-
             exportChart(chartName) {
                 const chart = this.charts.get(chartName);
                 if (chart) {

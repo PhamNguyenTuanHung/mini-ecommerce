@@ -1,0 +1,189 @@
+{% extends 'admin/layout/base.html' %}
+{% block title %} Thương hiệu {% endblock %}
+
+{% block content %}
+<main class="admin-main">
+    <div class="container-fluid p-4 p-lg-5">
+
+        <!-- Header trang -->
+        <div class="d-flex justify-content-between align-items-center mb-4 mb-lg-5">
+            <div>
+                <h1 class="h3 mb-0">Quản lý thương hiệu</h1>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-secondary" @click="exportBrands()">
+                    <i class="bi bi-download me-2"></i>Xuất dữ liệu
+                </button>
+                <button type="button" class="btn btn-primary"
+                        x-data="brandForm"
+                        @click="$store.brandFormStore.openModal('add', null)">
+                    <i class="bi bi-plus-lg me-2"></i>Thêm thương hiệu
+                </button>
+            </div>
+        </div>
+
+        <!-- Bảng thương hiệu -->
+        <div x-data="brandTable">
+            <div class="card">
+                <div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="card-title mb-0">Danh sách thương hiệu</h5>
+                        </div>
+                        <div class="col-auto">
+                            <div class="d-flex gap-2">
+                                <div class="position-relative">
+                                    <input type="search" class="form-control form-control-sm"
+                                           placeholder="Tìm kiếm thương hiệu..." x-model="searchQuery"
+                                           @input="filterBrands()" style="width: 200px;">
+                                    <i class="bi bi-search position-absolute top-50 end-0 translate-middle-y me-2 text-muted"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-0">
+                    <!-- Thanh thao tác nhiều mục -->
+                    <div class="bulk-actions-bar p-3 bg-light border-bottom" x-show="selectedBrands.length > 0" x-transition>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">
+                                <span x-text="selectedBrands.length"></span> thương hiệu đã chọn
+                            </span>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-secondary" @click="bulkAction('publish')">
+                                    <i class="bi bi-eye me-1"></i>Hiển thị
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" @click="bulkAction('unpublish')">
+                                    <i class="bi bi-eye-slash me-1"></i>Ẩn
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" @click="bulkAction('delete')">
+                                    <i class="bi bi-trash me-1"></i>Xóa
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bảng -->
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th style="width: 40px;">
+                                    <input type="checkbox"
+                                           class="form-check-input"
+                                           @change="toggleAll($event.target.checked)"
+                                           :checked="selectedBrands.length === filteredBrands.length && filteredBrands.length > 0">
+                                </th>
+                                <th>Mã Thương Hiệu</th>
+                                <th @click="sortBy('name')" class="sortable">Tên thương hiệu</th>
+                                <th>Doanh thu</th>
+                                <th style="width: 120px;">Thao tác</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <template x-for="brand in paginatedBrands" :key="brand.id">
+                                <tr>
+                                    <td>
+                                        <input type="checkbox" class="form-check-input" :value="brand.id" x-model="selectedBrands">
+                                    </td>
+                                    <td><span x-text="brand.id"></span></td>
+                                    <td><span x-text="brand.name"></span></td>
+                                    <td><span x-text="brand.revenue"></span></td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#" @click="editBrand(brand)">
+                                                    <i class="bi bi-pencil me-2"></i>Sửa
+                                                </a></li>
+                                                <li><a class="dropdown-item" href="#" @click="viewBrand(brand)">
+                                                    <i class="bi bi-eye me-2"></i>Xem chi tiết
+                                                </a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item text-danger" href="#" @click="deleteBrand(brand)">
+                                                    <i class="bi bi-trash me-2"></i>Xóa
+                                                </a></li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Phân trang -->
+                    <div class="d-flex justify-content-between align-items-center p-3">
+                        <div class="text-muted">
+                            Hiển thị <span x-text="(currentPage - 1) * itemsPerPage + 1"></span> đến
+                            <span x-text="Math.min(currentPage * itemsPerPage, filteredBrands.length)"></span> trong tổng
+                            <span x-text="filteredBrands.length"></span> thương hiệu
+                        </div>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0">
+                                <li class="page-item" :class="{ 'disabled': currentPage === 1 }">
+                                    <a class="page-link" href="#" @click.prevent="goToPage(currentPage - 1)">Trước</a>
+                                </li>
+                                <template x-for="(page, index) in visiblePages" :key="`page-${index}`">
+                                    <li class="page-item" :class="{ 'active': page === currentPage }">
+                                        <a class="page-link" href="#" @click.prevent="page !== '...' && goToPage(page)" x-text="page"></a>
+                                    </li>
+                                </template>
+                                <li class="page-item" :class="{ 'disabled': currentPage === totalPages }">
+                                    <a class="page-link" href="#" @click.prevent="goToPage(currentPage + 1)">Sau</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+
+{% block Modal %}
+<!-- Modal Thương Hiệu -->
+<div class="modal fade" id="brandModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thông tin thương hiệu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body" x-data="brandForm">
+                <div class="tab-content">
+                    <form @submit.prevent="saveBrand">
+                        <div class="tab-pane fade show active">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label">Tên thương hiệu</label>
+                                    <input type="text" class="form-control" x-model="form.name" required>
+                                </div>
+                            </div>
+                            <div class="row g-3 mt-3">
+                                <div class="col-12">
+                                    <label class="form-label">Mô tả</label>
+                                    <input type="text" class="form-control" x-model="form.description">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-primary"
+                                    x-text="mode === 'view' ? 'Sửa' : (mode === 'add' ? 'Thêm' : 'Lưu thay đổi')">
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

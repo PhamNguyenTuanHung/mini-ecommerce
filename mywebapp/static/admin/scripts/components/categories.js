@@ -11,16 +11,6 @@ document.addEventListener('alpine:init', () => {
         sortField: 'name',
         sortDirection: 'asc',
         isLoading: false,
-        chartsInitialized: false,
-        categoryColors: {},
-        stats: {
-            total: 0,
-            inStock: 0,
-            lowStock: 0,
-            totalValue: 0
-        },
-
-        categoriesStats: [],
 
         init() {
             Alpine.store('categoryTableStore', this);
@@ -38,12 +28,7 @@ document.addEventListener('alpine:init', () => {
                 .then(response => response.json())
                 .then(data => {
                     this.categories = data;
-                    data.forEach(cate => {
-                        this.categoryColors[cate.name.toLowerCase()] = this.getRandomColor();
-                    });
                     this.filterCategories();
-                    this.calculateStats();
-                    this.initCategoryChart();
                 })
                 .catch(error => {
                     console.error('Lỗi khi tải danh mục:', error);
@@ -53,48 +38,15 @@ document.addEventListener('alpine:init', () => {
                 });
         },
 
-        getRandomColor() {
-            const hue = Math.floor(Math.random() * 360);
-            return `hsl(${hue}, 70%, 70%)`;
-        },
-
-        getCategoryColor(category) {
-            const key = category.toLowerCase();
-            return this.categoryColors[key] || this.getRandomColor();
-        }
-        ,
-        calculateStats() {
-            this.stats.total = this.categories.length;
-            this.stats.inStock = this.categories.filter(p => p.stock > 20).length;
-            this.stats.lowStock = this.categories.filter(p => p.stock > 0 && p.stock <= 20).length;
-            this.stats.totalValue = this.categories.reduce((sum, p) => sum + (p.price * p.stock), 0);
-            this.categoryStats = this.categories.map(cat => {
-                const name = cat.name;
-                const count = cat.product_count;
-                const color = this.categoryColors?.[name.toLowerCase()] || this.getRandomColor();
-                return {
-                    name: name.charAt(0).toUpperCase() + name.slice(1),
-                    count,
-                    percentage: Math.round((count / this.categories.length) * 100),
-                    color
-                };
-            });
-
-        }
-        ,
 
         filterCategories() {
             this.filteredCategories = this.categories.filter(category => {
                 const matchesSearch = !this.searchQuery ||
                     category.name.toLowerCase().includes(this.searchQuery.toLowerCase())
 
-                const matchesCategory = !this.categoryFilter || category.category.name === this.categoryFilter;
-                const matchesStock = !this.stockFilter ||
-                    (this.stockFilter === 'in-stock' && category.stock > 20) ||
-                    (this.stockFilter === 'low-stock' && category.stock > 0 && category.stock <= 20) ||
-                    (this.stockFilter === 'out-of-stock' && category.stock === 0);
+                const matchesCategory = !this.categoryFilter || category.name === this.categoryFilter;
 
-                return matchesSearch && matchesCategory && matchesStock;
+                return matchesSearch && matchesCategory;
             });
 
             this.sortCategories();
@@ -272,59 +224,6 @@ document.addEventListener('alpine:init', () => {
         }
         ,
 
-        initCharts() {
-            // Prevent multiple chart initializations
-            if (this.chartsInitialized) return;
-            this.initCategoryChart();
-            this.chartsInitialized = true;
-        }
-        ,
-
-
-        initCategoryChart() {
-            const categoryChart = document.getElementById('categoryChart');
-            if (!categoryChart) {
-                console.warn('Category chart element not found');
-                return;
-            }
-            categoryChart.innerHTML = '';
-
-            try {
-
-                const chartData = {
-                    series: this.categoriesStats.map(cat => cat.count),
-                    chart: {
-                        type: 'donut',
-                        height: 200
-                    },
-                    labels: this.categoriesStats.map(cat => cat.name),
-                    colors: this.categoriesStats.map(cat => cat.color),
-                    plotOptions: {
-                        pie: {
-                            donut: {
-                                size: '70%'
-                            }
-                        }
-                    },
-                    legend: {
-                        show: false
-                    },
-                    tooltip: {
-                        y: {
-                            formatter: function (val) {
-                                return val + " categories"
-                            }
-                        }
-                    }
-                };
-
-                const chart = new ApexCharts(categoryChart, chartData);
-                chart.render();
-            } catch (error) {
-                console.error('Error rendering category chart:', error);
-            }
-        }
-        ,
 
         get paginatedCategories() {
             const start = (this.currentPage - 1) * this.itemsPerPage;

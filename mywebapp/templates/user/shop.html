@@ -6,18 +6,10 @@
 <!-- Plugin CSS -->
 <link rel="stylesheet" href="{{ url_for('static', filename='user/plugins/themefisher-font/style.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='user/plugins/bootstrap/css/bootstrap.min.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='user/plugins/animate/animate.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='user/plugins/slick/slick.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='user/plugins/slick/slick-theme.css') }}">
 <link rel="stylesheet"
       href="{{ url_for('static', filename='user/plugins/bootstrap-touchspin/dist/jquery.bootstrap-touchspin.min.css') }}">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-<link rel="stylesheet" href="{{ url_for('static', filename='user/css1/bootstrap.min.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='user/css1/font-awesome.min.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='user/css1/magnific-popup.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='user/css1/nice-select.css') }}">
+<!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">-->
 <link rel="stylesheet" href="{{ url_for('static', filename='user/css/style1.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='user/css/style.css') }}">
 
@@ -40,46 +32,60 @@
                         </form>
                     </div>
                     <div class="shop__sidebar__accordion">
-                        <div class="accordion" id="accordionExample">
-                            <div class="card">
-                                <div class="card-heading">
-                                    <a data-toggle="collapse" data-target="#collapseOne">Categories</a>
+                        <div class="panel-group" id="accordionExample">
+
+                            <!-- Categories -->
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <h4 class="panel-title">
+                                        <a data-toggle="collapse"  href="#collapseOne">
+                                            Danh mục sản phẩm <span class="caret"></span>
+                                        </a>
+                                    </h4>
                                 </div>
-                                <div id="collapseOne" class="collapse show" data-parent="#accordionExample">
-                                    <div class="card-body">
+                                <div id="collapseOne" class="panel-collapse collapse in">
+                                    <div class="panel-body">
                                         <div class="shop__sidebar__categories">
                                             <ul>
                                                 <template x-for="category in categories" :key="category.id">
                                                     <li>
                                                         <a href="#"
                                                            @click.prevent="
-                                                           categoryFilter = categoryFilter === category.name ? '' : category.name;
-                                                           filterProducts();"
-                                                           :class="categoryFilter === category.name ? 'active' : ''"
+                                           categoryFilter = (categoryFilter === category.id ? '' : category.id);
+                                           filterProducts();"
+                                                           :class="categoryFilter === category.id ? 'active' : ''"
                                                            x-text="category.name">
                                                         </a>
                                                     </li>
                                                 </template>
                                             </ul>
-
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="card">
-                                <div class="card-heading">
-                                    <a data-toggle="collapse" data-target="#collapseTwo">Branding</a>
+
+                            <!-- Branding -->
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <h4 class="panel-title">
+                                        <a data-toggle="collapse"href="#collapseTwo">
+                                            Thương hiệu <span class="caret"></span>
+                                        </a>
+                                    </h4>
                                 </div>
-                                <div id="collapseTwo" class="collapse show" data-parent="#accordionExample">
-                                    <div class="card-body">
+                                <div id="collapseTwo" class="panel-collapse collapse in">
+                                    <div class="panel-body">
                                         <div class="shop__sidebar__brand">
                                             <ul>
                                                 <template x-for="brand in brands" :key="brand.id">
-                                                    <li><a href="#"
-                                                           @click.prevent="brandFilter = brandFilter === brand.name ? '' : brand.name;;
-                                                           filterProducts()"
-                                                           :class="brandFilter === brand.name ? 'active' : ''"
-                                                           x-text="brand.name "></a>
+                                                    <li>
+                                                        <a href="#"
+                                                           @click.prevent="
+                                           brandFilter = brandFilter === brand.id ? '' : brand.id;
+                                           filterProducts();"
+                                                           :class="brandFilter === brand.id ? 'active' : ''"
+                                                           x-text="brand.name">
+                                                        </a>
                                                     </li>
                                                 </template>
                                             </ul>
@@ -87,8 +93,10 @@
                                     </div>
                                 </div>
                             </div>
+
                         </div>
                     </div>
+
                 </div>
             </div>
             <div class="col-lg-9 product-container">
@@ -98,57 +106,61 @@
                         <div class="col-lg-6 col-md-6 col-sm-6">
                             <div class="shop__product__option__right">
                                 <p>Sắp xếp theo:</p>
-                                    <select x-model="sortOption" @change="filterProducts()">
-                                        <option value="priceLowHigh">Giá: Thấp → Cao</option>
-                                        <option value="priceHighLow">Giá: Cao → Thấp</option>
-                                        <option value="newest">Mới nhất</option>
-                                        <option value="bestseller">Bán chạy nhất</option>
-                                        <option value="discount">Khuyến mãi nhiều nhất</option>
-                                    </select>
+                                <select x-model="sortOption" @change="filterProducts()">
+                                    <option value="priceLowHigh">Giá: Thấp → Cao</option>
+                                    <option value="priceHighLow">Giá: Cao → Thấp</option>
+                                    <option value="newest">Mới nhất</option>
+                                    <option value="bestseller">Bán chạy nhất</option>
+                                    <option value="discount">Khuyến mãi nhiều nhất</option>
+                                </select>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <div class="row">
-                    <template x-for="product in paginatedProducts" :key="product.id">
-                        <div class="col-lg-3 col-md-6 col-sm-6">
-                            <div class="product-item">
-                                <div class="product-thumb">
-                                    <span class="bage">Sale</span>
-                                    <img class="img-responsive"
-                                         :src="product.image"
-                                         alt="product-img"/>
-                                    <a :href="`/product/${product.MaSanPham}`"></a>
-                                    <div class="preview-meta">
-                                        <ul>
-                                            <li>
-                                                <a href="javascript:void(0);"><i class="tf-ion-ios-heart"></i></a>
-                                            </li>
-                                            <li>
-                                                <a :href="`/product_single/${product.id}`">
-                                                    <i class="tf-ion-android-cart"></i>
-                                                </a>
-                                            </li>
-                                        </ul>
+                <div class="product-list flex-grow-1">
+                    <div class="row">
+                        <template x-for="product in products" :key="product.id">
+                            <div class="col-lg-3 col-md-6 col-sm-6">
+                                <div class="product-item">
+                                    <div class="product-thumb">
+                                        <span class="bage">Sale</span>
+                                        <img class="img-responsive"
+                                             :src="product.image"
+                                             alt="product-img"/>
+                                        <a :href="`/product/${product.MaSanPham}`"></a>
+                                        <div class="preview-meta">
+                                            <ul>
+                                                <li>
+                                                    <a href="javascript:void(0);"><i class="tf-ion-ios-heart"></i></a>
+                                                </li>
+                                                <li>
+                                                    <a :href="`/product_single/${product.id}`">
+                                                        <i class="tf-ion-android-cart"></i>
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="product-content">
+                                        <h4><a :href="`/product_single/${product.id}`" x-text="product.name"></a></h4>
+                                        <p class="price" x-text="`$${product.price}`"></p>
                                     </div>
                                 </div>
-                                <div class="product-content">
-                                    <h4><a :href="`/product_single/${product.id}`" x-text="product.name"></a></h4>
-                                    <p class="price" x-text="`$${product.price}`"></p>
-                                </div>
                             </div>
-                        </div>
-                    </template>
-
+                        </template>
+                        <template x-for="n in (8 - products.length)" :key="`empty-${n}`">
+                            <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+                                <div class="product-item placeholder"></div>
+                            </div>
+                        </template>
+                    </div>
                 </div>
-                <div class="row shop-pagination">
-                    <div class="d-flex justify-content-end align-items-center">
+                <div class="row shop-pagination mt-auto">
+                    <div class="d-flex justify-content-end align-items-center w-100">
                         <nav>
                             <ul class="pagination pagination-sm mb-0">
                                 <li x-show="currentPage>1" class="page-item" :class="{ 'disabled': currentPage === 1 }">
-                                    <a class="page-link" href="#"
-                                       @click.prevent="goToPage(currentPage - 1)">
+                                    <a class="page-link" href="#" @click.prevent="goToPage(currentPage - 1)">
                                         <i class="fas fa-chevron-left"></i>
                                     </a>
                                 </li>
@@ -160,8 +172,7 @@
                                     </li>
                                 </template>
                                 <li class="page-item" :class="{ 'disabled': currentPage === totalPages }">
-                                    <a class="page-link" href="#"
-                                       @click.prevent="goToPage(currentPage + 1)">
+                                    <a class="page-link" href="#" @click.prevent="goToPage(currentPage + 1)">
                                         <i class="fas fa-chevron-right"></i>
                                     </a>
                                 </li>
