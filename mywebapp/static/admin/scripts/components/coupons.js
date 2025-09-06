@@ -191,6 +191,7 @@ document.addEventListener('alpine:init', () => {
             this.showNotification('Xuất file CSV thành công!', 'success');
         },
 
+
         showNotification(message, type = 'info') {
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
@@ -259,6 +260,141 @@ document.addEventListener('alpine:init', () => {
         }
     }))
     ;
+
+    Alpine.data('bulkAssignVoucher', () => ({
+        coupons: [],
+        users: [],
+        selectedCouponId: null,
+        selectedUserIds: [],
+        isLoading: false,
+        currentPage: 1,
+        itemsPerPage: 10,
+
+        init() {
+            this.loadCoupons();
+            this.loadUsers();
+        },
+
+        loadCoupons() {
+            fetch('/admin/api/coupons')
+                .then(res => res.json())
+                .then(data => {
+                    this.coupons = data;
+                });
+        },
+
+        loadUsers() {
+            fetch('/admin/api/users')
+                .then(res => res.json())
+                .then(data => {
+                    this.users = data;
+                });
+        },
+
+        canAssign() {
+            return this.selectedCouponId && this.selectedUserIds.length > 0;
+        },
+
+        toggleAll(checked) {
+            if (checked) {
+                this.selectedUserIds = this.users.map(u => u.id);
+            } else {
+                this.selectedUserIds = [];
+            }
+        },
+
+        assignVoucher() {
+            if (!this.canAssign()) return;
+
+            this.isLoading = true;
+
+            fetch('/admin/api/coupons/assign-bulk', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_ids: this.selectedUserIds,
+                    coupon_id: this.selectedCouponId
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        title: 'Thành công!',
+                        text: `Đã gán voucher cho ${this.selectedUserIds.length} user.`,
+                        icon: 'success',
+                        timer: 2000
+                    });
+                    this.selectedUserIds = [];
+                    this.selectedCouponId = null;
+                } else {
+                    Swal.fire({
+                        title: 'Lỗi!',
+                        text: data.message || 'Không thể gán voucher.',
+                        icon: 'error'
+                    });
+                }
+            })
+            .catch(err => console.error(err))
+            .finally(() => this.isLoading = false);
+        },
+
+        get paginatedUsers() {
+            const start = (this.currentPage - 1) * this.itemsPerPage;
+            const end = start + this.itemsPerPage;
+            return this.users.slice(start, end);
+        },
+
+        get totalPages() {
+            return Math.ceil(this.users.length / this.itemsPerPage);
+        },
+
+        get visiblePages() {
+            if (this.totalPages <= 1) return [1];
+
+            const pages = [];
+            const delta = 2;
+            pages.push(1);
+
+            if (this.totalPages <= 7) {
+                for (let i = 2; i <= this.totalPages; i++) {
+                    pages.push(i);
+                }
+            } else {
+                if (this.currentPage <= 4) {
+                    for (let i = 2; i <= 5; i++) {
+                        pages.push(i);
+                    }
+                    pages.push('...');
+                    pages.push(this.totalPages);
+                } else if (this.currentPage >= this.totalPages - 3) {
+                    pages.push('...');
+                    for (let i = this.totalPages - 4; i <= this.totalPages; i++) {
+                        pages.push(i);
+                    }
+                } else {
+                    pages.push('...');
+                    for (let i = this.currentPage - 1; i <= this.currentPage + 1; i++) {
+                        pages.push(i);
+                    }
+                    pages.push('...');
+                    pages.push(this.totalPages);
+                }
+            }
+
+            return pages;
+        },
+
+
+        goToPage(page) {
+            if (page >= 1 && page <= this.totalPages) {
+                this.currentPage = page;
+                if (this.selectedUserIds.length === this.paginatedUsers.length) {
+                    this.selectedUserIds = this.paginatedUsers.map(u => u.id);
+                }
+            }
+        }
+    }));
 
 
     // category form component for modals
@@ -339,7 +475,7 @@ document.addEventListener('alpine:init', () => {
                         this.resetForm();
 
                         const couponTable = Alpine.store('couponTableStore');
-                        if (couponTable ) {
+                        if (couponTable) {
                             console.log(123);
                             couponTable.loadCoupons();
                         }

@@ -22,9 +22,8 @@ def add_address():
     )
 
     if new_address:
-        return {
-            'success': True
-        }
+        return {'success': True,
+                'address_id': new_address.MaDiaChi}
     else:
         return {'success': False}
 

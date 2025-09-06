@@ -8,24 +8,20 @@ document.addEventListener("DOMContentLoaded", function () {
     const productId= productInfoEl.dataset.productId
     window.availableStock = 0;
 
-
-    // --- Lấy size mặc định ngay khi load ---
     const sizeSelect = document.getElementById('size-select');
     if (sizeSelect) {
         window.size = sizeSelect.value;
 
     }
 
-    // --- Lấy màu mặc định hoặc chọn màu đầu tiên ---
     const firstSwatch = document.querySelector('.color-swatches .swatch');
     if (firstSwatch) {
         window.color = firstSwatch.dataset.color;
         firstSwatch.classList.add('selected');
     }
 
-    updateStock();
+    checkStock();
 
-    // --- Khi chọn màu ---
     document.querySelector('.color-swatches ul')?.addEventListener('click', function (e) {
         const swatch = e.target.closest('.swatch');
         if (swatch) {
@@ -33,18 +29,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
             document.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
             swatch.classList.add('selected');
-            updateStock();
+            checkStock();
         }
     });
 
-    // --- Khi đổi size ---
     sizeSelect?.addEventListener('change', function () {
         window.size = this.value;
-        updateStock();
+        checkStock();
     });
 
-    // --- Hàm lấy số lượng tồn kho ---
-    function updateStock() {
+    function checkStock() {
         if (window.size && window.color) {
             fetch(`/user/api/products/stock?product_id=${productId}&color=${encodeURIComponent(window.color)}&size=${encodeURIComponent(window.size)}`)
                 .then(response => response.json())
@@ -56,7 +50,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     window.availableStock = data.quantity;
                 })
                 .catch(err => {
-                    console.error('Fetch stock failed:', err);
+                    console.error('Lỗi khi lấy dữ liệu tồn kho:', err);
                     const stockEl = document.getElementById('stock-display');
                     if (stockEl) stockEl.textContent = 'Lỗi khi lấy số lượng';
                 });

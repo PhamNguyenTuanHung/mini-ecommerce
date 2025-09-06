@@ -2280,7 +2280,7 @@ input[type=email]:focus, input[type=password]:focus, input[type=text]:focus, inp
 .checkout-form .form-group input {
     border-radius: 0;
     display: block;
-    padding: 6px 10px 5px 100px;
+    padding: 10px 10px 5px 130px;
     -moz-appearance: none;
     -webkit-appearance: none;
     height: 50px;
@@ -3425,3 +3425,4 @@ li a.active::after {
 .footer {
     height: 50px;
 }
+

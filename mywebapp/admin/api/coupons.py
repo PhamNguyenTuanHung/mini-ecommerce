@@ -63,3 +63,13 @@ def create_coupon():
         )
         return jsonify({"success": True})
     return jsonify({"success": False})
+
+@admin_api.route('/coupons/assign-bulk', methods=['POST'])
+def assign_voucher_to_users():
+    data = request.get_json()
+    users = data.get("user_ids")
+    coupon = data.get("coupon_id")
+
+    utils.assign_voucher_to_users(users, coupon)
+    return jsonify({"success": True})
+

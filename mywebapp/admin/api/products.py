@@ -96,14 +96,13 @@ def update_product(product_id):
     description = request.form.get('description')
     variants = json.loads(request.form.get('variants', '[]'))
 
-
     image_url_form = request.form.get('image_url', '').strip()
     image_file = request.files.get('image')
 
     # Gallery ảnh phụ
     gallery_files = request.files.getlist("gallery_images")
 
-    new_avatar_url = old_product.HinhAnh
+    new_avatar_url = old_product['image']
 
     # Nếu có file ảnh upload
     if image_file and image_file.filename and image_file.mimetype.startswith('image/'):

@@ -280,7 +280,6 @@ class Order(db.Model):
         ForeignKeyConstraint(['MaDiaChi'], ['DiaChiNguoiDung.MaDiaChi'], name='FK__Orders__MaDiaChi'),
         ForeignKeyConstraint(['MaGiamGia'], ['MaGiamGia.MaGiamGia'], name='FK__Orders__MaGiamGia'),
         PrimaryKeyConstraint('MaDonHang', name='PK__Orders__129584AD840D3CD7')
-
     )
 
     MaDonHang: Mapped[int] = mapped_column(Integer, Identity(start=1, increment=1), primary_key=True)
@@ -292,6 +291,7 @@ class Order(db.Model):
     TrangThai: Mapped[Optional[str]] = mapped_column(Unicode(50, 'Vietnamese_CI_AS'),                                             server_default=text("(N'Pending')"))
     PhiVanChuyen: Mapped[Optional[decimal.Decimal]] = mapped_column(DECIMAL(10, 2), server_default=text('((0))'))
     GiamGia: Mapped[Optional[decimal.Decimal]] = mapped_column(DECIMAL(10, 2), server_default=text('((0))'))
+
 
     user: Mapped[Optional['User']] = relationship('User', back_populates='orders')
     order_logs: Mapped[List['OrderLog']] = relationship('OrderLog', back_populates='order')
@@ -415,17 +415,17 @@ class Coupon(db.Model):
 class UserCoupon(db.Model):
     __tablename__ = 'NguoiDung_MaGiamGia'
     __table_args__ = (
-        PrimaryKeyConstraint('MaUserCoupon', name='PK__UserCoupon__B4DC79FF'),
+        PrimaryKeyConstraint('MaNguoiDungGiamGia', name='PK__UserCoupon__B4DC79FF'),
         ForeignKeyConstraint(['MaNguoiDung'], ['NguoiDung.MaNguoiDung'], name='FK__User__UserCoupon'),
         ForeignKeyConstraint(['MaGiamGia'], ['MaGiamGia.MaGiamGia'], name='FK__Coupon__UserCoupon'),
     )
 
-    MaUserCoupon: Mapped[int] = mapped_column(Integer, Identity(start=1, increment=1), primary_key=True)
+    MaNguoiDungGiamGia: Mapped[int] = mapped_column(Integer, Identity(start=1, increment=1), primary_key=True)
     MaNguoiDung: Mapped[int] = mapped_column(Integer)
     MaGiamGia: Mapped[int] = mapped_column(Integer)
     NgayNhan: Mapped[datetime] = mapped_column(DateTime, server_default=text("CURRENT_TIMESTAMP"))
+    DaSuDung: Mapped[int] = mapped_column(Integer,server_default=text("0"))
 
-    # Quan hệ
     user: Mapped['User'] = relationship('User', back_populates='user_coupons')
     coupon: Mapped['Coupon'] = relationship('Coupon', back_populates='user_coupons')
 

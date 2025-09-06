@@ -211,6 +211,12 @@ def view_address():
     addresses = utils.get_user_addresses_by_id(user_id=current_user.MaNguoiDung)
     return render_template('address.html', addresses=addresses)
 
+@main.route('/user/vouchers')
+@login_required
+def view_vouchers():
+    coupons = utils.get_user_vouchers(user_id=current_user.MaNguoiDung)
+    return render_template('voucher.html', coupons=coupons)
+
 
 @main.route('/user/dashboard')
 def dashboard():
