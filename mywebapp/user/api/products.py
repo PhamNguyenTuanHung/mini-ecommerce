@@ -46,8 +46,8 @@ def get_product_stock():
     color = request.args.get('color')
     size = request.args.get('size')
 
-    quantity = utils.count_stock_product(product_id=product_id, size=size, color=color)
-    return jsonify({'quantity': quantity})
+    stock  = utils.count_stock_product(product_id=product_id, size=size, color=color)
+    return stock
 
 
 @user_api.route('/categories', methods=['GET'])
@@ -59,6 +59,4 @@ def get_categories():
 @user_api.route('/brands', methods=['GET'])
 def get_brands():
     brands = utils.get_brands()
-    return jsonify([
-        {'name': b.TenThuongHieu, 'id': b.MaThuongHieu} for b in brands
-    ])
+    return brands

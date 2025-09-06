@@ -20,7 +20,6 @@
                                 <i class="fas fa-file-alt"></i> Đơn hàng của tôi
                             </a>
                         </li>
-
                         <li>
                             <a href="{{ url_for('main.view_address') }}"
                                class="menu-item {% if request.path.startswith(url_for('main.view_address')) %}active{% endif %}">
@@ -28,9 +27,10 @@
                             </a>
                         </li>
                         <li>
-                            <a href="#" class="menu-item voucher">
+                            <a href="{{ url_for('main.view_vouchers') }}"
+                               class="menu-item {% if request.path.startswith(url_for('main.view_vouchers')) %}active{% endif %}">
                                 <i class="fas fa-tag"></i> Vouchers
-                                <span class="badge bg-danger">New</span>
+                                <span class="badge bg-danger">Mới</span>
                             </a>
                         </li>
                         <li>

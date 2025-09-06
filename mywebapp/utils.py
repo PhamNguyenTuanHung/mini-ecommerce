@@ -7,7 +7,8 @@ from flask import current_app, session, request
 from werkzeug.security import check_password_hash, generate_password_hash
 from mywebapp import db
 from mywebapp.models import Product, Category, Brand, CartItem, Cart, User, ProductVariant, Order, OrderDetail, Payment, \
-    ShippingInfo, UserAddress, ProductImage, ActivityLog, OrderLog, Review, Admin, OTP, AdminLog, Coupon, UserCoupon
+    ShippingInfo, UserAddress, ProductImage, ActivityLog, OrderLog, Review, Admin, OTP, AdminLog, Coupon, UserCoupon, \
+    PendingOrder
 from decimal import Decimal
 from sqlalchemy import or_
 from sqlalchemy.orm import joinedload
@@ -395,7 +396,11 @@ def count_stock_product(product_id, size=None, color=None):
         query = query.filter(ProductVariant.MauSac == color.strip())
 
     variant = query.first()
-    return variant.SoLuongTon if variant else 0
+    return {
+        "id":product_id,
+        "color":color,
+        "size":size,
+        "quantity": variant.SoLuongTon if variant else 0}
 
 
 def get_best_sellers(limit=4):
@@ -902,7 +907,6 @@ def delete_address(address_id):
 
 def add_address(user_id, name, address, phone, is_default=False):
     if is_default:
-        # Gỡ mặc định các địa chỉ khác của user
         set_default_address_for_user(user_id=user_id)
 
     new_address = UserAddress(
@@ -1315,6 +1319,7 @@ def get_order_detail():
     return result
 
 
+
 def create_order(user_id, order_info, order_details, status=None):
     new_order = Order(
         MaNguoiDung=user_id,
@@ -1322,7 +1327,8 @@ def create_order(user_id, order_info, order_details, status=None):
         PhiVanChuyen=order_info.get('shipping_fee', 0),
         GiamGia=order_info.get('discount', 0),
         TrangThai='pending' if status is None else status,
-        MaDiaChi=order_info['address_id']
+        MaDiaChi=order_info['address_id'],
+        MaGiamGia = order_info.get('voucher_id', None),
     )
     db.session.add(new_order)
     db.session.flush()
@@ -1338,6 +1344,9 @@ def create_order(user_id, order_info, order_details, status=None):
         )
         db.session.add(detail)
     db.session.commit()
+
+    if order_info.get('voucher_id') is not None:
+        mark_voucher_used(user_id=user_id, coupon_id=order_info.get('voucher_id'))
     return new_order
 
 
@@ -1659,17 +1668,32 @@ def get_user_vouchers(user_id: int):
         db.session.query(Coupon)
         .join(UserCoupon, Coupon.MaGiamGia == UserCoupon.MaGiamGia)
         .filter(UserCoupon.MaNguoiDung == user_id)
+        .filter(UserCoupon.DaSuDung==0)
         .all()
     )
     return [
         {
-            "id": v.MaGiam,
+            "id": v.MaGiamGia,
+            "code":v.MaGiam,
             "discount_per": v.PhanTramGiam,
-            "expires_at": v.NgayHetHan,
+            "expiry_date": v.NgayHetHan,
             "description": v.MoTa
         }
         for v in vouchers
     ]
+
+def mark_voucher_used(user_id, coupon_id):
+    user_coupon = (
+        db.session.query(UserCoupon)
+        .filter(UserCoupon.MaNguoiDung == user_id)
+        .filter(UserCoupon.MaGiamGia == coupon_id)
+        .first()
+    )
+    if user_coupon:
+        user_coupon.DaSuDung = 1
+        db.session.commit()
+        return True
+    return False
 
 
 def get_voucher_by_code(code):
@@ -1719,3 +1743,43 @@ def add_coupon(code, discount, expiry_date, description):
         db.session.rollback()
         print("Lỗi khi thêm coupon:", e)
         return False
+
+
+def assign_voucher_to_users(user_ids: list[int], voucher_id: int):
+    print(user_ids)
+    new_entries = [
+        UserCoupon(
+            MaNguoiDung=user_id,
+            MaGiamGia=voucher_id,
+            NgayNhan=datetime.now(),
+            DaSuDung=0
+        )
+        for user_id in user_ids
+    ]
+
+    db.session.bulk_save_objects(new_entries)
+    db.session.commit()
+    return new_entries
+
+# pendind order
+
+def create_pending_order(pending_order_id,user_id,order_info,order_details):
+    pending_order = PendingOrder(
+        MaDonHangTam=pending_order_id,
+        MaNguoiDung=user_id,
+        ThongTinDonHang=order_info,
+        ChiTietDonHang=order_details
+    )
+    db.session.add(pending_order)
+    db.session.commit()
+    return pending_order
+
+def delete_pending_order(ma_don_hang):
+    pending_order = PendingOrder.query.filter_by(MaDonHang=ma_don_hang).first()
+    if pending_order:
+        db.session.delete(pending_order)
+        db.session.commit()
+        return True
+    return False
+def get_pending_order(pending_order_id):
+    return PendingOrder.query.filter_by(MaDonHang=pending_order_id).first()

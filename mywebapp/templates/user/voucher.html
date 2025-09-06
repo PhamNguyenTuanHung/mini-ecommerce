@@ -1,0 +1,77 @@
+{% extends 'user/layout/base.html' %}
+{% block title %} Voucher {% endblock %}
+{% block content %}
+
+<section class="user-dashboard ">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="sidebar-menu">
+                    <ul class="list-unstyled">
+                        <li>
+                            <a href="{{ url_for('main.profile_details') }}"
+                               class="menu-item {% if request.path.startswith(url_for('main.profile_details')) %}active{% endif %}">
+                                <i class="fas fa-user"></i> Hồ sơ của tôi
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('main.order') }}"
+                               class="menu-item {% if request.path.startswith(url_for('main.order')) %}active{% endif %}">
+                                <i class="fas fa-file-alt"></i> Đơn hàng của tôi
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('main.view_address') }}"
+                               class="menu-item {% if request.path.startswith(url_for('main.view_address')) %}active{% endif %}">
+                                <i class="fas fa-map-marker-alt"></i> Sổ địa chỉ
+                            </a>
+                        </li>
+                        <li>
+                             <a href="{{ url_for('main.view_vouchers') }}"
+                                class="menu-item {% if request.path.startswith(url_for('main.view_vouchers')) %}active{% endif %}">
+                                <i class="fas fa-tag"></i> Vouchers
+                                <span class="badge bg-danger">Mới</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('main.change_password_view') }}"
+                               class="menu-item {% if request.path.startswith(url_for('main.change_password_view')) %}active{% endif %}">
+                                <i class="fas fa-lock"></i> Đổi mật khẩu
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+            <div class="col-md-9">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>Mã giảm giá</th>
+                            <th>Mô tả </th>
+                            <th>Ngày hết hạn</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for coupon in coupons %}
+                            <tr border="1px">
+                                <td>
+                                    <div class="fw-medium">{{coupon.code}}</div>
+                                </td>
+                                <td>{{coupon.description}}</td>
+                                <td> {{coupon.expiry_date}}</td>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Review Modal -->
+
+<script type="module" src="{{ url_for('static', filename='user/js/components/coupons.js') }}" defer></script>
+
+{% endblock %}

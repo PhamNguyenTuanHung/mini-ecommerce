@@ -178,9 +178,74 @@
                 </div>
             </div>
         </div> <!-- End Coupon Management Container -->
+        <div x-data="bulkAssignVoucher()">
+            <h4>Thêm mã giảm cho người dùng</h4>
 
+            <!-- Chọn voucher -->
+            <div class="mb-3">
+                <select x-model="selectedCouponId" class="form-control">
+                    <option value="">-- Chọn voucher --</option>
+                    <template x-for="coupon in coupons" :key="coupon.id">
+                        <option :value="coupon.id" x-text="coupon.code + ' - ' + coupon.discount + '%'"></option>
+                    </template>
+                </select>
+            </div>
+
+
+            <!-- Bảng user -->
+            <table class="table table-bordered table-hover">
+                <thead>
+                <tr>
+                    <th style="width: 40px;">
+                        <input type="checkbox"
+                               class="form-check-input"
+                               @change="toggleAll($event.target.checked)">
+                    </th>
+                    <th>ID</th>
+                    <th>Họ tên</th>
+                    <th>Email</th>
+                </tr>
+                </thead>
+                <tbody>
+                <template x-for="user in paginatedUsers" :key="user.id">
+                    <tr>
+                        <td>
+                            <input type="checkbox" :value="user.id" x-model="selectedUserIds">
+                        </td>
+                        <td x-text="user.id"></td>
+                        <td x-text="user.name"></td>
+                        <td x-text="user.email"></td>
+                    </tr>
+                </template>
+                </tbody>
+            </table>
+            <div class="d-flex justify-content-between align-items-center p-3">
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item" :class="{ 'disabled': currentPage === 1 }">
+                            <a class="page-link" href="#"
+                               @click.prevent="goToPage(currentPage - 1)">Trước</a>
+                        </li>
+                        <template x-for="(page, index) in visiblePages" :key="`page-${index}`">
+                            <li class="page-item" :class="{ 'active': page === currentPage }">
+                                <a class="page-link" href="#"
+                                   @click.prevent="page !== '...' && goToPage(page)"
+                                   x-text="page"></a>
+                            </li>
+                        </template>
+                        <li class="page-item" :class="{ 'disabled': currentPage === totalPages }">
+                            <a class="page-link" href="#"
+                               @click.prevent="goToPage(currentPage + 1)">Tiếp</a>
+                        </li>
+                    </ul>
+                </nav>
+                <button class="btn btn-primary" @click="assignVoucher()" :disabled="!canAssign()">Gán voucher</button>
+
+            </div>
+        </div>
 
     </div>
+
 </main>
 {%endblock%}
 {% block Modal %}

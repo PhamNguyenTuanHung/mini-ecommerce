@@ -26,18 +26,17 @@
                                     {% endfor %}
                                 </select>
                             </div>
-
-                            <div class="form-group">
+                            <div class="form-group mb-3">
                                 <label for="full_name">Tên người nhận</label>
                                 <input type="text" class="form-control" id="full_name" placeholder="">
                             </div>
 
-                            <div class="form-group">
+                            <div class="form-group mb-3">
                                 <label for="user_address">Địa chỉ</label>
                                 <input type="text" class="form-control" id="user_address" placeholder="">
                             </div>
 
-                            <div class="form-group">
+                            <div class="form-group mb-3">
                                 <label for="user_phone">Số điện thoại</label>
                                 <input type="text" class="form-control" id="user_phone" name="phone" value="">
                             </div>
@@ -108,7 +107,7 @@
                                     <option value="">-- Chọn voucher --</option>
                                     {% for voucher in vouchers %}
                                     <option value="{{ voucher.id }}" data-percent="{{ voucher.discount_per }}">
-                                        {{ voucher.id }} - {{ voucher.description }} ({{ voucher.discount_per }}%)
+                                        {{ voucher.code }} - {{ voucher.description }} ({{ voucher.discount_per }}%)
                                     </option>
                                     {% endfor %}
                                 </select>
@@ -116,8 +115,6 @@
                                 <p id="applied-voucher" class="text-success mt-2" style="display:none;">
                                     Đã áp dụng mã: <span></span>
                                 </p>
-
-
                             </div>
 
 
@@ -145,9 +142,6 @@
         </div>
     </div>
 </div>
-
-
-
 
 
 {% endblock %}

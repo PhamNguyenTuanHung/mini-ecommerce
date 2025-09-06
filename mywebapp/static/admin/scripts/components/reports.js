@@ -1649,8 +1649,16 @@ document.addEventListener('alpine:init', () => {
                 statuses[order.status] = (statuses[order.status] || 0) + 1;
             });
 
+            const statusNameMap = {
+                pending: "Chờ xử lý",
+                delivered: "Hoàn thành",
+                cancelled: "Đã hủy",
+                shipping: "Đang giao",
+                processing: "Đang xử lý"
+            };
+
             this.statusStats = Object.entries(statuses).map(([name, count]) => ({
-                name: name.charAt(0).toUpperCase() + name.slice(1),
+                name: statusNameMap[name] || name,
                 count,
                 percentage: Math.round((count / this.orders.length) * 100),
                 color: this.getStatusColor(name)
@@ -2444,6 +2452,7 @@ document.addEventListener('alpine:init', () => {
         filteredProducts: [],
         selectedProducts: [],
         categories: [],
+        brands: [],
         categoryStats: [],
         currentPage: 1,
         itemsPerPage: 10,
@@ -2453,7 +2462,6 @@ document.addEventListener('alpine:init', () => {
         stockFilter: '',
         sortField: 'name',
         sortDirection: 'asc',
-
         isLoading: false,
         chartsInitialized: false,
         categoryColors: {},
@@ -2473,6 +2481,7 @@ document.addEventListener('alpine:init', () => {
             Alpine.store('productTableStore', this);
             this.loadDataProducts();
             this.loadCategories();
+            this.loadBrands();
             this.calculateStats();
             this.initCharts();
 
@@ -2518,6 +2527,18 @@ document.addEventListener('alpine:init', () => {
                 this.calculateStats();
             })
                 .catch(err => {
+                    console.error('Lỗi khi load danh mục:', err);
+                });
+        },
+
+        loadBrands() {
+            fetch('/admin/api/brands', {
+                    method: 'GET'
+                }
+            ).then(res => res.json()
+            ).then(data => {
+                this.brands = data;
+            }).catch(err => {
                     console.error('Lỗi khi load danh mục:', err);
                 });
         },
@@ -3141,7 +3162,6 @@ document.addEventListener('alpine:init', () => {
         }
         ,
     }))
-
     ;
 
     Alpine.data('searchComponent', () => ({

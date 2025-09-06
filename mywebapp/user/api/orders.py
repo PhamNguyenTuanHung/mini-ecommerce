@@ -3,7 +3,6 @@ import uuid
 from datetime import datetime
 from flask import jsonify, request, session, url_for
 from flask_login import login_required, current_user
-from mywebapp.models import PendingOrder
 from mywebapp.user.api import user_api
 from mywebapp import utils
 
@@ -55,7 +54,7 @@ def create_COD_order():
     order_info = data.get('order_info')
     order_details = data.get('order_details')
 
-    # 1. Tạo đơn hàng
+
     new_order = utils.create_order(
         user_id=current_user.MaNguoiDung,
         order_info=order_info,
@@ -107,46 +106,39 @@ def create_COD_order():
 @user_api.route('/payments/momo/init', methods=['POST'])
 @login_required
 def init_momo_payment():
-    print("init_momo_payment")
     data = request.get_json()
     order_info = data.get('order_info')
     order_details = data.get('order_details')
 
     momo_order_id = str(uuid.uuid4())
 
-    pending = PendingOrder(
-        MaDonHangTam=momo_order_id,
-        MaNguoiDung=current_user.MaNguoiDung,
-        ThongTinDonHang=order_info,
-        ChiTietDonHang=order_details
-    )
-
-    utils.db.session.add(pending)
-    utils.db.session.commit()
-
-    # 3. Gọi hàm tạo link thanh toán
-    total_amount = order_info.get("total_amount")
-    utils.log_activity(
+    pending = utils.create_pending_order(
+        pending_order_id=momo_order_id,
         user_id=current_user.MaNguoiDung,
-        action='init_online_payment',
-        message=f'Khởi tạo thanh toán MoMo đơn #{momo_order_id}, tổng tiền {total_amount}'    )
-    pay_url = utils.generate_momo_payment_url(momo_order_id, total_amount)
+        order_info=order_info,
+        order_details=order_details
+    )
+    if pending:
+        total_amount = order_info.get("total_amount")
+        utils.log_activity(
+            user_id=current_user.MaNguoiDung,
+            action='init_online_payment',
+            message=f'Khởi tạo thanh toán MoMo đơn #{momo_order_id}, tổng tiền {total_amount}'    )
+        pay_url = utils.generate_momo_payment_url(momo_order_id, total_amount)
 
-    if pay_url:
-        return jsonify({'success': True, 'pay_url': pay_url}), 200
-    else:
-        return jsonify({'success': False, 'message': 'Không tạo được URL MoMo'}), 500
+        if pay_url:
+            return jsonify({'success': True, 'pay_url': pay_url}), 200
+        else:
+            return jsonify({'success': False, 'message': 'Không tạo được URL MoMo'}), 500
 
 
 @user_api.route('/payment/ipn', methods=['POST'])
 def momo_ipn():
     data = request.get_json()
-    print(data)
-    momo_order_id = data.get("orderId")  # UUID string
+    momo_order_id = data.get("orderId")
     result_code = int(data.get("resultCode", -1))
     if result_code == 0:
-        print("Thanh toán nè")
-        pending = PendingOrder.query.get(momo_order_id)
+        pending = utils.get_pending_order(momo_order_id)
         if not pending:
             return jsonify({'message': 'Không tìm thấy đơn hàng tạm'}), 400
 
@@ -164,7 +156,6 @@ def momo_ipn():
             payment_date=datetime.now()
         )
 
-        # Cập nhật kho và giỏ hàng
         cart = utils.get_cart(user_id=pending.MaNguoiDung)
         for item in pending.ChiTietDonHang:
             key = f"{item['product_id']}_{item['size']}_{item['color']}"
@@ -176,10 +167,9 @@ def momo_ipn():
         utils.log_activity(
             user_id=pending.MaNguoiDung,
             action='payment_success',
-            message=f'Thanh toán MoMo thành công đơn #{order.MaDonHang}'        )
-        # Xóa bản ghi đơn tạm
-        utils.db.session.delete(pending)
-        utils.db.session.commit()
+            message=f'Thanh toán MoMo thành công đơn #{order.MaDonHang}')
+
+        utils.delete_pending_order(momo_order_id)
 
         return jsonify({'resultCode': 0, 'message': 'Confirm Success'}), 200
     return jsonify({'message': 'fail'}), 400

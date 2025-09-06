@@ -100,8 +100,6 @@ def update_cart_item(key):
         cart = utils.get_cart(user_id=current_user.MaNguoiDung)
     else:
         cart = session.get('cart', {})
-    print(key)
-    print(cart)
     item = cart.get(key)
     cart = utils.update_quantity_item(cart, key=key, quantity=quantity)
 
@@ -112,13 +110,20 @@ def update_cart_item(key):
             size = item.get('size')
             quantity = item.get('quantity')
 
-            utils.log_activity(
-                current_user.MaNguoiDung,
-                action='update_cart',
-                message=f'Cập nhật số lượng = {quantity} cho sản phẩm ID={product_id}, Màu={color}, Size={size} trong giỏ hàng',
-            )
-        utils.save_cart(user_id=current_user.MaNguoiDung, cart=cart)
 
+            result , message = utils.check_stock(product_id, size, color, quantity)
+            if result:
+                utils.log_activity(
+                    current_user.MaNguoiDung,
+                    action='update_cart',
+                    message=f'Cập nhật số lượng = {quantity} cho sản phẩm ID={product_id}, Màu={color}, Size={size} trong giỏ hàng',
+                )
+                utils.save_cart(user_id=current_user.MaNguoiDung, cart=cart)
+            else :
+                return jsonify({
+                    'success': False,
+                    'message': message
+                })
     else:
         session['cart'] = cart
 

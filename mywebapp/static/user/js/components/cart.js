@@ -114,7 +114,6 @@ function removeCartItem(product_id, color, size) {
 
 
 function updateQuantityCartItem(id, quantity) {
-
     var input = document.querySelector(`input[data-id="${id}"]`);
     var size = input.dataset.size;
     var color = input.dataset.color;
@@ -133,20 +132,36 @@ function updateQuantityCartItem(id, quantity) {
     })
         .then(res => res.json())
         .then(data => {
-            if (data.success) {
-                const totalElem = document.getElementById('cart-total');
-                document.getElementById(`item-total-${product_id}`).innerText = data.item_total.toLocaleString();
-                document.getElementById("cart_count_id").innerText = data.total_quantity
-
-                if (totalElem && data.total_amount !== undefined) {
-                    totalElem.innerText = data.total_amount;
+            if (!data.success) {
+                // Xử lý lỗi từ backend (ví dụ: hết hàng)
+                swal.fire("Lỗi", data.message || "Không thể cập nhật giỏ hàng", "error");
+                // đồng bộ lại input về số lượng cũ
+                if (input) {
+                    input.value = input.dataset.prevQuantity || 1;
                 }
-
-                const dropdown = document.querySelector('.dropdown-menu.cart-dropdown');
-                if (dropdown && data.mini_cart_html) {
-                    dropdown.innerHTML = data.mini_cart_html;
-                }
+                return;
             }
+
+            // ✅ Cập nhật số lượng cũ để rollback nếu có lỗi lần sau
+            input.dataset.prevQuantity = quantity;
+
+            // ✅ Update các phần tử liên quan
+            const totalElem = document.getElementById('cart-total');
+            document.getElementById(`item-total-${product_id}`).innerText = data.item_total;
+            document.getElementById("cart_count_id").innerText = data.total_quantity;
+
+            if (totalElem && data.total_amount !== undefined) {
+                totalElem.innerText = data.total_amount;
+            }
+
+            const dropdown = document.querySelector('.dropdown-menu.cart-dropdown');
+            if (dropdown && data.mini_cart_html) {
+                dropdown.innerHTML = data.mini_cart_html;
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            swal.fire("Lỗi", "Có lỗi khi cập nhật giỏ hàng", "error");
         });
 }
 
@@ -170,194 +185,9 @@ $(document).on('click', '.bootstrap-touchspin-up, .bootstrap-touchspin-down', fu
     }, 50);
 });
 
-// CheckOUt
-
-function checkoutSelectedItems() {
-    const checkedBoxes = document.querySelectorAll('.checkout-item:checked');
-    const selected = Array.from(checkedBoxes).map(cb => cb.value);
-
-    if (selected.length === 0) {
-        alert("Vui lòng chọn ít nhất 1 sản phẩm để thanh toán.");
-        return;
-    }
-
-    fetch('user/api/checkout/selection', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({checkout_items: selected})
-    })
-        .then(res => {
-            if (res.status === 401) {
-                window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
-                return;
-            }
-            return res.json();
-        })
-        .then(data => {
-            if (!data) return;
-            if (data.success) {
-                window.location.href = "/checkout";
-            } else {
-                alert("Không thể thực hiện thanh toán.");
-            }
-        });
-}
-
-function removeFromCheckout(span, key) {
-    fetch('/api/checkout-items', {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({keys: [key]})
-    })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                const productCard = span.closest('.product-card');
-                if (productCard) productCard.remove();
-
-                // (Tuỳ bạn: nếu muốn cập nhật lại tổng tiền thì xử lý tiếp)
-
-                showToast("Đã xoá khỏi danh sách thanh toán");
-            } else {
-                alert("Không thể xoá sản phẩm khỏi thanh toán");
-            }
-        });
-}
-
-function createOrderFromCheckout() {
-    const productCards = document.querySelectorAll('.product-card');
-    const orderDetails = [];
-
-
-    const rawSubtotal = document.getElementById('total')?.innerText || '0';
-    const cleaned = rawSubtotal.replace(/,/g, '');
-    const subtotal = parseFloat(cleaned);
-    const address_id = parseInt(document.querySelector('#saved_address').value);
-    const pay_method = document.querySelector('#pay_method').value;
-    const appliedVoucher = document.querySelector("#applied-voucher span")?.innerText || "";
-
-
-    productCards.forEach(card => {
-        orderDetails.push({
-            product_id: parseInt(card.dataset.id),
-            quantity: parseInt(card.dataset.quantity),
-            price: parseFloat(card.dataset.price),
-            color: card.dataset.color,
-            size: card.dataset.size
-        });
-    });
-
-    const orderInfo = {
-        total_amount: subtotal,
-        shipping_fee: 0,
-        discount: 0,
-        address_id: address_id,
-        pay_method: pay_method
-    };
-
-    const paymentInfo = {
-        method: pay_method,
-        status: 'Pending',
-        payment_date: null
-    };
-    // Thanh toán tiền mặt
-    if (pay_method == "COD") {
-        fetch('user/api/orders/cod', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                order_info: orderInfo,
-                order_details: orderDetails,
-                payment_info: paymentInfo
-            })
-        })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    showToast("Đặt hàng thành công!");
-                    window.location.href = "/confirmation";
-                } else {
-                    showToast("Lỗi khi đặt hàng.", "danger");
-                }
-            });
-    }
-
-    // Nếu là thanh toán online (MOMO, ZaloPay,...)
-    else {
-        fetch('user/api/payments/momo/init', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                order_info: orderInfo,
-                order_details: orderDetails
-            })
-        })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    if (data.pay_url)
-                        window.location.href = data.pay_url;
-                    else {
-                        showToast("Không thể tạo đơn hàng.", "danger");
-                    }
-                }
-            });
-    }
-}
-
-function changeAddress(select) {
-    const selected = select.options[select.selectedIndex];
-
-    if (selected && selected.value !== "") {
-        document.getElementById('full_name').value = selected.dataset.name || "";
-        document.getElementById('user_address').value = selected.dataset.address || "";
-        document.getElementById('user_phone').value = selected.dataset.sdt || "";
-    } else {
-        document.getElementById('full_name').value = "";
-        document.getElementById('user_address').value = "";
-        document.getElementById('user_phone').value = "";
-    }
-}
-
-document.addEventListener('DOMContentLoaded', function () {
-    const select = document.getElementById('saved_address');
-
-    if (select) {
-        changeAddress(select);
-
-        select.addEventListener('change', function () {
-            changeAddress(this);
-        });
-    }
-    const checkboxes = document.querySelectorAll('.checkout-item');
-
-    checkboxes.forEach(cb => {
-        const removeId = cb.id.replace('checkout', 'remove');
-        const removeLink = document.getElementById(removeId);
-
-
-        removeLink.style.display = cb.checked ? 'inline' : 'none';
-
-
-        cb.addEventListener('change', () => {
-            removeLink.style.display = cb.checked ? 'inline' : 'none';
-        });
-    });
-});
 
 
 
-
-
-// Order
 
 
 
