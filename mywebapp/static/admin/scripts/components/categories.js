@@ -15,9 +15,6 @@ document.addEventListener('alpine:init', () => {
         init() {
             Alpine.store('categoryTableStore', this);
             this.loadDataCategories();
-            setTimeout(() => {
-                this.initCharts();
-            }, 500);
         },
 
         loadDataCategories() {

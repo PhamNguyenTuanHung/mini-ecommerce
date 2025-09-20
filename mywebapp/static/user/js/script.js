@@ -9,7 +9,6 @@
     $('input[name=\'product-quantity\']').TouchSpin();
 
     window.showToast = function (message, type = 'success') {
-        console.log(123);
         const container = document.getElementById('toast-container');
         if (!container) return;
 

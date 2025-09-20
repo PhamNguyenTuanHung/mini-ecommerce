@@ -20,6 +20,7 @@ def get_products():
         page=page,
         sort_by=sort_by
     )
+
     return jsonify(data)
 
 
@@ -28,6 +29,11 @@ def get_best_sellers():
     products = utils.get_best_sellers()
     return jsonify(products)
 
+
+@user_api.route('/products/flash-sales')
+def get_flash_sales():
+    products = utils.get_flash_sale_products()
+    return jsonify(products)
 
 @user_api.route('/products/newest')
 def get_newest():

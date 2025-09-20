@@ -229,11 +229,8 @@
                                 <button class="btn btn-sm btn-success" @click="bulkAction('activate')">
                                     <i class="bi bi-check-circle me-1"></i>Kích Hoạt
                                 </button>
-                                <button class="btn btn-sm btn-warning" @click="bulkAction('deactivate')">
+                                <button class="btn btn-sm btn-warning" @click="bulkAction('inactivate')">
                                     <i class="bi bi-x-circle me-1"></i>Vô hiệu
-                                </button>
-                                <button class="btn btn-sm btn-danger" @click="bulkAction('delete')">
-                                    <i class="bi bi-trash me-1"></i>Xóa
                                 </button>
                                 <button class="btn btn-sm btn-outline-secondary" @click="selectedUsers = []"
                                         title="Clear selection">
@@ -305,8 +302,7 @@
                                         <span class="badge"
                                               :class="{
                                                   'bg-success': user.status === 'active',
-                                                  'bg-secondary': user.status === 'inactive',
-                                                  'bg-warning': user.status === 'pending'
+                                                  'bg-secondary': user.status === 'inactive'
                                               }"
                                               x-text="user.status"></span>
                                     </td>

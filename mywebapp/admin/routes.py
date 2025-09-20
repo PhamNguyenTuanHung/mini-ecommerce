@@ -25,7 +25,7 @@ def login():
         password = request.form.get('password')
         next_page = request.form.get('next') or next_page
 
-        admin_user = utils.check_admin_login(username, password)
+        admin_user,msg = utils.check_admin_login(username, password)
         if admin_user:
             session['admin_logged_in'] = True
             session['admin_id'] = admin_user.MaAdmin
@@ -39,7 +39,7 @@ def login():
                 next_page = url_for('admin.dashboard')
             return redirect(next_page)
         else:
-            flash('Thông tin đăng nhập hoặc mật khẩu không chính xác', 'danger')
+            flash(msg, 'danger')
 
     return render_template('admin/login.html', next=next_page)
 
@@ -120,67 +120,9 @@ def reports():
 def coupons():
     return render_template('coupons.html', page_name='coupons', body_class='coupons-page')
 
-@admin.route('/calendar')
-def calendar():
-    return render_template('calendar.html', page_name='calendar', body_class='calendar-page')
 
-@admin.route('/files')
-def files():
-    return render_template('files.html', page_name='files', body_class='files-page')
-
-@admin.route('/forms')
-def forms():
-    return render_template('forms.html', page_name='forms', body_class='forms-page')
-
-@admin.route('/help')
-def help_page():
-    return render_template('help.html', page_name='help', body_class='help-page')
-
-@admin.route('/messages')
-def messages():
-    return render_template('messages.html', page_name='messages', body_class='messages-page')
-
-@admin.route('/security')
-def security():
-    return render_template('security.html', page_name='security', body_class='security-page')
-
-@admin.route('/settings')
-def settings():
-    return render_template('settings.html', page_name='settings', body_class='settings-page')
-
-
-
-# Elements routes
-@admin.route('/elements')
-def elements():
-    return render_template('elements.html', page_name='elements', body_class='elements-page')
-
-@admin.route('/elements-alerts')
-def elements_alerts():
-    return render_template('elements-alerts.html', page_name='elements-alerts', body_class='elements_alerts-page')
-
-@admin.route('/elements-badges')
-def elements_badges():
-    return render_template('elements-badges.html', page_name='elements-badges', body_class='elements_badges-page')
-
-@admin.route('/elements-buttons')
-def elements_buttons():
-    return render_template('elements-buttons.html', page_name='elements-buttons', body_class='elements_buttons-page')
-
-@admin.route('/elements-cards')
-def elements_cards():
-    return render_template('elements-cards.html', page_name='elements-cards', body_class='elements_cards-page')
-
-@admin.route('/elements-forms')
-def elements_forms():
-    return render_template('elements-forms.html', page_name='elements-forms', body_class='elements_forms-page')
-
-@admin.route('/elements-modals')
-def elements_modals():
-    return render_template('elements-modals.html', page_name='elements-modals', body_class='elements_modals-page')
-
-@admin.route('/elements-tables')
-def elements_tables():
-    return render_template('elements-tables.html', page_name='elements-tables', body_class='elements_tables-page')
-
+@admin.route('/sales')
+@admin_required
+def sales():
+    return render_template('sales.html', page_name='sales', body_class='sales-page')
 

@@ -51,68 +51,6 @@
                         <span>Thương hiệu</span>
                     </a>
                 </li>
-
-                <!--                &lt;!&ndash; Elements collapse menu &ndash;&gt;-->
-                <!--                <li class="nav-item">-->
-                <!--                    <a class="nav-link {% if page_name.startswith('elements') %}active{% endif %}" href="#" data-bs-toggle="collapse" data-bs-target="#elementsSubmenu" aria-expanded="false">-->
-                <!--                        <i class="bi bi-puzzle"></i>-->
-                <!--                        <span>Elements</span>-->
-                <!--                        <span class="badge bg-primary rounded-pill me-2">New</span>-->
-                <!--                        <i class="bi bi-chevron-down ms-auto"></i>-->
-                <!--                    </a>-->
-                <!--                    <div class="collapse {% if page_name.startswith('elements') %}show{% endif %}" id="elementsSubmenu">-->
-                <!--                        <ul class="nav nav-submenu">-->
-                <!--                            <li class="nav-item">-->
-                <!--                                <a class="nav-link {% if page_name == 'elements' %}active{% endif %}" href="{{ url_for('admin.elements') }}">-->
-                <!--                                    <i class="bi bi-grid"></i>-->
-                <!--                                    <span>Overview</span>-->
-                <!--                                </a>-->
-                <!--                            </li>-->
-                <!--                            <li class="nav-item">-->
-                <!--                                <a class="nav-link {% if page_name == 'elements-buttons' %}active{% endif %}" href="{{ url_for('admin.elements_buttons') }}">-->
-                <!--                                    <i class="bi bi-square"></i>-->
-                <!--                                    <span>Buttons</span>-->
-                <!--                                </a>-->
-                <!--                            </li>-->
-                <!--                            <li class="nav-item">-->
-                <!--                                <a class="nav-link {% if page_name == 'elements-alerts' %}active{% endif %}" href="{{ url_for('admin.elements_alerts') }}">-->
-                <!--                                    <i class="bi bi-exclamation-triangle"></i>-->
-                <!--                                    <span>Alerts</span>-->
-                <!--                                </a>-->
-                <!--                            </li>-->
-                <!--                            <li class="nav-item">-->
-                <!--                                <a class="nav-link {% if page_name == 'elements-badges' %}active{% endif %}" href="{{ url_for('admin.elements_badges') }}">-->
-                <!--                                    <i class="bi bi-award"></i>-->
-                <!--                                    <span>Badges</span>-->
-                <!--                                </a>-->
-                <!--                            </li>-->
-                <!--                            <li class="nav-item">-->
-                <!--                                <a class="nav-link {% if page_name == 'elements-cards' %}active{% endif %}" href="{{ url_for('admin.elements_cards') }}">-->
-                <!--                                    <i class="bi bi-card-text"></i>-->
-                <!--                                    <span>Cards</span>-->
-                <!--                                </a>-->
-                <!--                            </li>-->
-                <!--                            <li class="nav-item">-->
-                <!--                                <a class="nav-link {% if page_name == 'elements-modals' %}active{% endif %}" href="{{ url_for('admin.elements_modals') }}">-->
-                <!--                                    <i class="bi bi-window"></i>-->
-                <!--                                    <span>Modals</span>-->
-                <!--                                </a>-->
-                <!--                            </li>-->
-                <!--                            <li class="nav-item">-->
-                <!--                                <a class="nav-link {% if page_name == 'elements-forms' %}active{% endif %}" href="{{ url_for('admin.elements_forms') }}">-->
-                <!--                                    <i class="bi bi-ui-checks"></i>-->
-                <!--                                    <span>Forms</span>-->
-                <!--                                </a>-->
-                <!--                            </li>-->
-                <!--                            <li class="nav-item">-->
-                <!--                                <a class="nav-link {% if page_name == 'elements-tables' %}active{% endif %}" href="{{ url_for('admin.elements_tables') }}">-->
-                <!--                                    <i class="bi bi-table"></i>-->
-                <!--                                    <span>Tables</span>-->
-                <!--                                </a>-->
-                <!--                            </li>-->
-                <!--                        </ul>-->
-                <!--                    </div>-->
-                <!--                </li>-->
                 <li class="nav-item">
                     <a class="nav-link {% if page_name == 'coupons' %}active{% endif %}"
                        href="{{ url_for('admin.coupons') }}">
@@ -128,46 +66,7 @@
                         <span>Báo cáo</span>
                     </a>
                 </li>
-                <!--                <li class="nav-item">-->
-                <!--                    <a class="nav-link {% if page_name == 'messages' %}active{% endif %}" href="{{ url_for('admin.messages') }}">-->
-                <!--                        <i class="bi bi-chat-dots"></i>-->
-                <!--                        <span>Messages</span>-->
-                <!--                        <span class="badge bg-danger rounded-pill ms-auto">3</span>-->
-                <!--                    </a>-->
-                <!--                </li>-->
-                <!--                <li class="nav-item">-->
-                <!--                    <a class="nav-link {% if page_name == 'calendar' %}active{% endif %}" href="{{ url_for('admin.calendar') }}">-->
-                <!--                        <i class="bi bi-calendar-event"></i>-->
-                <!--                        <span>Calendar</span>-->
-                <!--                    </a>-->
-                <!--                </li>-->
-                <!--                <li class="nav-item">-->
-                <!--                    <a class="nav-link {% if page_name == 'files' %}active{% endif %}" href="{{ url_for('admin.files') }}">-->
-                <!--                        <i class="bi bi-folder2-open"></i>-->
-                <!--                        <span>Files</span>-->
-                <!--                    </a>-->
-                <!--                </li>-->
-                <!--                <li class="nav-item mt-3">-->
-                <!--                    <small class="text-muted px-3 text-uppercase fw-bold">Admin</small>-->
-                <!--                </li>-->
-                <!--                <li class="nav-item">-->
-                <!--                    <a class="nav-link {% if page_name == 'settings' %}active{% endif %}" href="{{ url_for('admin.settings') }}">-->
-                <!--                        <i class="bi bi-gear"></i>-->
-                <!--                        <span>Settings</span>-->
-                <!--                    </a>-->
-                <!--                </li>-->
-                <!--                <li class="nav-item">-->
-                <!--                    <a class="nav-link {% if page_name == 'security' %}active{% endif %}" href="{{ url_for('admin.security') }}">-->
-                <!--                        <i class="bi bi-shield-check"></i>-->
-                <!--                        <span>Security</span>-->
-                <!--                    </a>-->
-                <!--                </li>-->
-                <!--                <li class="nav-item">-->
-                <!--                    <a class="nav-link {% if page_name == 'help' %}active{% endif %}" href="{{ url_for('admin.help_page') }}">-->
-                <!--                        <i class="bi bi-question-circle"></i>-->
-                <!--                        <span>Help & Support</span>-->
-                <!--                    </a>-->
-                <!--                </li>-->
+
             </ul>
         </nav>
     </div>

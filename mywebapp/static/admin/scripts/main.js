@@ -126,6 +126,9 @@ class AdminApp {
             case 'coupons':
                 await this.initCouponsPage();
                 break;
+            case 'sales':
+                await this.initFlashSalesPage();
+                break;
             case 'brands':
                 await this.initBrandsPage();
                 break;
@@ -250,6 +253,14 @@ class AdminApp {
     async initCouponsPage() {
         try {
             await import('./components/coupons.js');
+        } catch (error) {
+            console.error('Failed to load reports page script:', error);
+        }
+    }
+
+    async initFlashSalesPage() {
+        try {
+            await import('./components/sales.js');
         } catch (error) {
             console.error('Failed to load reports page script:', error);
         }
@@ -529,6 +540,8 @@ class AdminApp {
         this.components.clear();
         this.isInitialized = false;
     }
+
+
 }
 
 const app = new AdminApp();

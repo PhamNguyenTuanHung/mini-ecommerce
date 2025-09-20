@@ -1,6 +1,6 @@
 from typing import List, Optional
 from sqlalchemy import Boolean, DECIMAL, DateTime, ForeignKeyConstraint, Identity, Index, Integer, LargeBinary, \
-    PrimaryKeyConstraint, Unicode, text, String, JSON, UniqueConstraint
+    PrimaryKeyConstraint, Unicode, text, String, JSON, UniqueConstraint, func, CheckConstraint, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import datetime
 import decimal
@@ -141,6 +141,7 @@ class Category(db.Model):
     products: Mapped[List['Product']] = relationship('Product', back_populates='category')
 
 
+
 class Product(db.Model):
     __tablename__ = 'SanPham'
     __table_args__ = (
@@ -151,13 +152,15 @@ class Product(db.Model):
 
     MaSanPham: Mapped[int] = mapped_column(Integer, Identity(start=1, increment=1), primary_key=True)
     TenSanPham: Mapped[str] = mapped_column(Unicode(150, 'Vietnamese_CI_AS'))
-    Gia: Mapped[decimal.Decimal] = mapped_column(DECIMAL(10, 2))
+    DonGia: Mapped[decimal.Decimal] = mapped_column(DECIMAL(10, 2))
     MoTaNgan: Mapped[Optional[str]] = mapped_column(Unicode(collation='Vietnamese_CI_AS'))
     MoTa: Mapped[Optional[str]] = mapped_column(Unicode(collation='Vietnamese_CI_AS'))
     MaDanhMuc: Mapped[Optional[int]] = mapped_column(Integer)
     MaThuongHieu: Mapped[Optional[int]] = mapped_column(Integer)
     HinhAnh: Mapped[Optional[str]] = mapped_column(Unicode(255, 'Vietnamese_CI_AS'))
-    DiemDanhGia: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    GiaGiam: Mapped[decimal.Decimal] = mapped_column( DECIMAL(10, 2), default=0.0)
+    TrangThaiHienThi: Mapped[bool] = mapped_column( Boolean, default=True)
+    NgayTao: Mapped[datetime] = mapped_column(DateTime, server_default=text('(getdate())'))
 
     brand: Mapped[Optional['Brand']] = relationship('Brand', back_populates='products')
     category: Mapped[Optional['Category']] = relationship('Category', back_populates='products')
@@ -167,12 +170,38 @@ class Product(db.Model):
     product_variants: Mapped[List['ProductVariant']] = relationship('ProductVariant', back_populates='product')
     reviews: Mapped[List['Review']] = relationship('Review', back_populates='product')
     wishlists: Mapped[List['Wishlist']] = relationship('Wishlist', back_populates='product')
+    flash_sales: Mapped[List["FlashSale"]] = relationship(
+        "FlashSale",
+        secondary="KhuyenMaiNong_SanPham",
+        back_populates="products"
+    )
 
     def get_rating(self):
-        reviews = Review.query.filter_by(MaSanPham=self.MaSanPham).all()
-        avg_rating = sum(reviews.DiemDanhGia) / len(reviews)
-        return avg_rating
+        avg_rating = db.session.query(func.avg(Review.DiemDanhGia)) \
+            .filter(Review.MaSanPham == self.MaSanPham).scalar()
+        return round(avg_rating or 0, 2)
 
+    def get_price_info(self):
+        now = datetime.utcnow()
+        price = float(self.DonGia)
+        active_flash_sale = next(
+            (fs for fs in self.flash_sales if fs.NgayBatDau <= now <= fs.NgayKetThuc),
+            None
+        )
+        flash_sale_percent = float(active_flash_sale.GiaGiam) if active_flash_sale else 0
+
+        final_sale_percent = flash_sale_percent or float(self.GiaGiam or 0)
+
+        price_after_discount = price * (1 - final_sale_percent / 100) if final_sale_percent > 0 else price
+
+        return {
+            'price': round(price, 2),
+            'price_after_discount': round(price_after_discount, 2),
+            'sale_percent': round(final_sale_percent, 2),
+        }
+
+    def is_new(self):
+        return (datetime.utcnow() - self.NgayTao) <= timedelta(days=7)
 
 class ProductImage(db.Model):
     __tablename__ = 'HinhAnhSanPham'
@@ -203,24 +232,65 @@ class ProductVariant(db.Model):
     product: Mapped[Optional['Product']] = relationship('Product', back_populates='product_variants')
 
 
+class FlashSale(db.Model):
+    __tablename__ = 'KhuyenMaiNong'
+    __table_args__ = (
+        PrimaryKeyConstraint('MaKhuyenMai', name='PK_KhuyenMaiNong'),
+    )
+    # Khóa chính
+    MaKhuyenMai: Mapped[int] = mapped_column(Integer, Identity(start=1, increment=1), primary_key=True)
+    TenKhuyenMai: Mapped[Optional[str]] = mapped_column(Unicode(collation='Vietnamese_CI_AS'))
+    GiaGiam: Mapped[decimal.Decimal] = mapped_column(DECIMAL(10, 2), default=0.0)
+    NgayBatDau: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    NgayKetThuc: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+
+    products: Mapped[List["Product"]] = relationship(
+        "Product",
+        secondary="KhuyenMaiNong_SanPham",
+        back_populates="flash_sales"
+    )
+
+    def is_currently_active(self):
+        now = datetime.utcnow()
+        return self.TrangThaiHienThi and self.NgayBatDau <= now <= self.NgayKetThuc
+
+class FlashSaleProduct(db.Model):
+    __tablename__ = "KhuyenMaiNong_SanPham"
+
+    __table_args__ = (
+        PrimaryKeyConstraint("MaKhuyenMai", "MaSanPham", name="PK_KhuyenMaiNong_SanPham"),
+    )
+
+    MaKhuyenMai: Mapped[int] = mapped_column(
+        ForeignKey("KhuyenMaiNong.MaKhuyenMai"), nullable=False
+    )
+    MaSanPham: Mapped[int] = mapped_column(
+        ForeignKey("SanPham.MaSanPham"), nullable=False
+    )
+
+
 class Review(db.Model):
     __tablename__ = 'DanhGia'
     __table_args__ = (
-        ForeignKeyConstraint(['MaNguoiDung'], ['NguoiDung.MaNguoiDung'], name='FK__Reviews__MaNguoi__71D1E811'),
-        ForeignKeyConstraint(['MaSanPham'], ['SanPham.MaSanPham'], name='FK__Reviews__MaSanPh__72C60C4A'),
-        PrimaryKeyConstraint('MaDanhGia', name='PK__Reviews__AA9515BFAC60D49C'),
-        UniqueConstraint('MaNguoiDung', 'MaSanPham', name='UQ__Review__NguoiDung_SanPham')
+        ForeignKeyConstraint(['MaNguoiDung'], ['NguoiDung.MaNguoiDung']),
+        ForeignKeyConstraint(['MaSanPham'], ['SanPham.MaSanPham']),
+        ForeignKeyConstraint(['MaChiTietDonHang'], ['ChiTietDonHang.MaChiTietDonHang']),
+        PrimaryKeyConstraint('MaDanhGia'),
+        UniqueConstraint('MaChiTietDonHang', name='UQ__Review__ChiTietDonHang')
     )
 
     MaDanhGia: Mapped[int] = mapped_column(Integer, Identity(start=1, increment=1), primary_key=True)
-    MaNguoiDung: Mapped[Optional[int]] = mapped_column(Integer)
-    MaSanPham: Mapped[Optional[int]] = mapped_column(Integer)
+    MaNguoiDung: Mapped[int] = mapped_column(Integer)
+    MaSanPham: Mapped[int] = mapped_column(Integer)
+    MaChiTietDonHang: Mapped[int] = mapped_column(Integer)
     DiemDanhGia: Mapped[Optional[int]] = mapped_column(Integer)
     BinhLuan: Mapped[Optional[str]] = mapped_column(Unicode(collation='Vietnamese_CI_AS'))
-    NgayDanhGia: Mapped[Optional[datetime]] = mapped_column(DateTime, server_default=text('(getdate())'))
+    NgayDanhGia: Mapped[datetime] = mapped_column(DateTime, server_default=text('(getdate())'))
 
-    user: Mapped[Optional['User']] = relationship('User', back_populates='reviews')
-    product: Mapped[Optional['Product']] = relationship('Product', back_populates='reviews')
+    # Relationships
+    user: Mapped['User'] = relationship('User', back_populates='reviews')
+    product: Mapped['Product'] = relationship('Product', back_populates='reviews')
+    order_detail: Mapped['OrderDetail'] = relationship('OrderDetail', back_populates='reviews')
 
 
 class Wishlist(db.Model):
@@ -302,7 +372,6 @@ class Order(db.Model):
     discount: Mapped[Optional["Coupon"]] = relationship("Coupon", back_populates="orders")
 
 
-
 class OrderLog(db.Model):
     __tablename__ = 'NhatKyDonHang'
     __table_args__ = (
@@ -356,7 +425,7 @@ class OrderDetail(db.Model):
 
     order: Mapped[Optional['Order']] = relationship('Order', back_populates='order_details')
     product: Mapped[Optional['Product']] = relationship('Product', back_populates='order_details')
-
+    reviews: Mapped[List['Review']] = relationship('Review', back_populates='order_detail')
 
 class Payment(db.Model):
     __tablename__ = 'ThanhToan'

@@ -476,7 +476,6 @@ document.addEventListener('alpine:init', () => {
 
                         const couponTable = Alpine.store('couponTableStore');
                         if (couponTable) {
-                            console.log(123);
                             couponTable.loadCoupons();
                         }
                     } else {

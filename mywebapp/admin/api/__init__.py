@@ -11,5 +11,6 @@ from . import categories
 from . import export
 from . import coupons
 from . import brands
+from . import sales
 
 

@@ -1,8 +1,6 @@
 # admin/api/coupons.py
 
 from flask import jsonify, request, g
-from scripts.regsetup import description
-
 from mywebapp.admin.api import admin_api
 from mywebapp import utils
 from mywebapp.admin.routes import admin_required

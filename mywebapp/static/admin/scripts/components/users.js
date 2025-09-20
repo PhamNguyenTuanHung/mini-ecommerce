@@ -312,27 +312,46 @@ document.addEventListener('alpine:init', () => {
         }
         ,
 
+        updateStatusUser(user) {
+            fetch(`/admin/api/users/${user.id}/status`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    status: user.status
+                })
+            })
+                .then(res => {
+                    if (!res.ok) throw new Error("Cập nhật không thành công");
+                    return res.json();
+                })
+                .then(data => {
+                    if (data) {
+                        Swal.fire('Thành công', "Cập nhật thành công", "success");
+                    }
+                })
+                .catch(err => console.error(err));
+        },
+
         bulkAction(action) {
             if (this.selectedUsers.length === 0) {
-                alert('Please select users first');
+                Swal.fire("Lỗi", 'Vui lòng chọn người dùng', 'error');
                 return;
             }
 
-            const selectedUserObjects = this.users.filter(u => this.selectedUsers.includes(u.id));
+            const selectedUserObjects = this.users.filter(u =>
+                this.selectedUsers.includes(String(u.id))
+            );
+            console.log(selectedUserObjects);
 
-            switch (action) {
-                case 'activate':
-                    selectedUserObjects.forEach(user => user.status = 'active');
-                    break;
-                case 'deactivate':
-                    selectedUserObjects.forEach(user => user.status = 'inactive');
-                    break;
-                case 'delete':
-                    if (confirm(`Are you sure you want to delete ${this.selectedUsers.length} users?`)) {
-                        this.users = this.users.filter(u => !this.selectedUsers.includes(u.id));
-                    }
-                    break;
-            }
+            selectedUserObjects.forEach(user => {
+                if (action === 'activate' || action === 'inactivate') {
+                    const status = action === 'activate' ? 'active' : 'inactive';
+                    selectedUserObjects.forEach(user => user.status = status);
+                }
+                this.updateStatusUser(user);
+            })
 
             this.selectedUsers = [];
             this.filterUsers();
@@ -378,7 +397,6 @@ document.addEventListener('alpine:init', () => {
             return [headers, ...rows].map(row => row.join(',')).join('\n');
         }
         ,
-
 
 
         downloadCSV(content, filename) {

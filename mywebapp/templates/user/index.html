@@ -1,6 +1,7 @@
 {% extends 'user/layout/base.html' %}
 {% block title %} Trang chủ {%endblock%}
 {%block content %}
+
 <div class="hero-slider">
     <div class="slider-item th-fullpage hero-area"
          style="background-image: url('{{ url_for('static', filename='user/images/slider/slider-1.jpg') }}')">
@@ -17,100 +18,583 @@
             </div>
         </div>
     </div>
+
 </div>
 
-<!--<section class="product-category section">-->
-<!--    <div class="container">-->
-<!--        <div class="row">-->
-<!--            <div class="col-md-12">-->
-<!--                <div class="title text-center">-->
-<!--                    <h2>Product Category</h2>-->
-<!--                </div>-->
-<!--            </div>-->
-<!--            {% if categories %}-->
-<!--            <div class="col-md-6">-->
-<!--                {% for i in range(0,2) %}-->
-<!--                <div class="category-box">-->
-<!--                    <a href="{{ url_for('main.shop',cate_id=categories[i].MaDanhMuc) }}">-->
-<!--                        <img src="{{ url_for('static', filename='user/images/shop/category/category-' + (i+1)|string + '.jpg') }}"-->
-<!--                             alt=""/>-->
-<!--                        <div class="content">-->
-<!--                            <h3>{{categories[i].TenDanhMuc}}</h3>-->
-<!--                            <p>Shop New Season Clothing</p>-->
-<!--                        </div>-->
-<!--                    </a>-->
-<!--                </div>-->
-<!--                {% endfor %}-->
-<!--            </div>-->
-<!--            <div class="col-md-6">-->
-<!--                <div class="category-box category-box-2">-->
-<!--                    <a href="{{ url_for('main.shop',cate_id=categories[2].MaDanhMuc) }}">-->
-<!--                        <img src="{{ url_for('static', filename='user/images/shop/category/category-3.jpg') }}" alt=""/>-->
-<!--                        <div class="content">-->
-<!--                            <h3>{{categories[2].TenDanhMuc}}</h3>-->
-<!--                            <p>Special Design Comes First</p>-->
-<!--                        </div>-->
-<!--                    </a>-->
-<!--                </div>-->
-<!--            </div>-->
-<!--            {% endif %}-->
+
+<div x-data="dataProducts">
+
+    <nav id="navigation">
+        <!-- container -->
+        <div class="container">
+            <!-- responsive-nav -->
+            <div id="responsive-nav">
+                <!-- NAV -->
+                <ul class="main-nav nav navbar-nav">
+                    <li><a href="{{ url_for('main.home') }}">Home</a></li>
+                    <template x-for="cate in categories" :key="cate.id">
+                        <li>
+                            <a :href="`/shop?cate_id=${cate.id}`" x-text="cate.name"></a>
+                        </li>
+                    </template>
+                </ul>
+                <!-- /NAV -->
+            </div>
+            <!-- /responsive-nav -->
+        </div>
+        <!-- /container -->
+    </nav>
+
+
+    <!-- HOT DEAL SECTION -->
+    <div class="section flash-sale-section">
+        <!-- container -->
+        <div class="container">
+            <!-- row -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="flash-sale-header">
+                        <h3 class="title">Flash Sale</h3>
+                        <span id="flash-sale-timer">00:00:00</span>
+                    </div>
+                </div>
+                <div class="col-md-12">
+                    <div class="row">
+                        <!-- HTML -->
+                        <div class="slider-container" x-ref="swiperFlashSale">
+                            <div class="swiper mySwiper">
+                                <div class="swiper-wrapper">
+                                    <template x-for="product in flashSale" :key="product.id">
+                                        <div class="swiper-slide">
+                                            <div class="product-item">
+                                                <div class="product-thumb">
+                                                    <template x-if="product.sale">
+                                                        <span class="sale" x-text="product.sale + '%'"></span>
+                                                    </template>
+                                                    <!-- NEW badge -->
+                                                    <template x-if="product.new">
+                                                        <span class="new">NEW</span>
+                                                    </template>
+                                                    <img class="img-responsive"
+                                                         :src="product.image"
+                                                         alt="product-img"/>
+                                                    <a :href="`/product/${product.id}`"></a>
+                                                    <div class="preview-meta">
+                                                        <ul>
+                                                            <li>
+                                                                <a href="javascript:void(0);"><i
+                                                                        class="tf-ion-ios-heart"></i></a>
+                                                            </li>
+                                                            <li>
+                                                                <a :href="`/product_single/${product.id}`">
+                                                                    <i class="tf-ion-android-cart"></i>
+                                                                </a>
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                                <a :href="`/product_single/${product.id}`" class="product-content">
+                                                    <div class="product-name">
+                                                        <h5 x-text="product.name"></h5>
+                                                    </div>
+                                                    <p class="price">
+                                                        <!-- Nếu có sale hoặc flash sale -->
+                                                        <template x-if="product.sale || product.flash_sale">
+                                                <span>
+                                                    <span x-text="`$${product.price}`" class="original-price"></span>
+                                                    <span x-text="`$${product.price_after_discount}`"
+                                                          class="discount-price"></span>
+                                                </span>
+                                                        </template>
+
+                                                        <!-- Nếu không có sale thì hiện giá gốc bình thường -->
+                                                        <template x-if="!product.sale && !product.flash_sale">
+                                                            <span x-text="`$${product.price}`"></span>
+                                                        </template>
+                                                    </p>
+
+                                                </a>
+
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+
+
+                            </div>
+                            <!-- Navigation -->
+                            <div class="swiper-button-prev"><i class="tf-ion-chevron-left"></i></div>
+                            <div class="swiper-button-next"><i class="tf-ion-chevron-right"></i></div>
+                            <!-- /tab -->
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <!-- /row -->
+    </div>
+    <!-- /container -->
+
+    <!--   New Product-->
+    <div class="section">
+        <!-- container -->
+        <div class="container">
+            <!-- row -->
+            <div class="row">
+                <!-- section title -->
+                <div class="col-md-12">
+                    <div class="section-title">
+                        <h3 class="title">
+                            <i class="tf-ion-flash"></i> Sản phẩm mới
+                        </h3>
+                        <div class="section-nav">
+                            <ul class="section-tab-nav tab-nav">
+                                <li class="active"><a data-toggle="tab" href="#tab1">Laptops</a></li>
+                                <li><a data-toggle="tab" href="#tab1">Smartphones</a></li>
+                                <li><a data-toggle="tab" href="#tab1">Cameras</a></li>
+                                <li><a data-toggle="tab" href="#tab1">Accessories</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <!-- /section title -->
+
+                <!-- Products tab & slick -->
+                <div class="col-md-12">
+                    <div class="row">
+                        <!-- HTML -->
+                        <div class="slider-container" x-ref="swiperNewest">
+                            <div class="swiper mySwiper">
+                                <div class="swiper-wrapper">
+                                    <template x-for="product in newest" :key="product.id">
+                                        <div class="swiper-slide">
+                                            <div class="product-item">
+                                                <div class="product-thumb">
+                                                    <template x-if="product.sale>0">
+                                                        <span class="sale" x-text="product.sale + '%'"></span>
+                                                    </template>
+                                                    <!-- NEW badge -->
+                                                    <template x-if="product.new">
+                                                        <span class="new">NEW</span>
+                                                    </template>
+                                                    <img class="img-responsive"
+                                                         :src="product.image"
+                                                         alt="product-img"/>
+                                                    <a :href="`/product/${product.id}`"></a>
+                                                    <div class="preview-meta">
+                                                        <ul>
+                                                            <li>
+                                                                <a href="javascript:void(0);"><i
+                                                                        class="tf-ion-ios-heart"></i></a>
+                                                            </li>
+                                                            <li>
+                                                                <a :href="`/product_single/${product.id}`">
+                                                                    <i class="tf-ion-android-cart"></i>
+                                                                </a>
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                                <a :href="`/product_single/${product.id}`" class="product-content">
+                                                    <div class="product-name">
+                                                        <h5 x-text="product.name"></h5>
+                                                    </div>
+                                                    <p class="price">
+                                                        <template x-if="product.sale > 0 ">
+                                                                <span>
+                                                                    <span x-text="`$${product.price}`"
+                                                                          class="original-price"></span>
+                                                                    <span x-text="`$${product.price_after_discount}`"
+                                                                          class="discount-price"></span>
+                                                                </span>
+                                                        </template>
+
+                                                        <template x-if="product.sale == 0 ">
+                                                            <span x-text="`$${product.price}`"></span>
+                                                        </template>
+
+                                                    </p>
+
+                                                </a>
+
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+
+
+                            </div>
+                            <!-- Navigation -->
+                            <div class="swiper-button-prev"><i class="tf-ion-chevron-left"></i></div>
+                            <div class="swiper-button-next"><i class="tf-ion-chevron-right"></i></div>
+
+                            <!-- /tab -->
+                        </div>
+                    </div>
+                </div>
+                <!-- /tab -->
+            </div>
+        </div>
+    </div>
+
+    <!--   Best seller-->
+    <div class="section">
+        <!-- container -->
+        <div class="container">
+            <!-- row -->
+            <div class="row">
+
+                <!-- section title -->
+                <div class="col-md-12">
+                    <div class="section-title">
+                        <h3 class="title"><i class="tf-ion-ios-flame"></i> Sản phẩm bán chạy</h3>
+                        <div class="section-nav">
+                            <ul class="section-tab-nav tab-nav">
+                                <li class="active"><a data-toggle="tab" href="#tab2">Laptops</a></li>
+                                <li><a data-toggle="tab" href="#tab2">Smartphones</a></li>
+                                <li><a data-toggle="tab" href="#tab2">Cameras</a></li>
+                                <li><a data-toggle="tab" href="#tab2">Accessories</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <!-- /section title -->
+
+                <!-- Products tab & slick -->
+                <div class="col-md-12">
+                    <div class="row">
+                        <!-- HTML -->
+                        <div class="slider-container" x-ref="swiperBestSeller">
+                            <div class="swiper mySwiper">
+                                <div class="swiper-wrapper">
+                                    <template x-for="product in bestSeller" :key="product.id">
+                                        <div class="swiper-slide">
+                                            <div class="product-item">
+                                                <div class="product-thumb">
+                                                    <template x-if="product.sale>0">
+                                                        <span class="sale" x-text="product.sale + '%'"></span>
+                                                    </template>
+                                                    <!-- NEW badge -->
+                                                    <template x-if="product.new">
+                                                        <span class="new">NEW</span>
+                                                    </template>
+                                                    <img class="img-responsive"
+                                                         :src="product.image"
+                                                         alt="product-img"/>
+                                                    <a :href="`/product/${product.id}`"></a>
+                                                    <div class="preview-meta">
+                                                        <ul>
+                                                            <li>
+                                                                <a href="javascript:void(0);"><i
+                                                                        class="tf-ion-ios-heart"></i></a>
+                                                            </li>
+                                                            <li>
+                                                                <a :href="`/product_single/${product.id}`">
+                                                                    <i class="tf-ion-android-cart"></i>
+                                                                </a>
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                                <a :href="`/product_single/${product.id}`" class="product-content">
+                                                    <div class="product-name">
+                                                        <h5 x-text="product.name"></h5>
+                                                    </div>
+                                                    <p class="price">
+                                                        <!-- Nếu có sale hoặc flash sale -->
+                                                        <template x-if="product.sale > 0 ">
+                                                                <span>
+                                                                    <span x-text="`$${product.price}`"
+                                                                          class="original-price"></span>
+                                                                    <span x-text="`$${product.price_after_discount}`"
+                                                                          class="discount-price"></span>
+                                                                </span>
+                                                        </template>
+
+                                                        <template x-if="product.sale == 0 ">
+                                                            <span x-text="`$${product.price}`"></span>
+                                                        </template>
+
+                                                    </p>
+
+                                                </a>
+
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+
+
+                            </div>
+                            <!-- Navigation -->
+                            <div class="swiper-button-prev"><i class="tf-ion-chevron-left"></i></div>
+                            <div class="swiper-button-next"><i class="tf-ion-chevron-right"></i></div>
+                            <!-- /tab -->
+                        </div>
+                    </div>
+                </div>
+                <!-- /tab -->
+            </div>
+        </div>
+    </div>
+
+    <!--   Best rating-->
+    <div class="section">
+        <!-- container -->
+        <div class="container">
+            <!-- row -->
+            <div class="row">
+                <!-- section title -->
+                <div class="col-md-12">
+                    <div class="section-title">
+                        <h3 class="title"><i class="tf-ion-ios-star"></i> Sản phẩm đánh giá cao</h3>
+                        <div class="section-nav">
+                            <ul class="section-tab-nav tab-nav">
+                                <li :class="{ 'active': filteredProducts===bestSeller }">
+                                    <a href="#" @click.prevent="filteredProducts=bestSeller">Bán chạy nhất</a>
+                                </li>
+                                <li :class="{ 'active': filteredProducts===newest }">
+                                    <a href="#" @click.prevent="filteredProducts=newest">Hàng mới về</a>
+                                </li>
+                                <li :class="{ 'active': filteredProducts===bestRating }">
+                                    <a href="#" @click.prevent="filteredProducts=bestRating">Đánh giá cao</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <!-- /section title -->
+                    <div class="col-md-12">
+                        <div class="row">
+                            <!-- HTML -->
+                            <div class="slider-container" x-ref="swiperBestRating">
+                                <div class="swiper mySwiper">
+                                    <div class="swiper-wrapper">
+                                        <template x-for="product in bestRating" :key="product.id">
+                                            <div class="swiper-slide">
+                                                <div class="product-item">
+                                                    <div class="product-thumb">
+                                                        <template x-if="product.sale>0">
+                                                            <span class="sale" x-text="product.sale + '%'"></span>
+                                                        </template>
+                                                        <!-- NEW badge -->
+                                                        <template x-if="product.new">
+                                                            <span class="new">NEW</span>
+                                                        </template>
+                                                        <img class="img-responsive"
+                                                             :src="product.image"
+                                                             alt="product-img"/>
+                                                        <a :href="`/product/${product.id}`"></a>
+                                                        <div class="preview-meta">
+                                                            <ul>
+                                                                <li>
+                                                                    <a href="javascript:void(0);"><i
+                                                                            class="tf-ion-ios-heart"></i></a>
+                                                                </li>
+                                                                <li>
+                                                                    <a :href="`/product_single/${product.id}`">
+                                                                        <i class="tf-ion-android-cart"></i>
+                                                                    </a>
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                    <a :href="`/product_single/${product.id}`" class="product-content">
+                                                        <div class="product-name">
+                                                            <h5 x-text="product.name"></h5>
+                                                        </div>
+                                                        <p class="price">
+                                                            <template x-if="product.sale > 0 ">
+                                                                <span>
+                                                                    <span x-text="`$${product.price}`"
+                                                                          class="original-price"></span>
+                                                                    <span x-text="`$${product.price_after_discount}`"
+                                                                          class="discount-price"></span>
+                                                                </span>
+                                                            </template>
+
+                                                            <template x-if="product.sale == 0 ">
+                                                                <span x-text="`$${product.price}`"></span>
+                                                            </template>
+
+                                                        </p>
+
+                                                    </a>
+
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+
+
+                                </div>
+                                <!-- Navigation -->
+                                <div class="swiper-button-prev"><i class="tf-ion-chevron-left"></i></div>
+                                <div class="swiper-button-next"><i class="tf-ion-chevron-right"></i></div>
+                                <!-- /tab -->
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Products tab & slick -->
+                    <!-- /tab -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class=" section">
+        <div class="container">
+            <!-- row -->
+            <div class="row">
+                <!-- section title -->
+                <div class="col-md-12">
+                    <div class="section-title">
+                        <h3 class="title"><i class="tf-ion-ios-star"></i> Dành cho bạn</h3>
+                    </div>
+                    <!-- /section title -->
+                    <div class="col-md-12">
+                        <div class="row">
+                            <!-- HTML -->
+                            <template x-for="product in products" :key="product.id">
+                                <div class="col-md-3 col-sm-6 mb-4"> <!-- 4 sp 1 hàng trên desktop, 2 sp trên mobile -->
+                                    <div class="product-item">
+                                        <div class="product-thumb position-relative">
+                                            <template x-if="product.sale > 0">
+                                                <span class="sale position-absolute" x-text="product.sale + '%'"></span>
+                                            </template>
+                                            <template x-if="product.new">
+                                                <span class="new position-absolute" x-text="'NEW'"></span>
+                                            </template>
+                                            <img class="img-responsive" :src="product.image" :alt="product.name"/>
+                                            <div class="preview-meta">
+                                                <ul>
+                                                    <li>
+                                                        <a href="javascript:void(0);"><i
+                                                                class="tf-ion-ios-heart"></i></a>
+                                                    </li>
+                                                    <li>
+                                                        <a :href="`/product_single/${product.id}`"><i
+                                                                class="tf-ion-android-cart"></i></a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <a :href="`/product_single/${product.id}`" class="product-content">
+                                            <div class="product-name">
+                                                <h5 x-text="product.name"></h5>
+                                            </div>
+                                            <p class="price">
+                                                <template x-if="product.sale > 0">
+                                                    <span>
+                                                        <span x-text="`$${product.price}`"
+                                                              class="original-price"></span>
+                                                        <span x-text="`$${product.price_after_discount}`"
+                                                              class="discount-price"></span>
+                                                    </span>
+                                                </template>
+                                                <template x-if="product.sale == 0">
+                                                    <span x-text="`$${product.price}`"></span>
+                                                </template>
+                                            </p>
+                                        </a>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                    <!-- Products tab & slick -->
+                    <!-- /tab -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+</div>
+<!-- /HOT DEAL SECTION -->
+
+
+<!--<section class="products section bg-gray" x-data="dataProducts">-->
+<!--    <div class="row">-->
+<!--        <div class="col-lg-12">-->
+<!--            <ul class="filter__controls">-->
+<!--                <li @click="filteredProducts = bestSeller"-->
+<!--                    :class="{ 'active': filteredProducts === bestSeller }">Bán chạy nhất-->
+<!--                </li>-->
+
+<!--                <li @click="filteredProducts = newest"-->
+<!--                    :class="{ 'active': filteredProducts === newest }">Hàng mới về-->
+<!--                </li>-->
+
+<!--                <li @click="filteredProducts = bestRating"-->
+<!--                    :class="{ 'active': filteredProducts === bestRating }">Đánh giá cao-->
+<!--                </li>-->
+<!--            </ul>-->
 <!--        </div>-->
+<!--    </div>-->
+<!--    <div class="row">-->
+<!--        <template x-for="product in filteredProducts" :key="product.id">-->
+<!--            <div class="col-md-3">-->
+<!--                <div class="product-item">-->
+<!--                    <div class="product-thumb">-->
+<!--                        <span class="bage">Sale</span>-->
+<!--                        <img class="img-responsive"-->
+<!--                             :src="product.image"-->
+<!--                             alt="product-img"/>-->
+<!--                        <a :href="`/product/${product.id}`"></a>-->
+<!--                        <div class="preview-meta">-->
+<!--                            <ul>-->
+<!--                                <li>-->
+<!--                                    <a href="javascript:void(0);"><i class="tf-ion-ios-heart"></i></a>-->
+<!--                                </li>-->
+<!--                                <li>-->
+<!--                                    <a :href="`/product_single/${product.id}`">-->
+<!--                                        <i class="tf-ion-android-cart"></i>-->
+<!--                                    </a>-->
+<!--                                </li>-->
+<!--                            </ul>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                    <a :href="`/product_single/${product.id}`" class="product-content">-->
+<!--                        <h4 x-text="product.name"></h4>-->
+<!--                        <p class="price" x-text="`$${product.price}`"></p>-->
+<!--                    </a>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </template>-->
 <!--    </div>-->
 <!--</section>-->
 
-<section class="products section bg-gray">
-    <div class="container" x-data="dataProducts">
-        <div class="row">
-            <div class="col-lg-12">
-                <ul class="filter__controls">
-                    <li @click="filteredProducts = bestSeller"
-                        :class="{ 'active': filteredProducts === bestSeller }">Bán chạy nhất
-                    </li>
 
-                    <li @click="filteredProducts = newest"
-                        :class="{ 'active': filteredProducts === newest }">Hàng mới về
-                    </li>
-
-                    <li @click="filteredProducts = bestRating"
-                        :class="{ 'active': filteredProducts === bestRating }">Đánh giá cao
-                    </li>
-                </ul>
-            </div>
-        </div>
-        <div class="row">
-            <template x-for="product in filteredProducts" :key="product.id">
-                <div class="col-md-3">
-                    <div class="product-item">
-                        <div class="product-thumb">
-                            <span class="bage">Sale</span>
-                            <img class="img-responsive"
-                                 :src="product.image"
-                                 alt="product-img"/>
-                            <a :href="`/product/${product.id}`"></a>
-                            <div class="preview-meta">
-                                <ul>
-                                    <li>
-                                        <a href="javascript:void(0);"><i class="tf-ion-ios-heart"></i></a>
-                                    </li>
-                                    <li>
-                                        <a :href="`/product_single/${product.id}`">
-                                            <i class="tf-ion-android-cart"></i>
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                        <a :href="`/product_single/${product.id}`" class="product-content">
-                            <h4 x-text="product.name"></h4>
-                            <p class="price" x-text="`$${product.price}`"></p>
-                        </a>
-                    </div>
-                </div>
-            </template>
-        </div>
-    </div>
-</section>
 <script type="module" src="{{ url_for('static', filename='user/js/components/product.js') }}" defer></script>
 
+<!-- template -->
+<script>
+    // Lấy từ backend
+    const endTime = new Date("{{ flash_sale.end }}").getTime();
+
+    function updateFlashSaleTimer() {
+        const now = new Date().getTime();
+        const distance = endTime - now;
+
+        if (distance < 0) {
+            document.getElementById("flash-sale-timer").innerText = "EXPIRED";
+            return;
+        }
+
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        const formatted =
+            String(hours).padStart(2, '0') + ":" +
+            String(minutes).padStart(2, '0') + ":" +
+            String(seconds).padStart(2, '0');
+
+        document.getElementById("flash-sale-timer").innerText = formatted;
+    }
+
+    setInterval(updateFlashSaleTimer, 1000);
+    updateFlashSaleTimer();
+</script>
 
 {%endblock%}

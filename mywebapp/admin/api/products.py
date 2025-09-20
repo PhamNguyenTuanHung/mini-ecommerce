@@ -16,7 +16,6 @@ def get_all_products():
         'sales_data': sales_data
     }
 
-
 @admin_api.route('/products', methods=['POST'])
 @admin_required
 def create_product():
@@ -25,13 +24,15 @@ def create_product():
     brand = request.form.get('brand')
     category = request.form.get('category')
     description = request.form.get('description')
+    sale = request.form.get('sale')
+    publish = request.form.get('publish')
     variants = json.loads(request.form.get('variants', '[]'))
 
     gallery_files = request.files.getlist('gallery_images')
     image_file = request.files.get('image')
     image_url = "https://res.cloudinary.com/dmwhvc8tc/image/upload/v1753408922/product/default.jpg"
 
-    new_product = utils.create_products(name, price, description, category, brand)
+    new_product = utils.create_products(name, price, description, category, brand,sale,publish)
     product_id = new_product.MaSanPham
 
     # Thêm variants
@@ -95,6 +96,9 @@ def update_product(product_id):
     category = request.form.get('category')
     description = request.form.get('description')
     variants = json.loads(request.form.get('variants', '[]'))
+    sale = request.form.get('sale')
+    publish = request.form.get('publish')
+
 
     image_url_form = request.form.get('image_url', '').strip()
     image_file = request.files.get('image')
@@ -145,16 +149,16 @@ def update_product(product_id):
         brand_id=brand,
         main_img=new_avatar_url,
         variants=variants,
-        gallery=new_gallery
+        gallery=new_gallery,
+        sale=sale,
+        publish=publish
     )
-
-
 
     if result:
         utils.admin_log_activity(
             g.admin_id,
             action="update_product",
-            message=f"admin {g.admin_name} cập nhật sản phẩm id={product_id}, name={name}, giá={price}"
+            message=f"admin {g.admin_name} cập nhật sản phẩm id={product_id}, name={name}, giá={price}, giảm giá={sale}, hiển thị={publish}"
         )
         return jsonify({'success': True})
     return jsonify({'success': False, 'error': 'Cập nhật thất bại'})

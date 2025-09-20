@@ -232,10 +232,10 @@
                                 <th>Khách hàng</th>
                                 <th>Sản phẩm</th>
                                 <th @click="sortBy('total')" class="sortable">Tổng</th>
-                                <th>Trạng thái</th>
-                                <th @click="sortBy('orderDate')" class="sortable">Date</th>
+                                <th style="width: 120px;">Trạng thái</th>
+                                <th @click="sortBy('orderDate')" class="sortable">Ngày đặt</th>
                                 <th>Thanh toán</th>
-                                <th style="width: 120px;">Actions</th>
+                                <th></th>
                             </tr>
                             </thead>
                             <tbody>
@@ -258,67 +258,49 @@
                                                  height="32">
                                             <div>
                                                 <div class="fw-medium" x-text="order.customer.name"></div>
-                                                <small class="text-muted" x-text="order.customer.email"></small>
                                             </div>
                                         </div>
                                     </td>
                                     <td>
                                         <div class="order-items">
                                             <div x-text="order.itemCount + ' item' + (order.itemCount > 1 ? 's' : '')"></div>
-                                            <small class="text-muted"
-                                                   x-text="order.items[0].name + (order.itemCount > 1 ? ' +' + (order.itemCount - 1) + ' more' : '')"></small>
+                                            <small class="text-muted d-block">
+                                                <template x-for="(item, idx) in order.items" :key="idx">
+                                                    <div x-text="item.name"></div>
+                                                </template>
+                                            </small>
                                         </div>
                                     </td>
-                                    <td class="fw-medium" x-text="`$${order.total}`"></td>
+                                    <td class="fw-medium" x-text="order.total"></td>
                                     <td>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <span class="order-status badge"
-                                                  :class="{
-                                                          'bg-secondary': order.status === 'pending',
-                                                          'bg-info': order.status === 'processing',
-                                                          'bg-primary': order.status === 'shipping',
-                                                          'bg-success': order.status === 'delivered',
-                                                          'bg-danger': order.status === 'cancelled'
-                                                      }"
-                                                  x-text="{
-                                              pending: 'Chờ xử lý',
-                                              processing: 'Đang xử lý',
-                                              shipping: 'Đang giao',
-                                              delivered: 'Đã giao',
-                                              cancelled: 'Đã hủy'
-                                          }[order.status]">
-
-                                            </span>
+                                        <div class="d-flex align-items-center gap-2 order-status">
+                                            <select class="form-select form-select-sm order-status"
+                                                    x-model="order.status"
+                                                    @change="updateStatusOrder(order)"
+                                                    :disabled="order.status === 'delivered' || order.status === 'cancelled'"
+                                                    :class="{
+                                                    'bg-secondary text-white': order.status === 'pending',
+                                                    'bg-info text-white': order.status === 'processing',
+                                                    'bg-primary text-white': order.status === 'shipping',
+                                                    'bg-success text-white': order.status === 'delivered',
+                                                    'bg-danger text-white': order.status === 'cancelled'
+                                                }">
+                                                <option value="pending">Chờ xử lý</option>
+                                                <option value="processing">Đang xử lý</option>
+                                                <option value="shipping">Đang giao</option>
+                                                <option value="delivered">Đã giao</option>
+                                                <option value="cancelled">Đã hủy</option>
+                                            </select>
                                         </div>
-
-
                                     </td>
-
                                     <td x-text="order.orderDate"></td>
                                     <td x-text="order.payment"></td>
                                     <td>
-                                        <div class="dropdown">
-                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
-                                                    type="button"
-                                                    data-bs-toggle="dropdown">
-                                                <i class="bi bi-three-dots"></i>
-                                            </button>
-                                            <ul class="dropdown-menu">
-                                                <li><a class="dropdown-item" href="#" @click="viewOrder(order)">
-                                                    <i class="bi bi-eye me-2"></i>Xem chi tiết
-                                                </a></li>
-                                                <li><a class="dropdown-item" href="#" @click="printInvoice(order)">
-                                                    <i class="bi bi-printer me-2"></i>In hóa đơn
-                                                </a></li>
-                                                <li>
-                                                    <hr class="dropdown-divider">
-                                                </li>
-                                                <li><a class="dropdown-item text-danger" href="#"
-                                                       @click="cancelOrder(order)">
-                                                    <i class="bi bi-x-circle me-2"></i>Hủy đơn hàng
-                                                </a></li>
-                                            </ul>
-                                        </div>
+                                        <a class="dropdown-item text-danger" href="#"
+                                           x-show="order.status !== 'delivered' && order.status !== 'cancelled' && order.status !== 'shipping'"
+                                           @click.prevent="cancelOrder(order)">
+                                            <i class="bi bi-x-circle me-2"></i>Hủy
+                                        </a>
                                     </td>
 
                                 </tr>
@@ -330,25 +312,31 @@
                     <!-- Pagination -->
                     <div class="d-flex justify-content-between align-items-center p-3">
                         <div class="text-muted">
-                            Showing <span x-text="(currentPage - 1) * itemsPerPage + 1"></span> to
-                            <span x-text="Math.min(currentPage * itemsPerPage, filteredOrders.length)"></span> of
-                            <span x-text="filteredOrders.length"></span> results
+                            Hiển thị <span x-text="(currentPage - 1) * itemsPerPage + 1"></span> tới
+                            <span x-text="Math.min(currentPage * itemsPerPage, filteredOrders.length)"></span>
                         </div>
                         <nav>
                             <ul class="pagination pagination-sm mb-0">
                                 <li class="page-item" :class="{ 'disabled': currentPage === 1 }">
                                     <a class="page-link" href="#"
-                                       @click.prevent="goToPage(currentPage - 1)">Previous</a>
+                                       @click.prevent="goToPage(currentPage - 1)">
+                                        <i class="bi bi-chevron-left"></i>
+                                    </a>
                                 </li>
-                                <template x-for="(page, index) in visiblePages" :key="`page-${index}`">
+
+                                <template x-for="page in visiblePages" :key="page">
                                     <li class="page-item" :class="{ 'active': page === currentPage }">
-                                        <a class="page-link" href="#" @click.prevent="page !== '...' && goToPage(page)"
-                                           x-text="page"></a>
+                                        <a class="page-link" href="#" @click.prevent="goToPage(page)" x-text="page"></a>
                                     </li>
                                 </template>
+
                                 <li class="page-item" :class="{ 'disabled': currentPage === totalPages }">
-                                    <a class="page-link" href="#" @click.prevent="goToPage(currentPage + 1)">Next</a>
+                                    <a class="page-link" href="#"
+                                       @click.prevent="goToPage(currentPage + 1)">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </a>
                                 </li>
+
                             </ul>
                         </nav>
                     </div>
@@ -359,7 +347,7 @@
                 <div class="modal-dialog modal-xl">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title">Order Details</h5>
+                            <h5 class="modal-title">CHi tiết đơn hàng</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
 
@@ -417,37 +405,6 @@
                                     </tbody>
                                 </table>
 
-                                <!--                                                                <template x-for="(item, index) in selectedOrder.items" :key="index">-->
-                                <!--                                                                    <div class="border rounded p-3 mb-2 bg-secondary bg-opacity-10">-->
-                                <!--                                                                        &lt;!&ndash; Dòng 1: Tên sản phẩm | Giá | Tổng &ndash;&gt;-->
-                                <!--                                                                        <div class="row">-->
-                                <!--                                                                            &lt;!&ndash; Tên sản phẩm (col-md-6) &ndash;&gt;-->
-                                <!--                                                                            <div class="col-md-3 d-flex align-items-center">-->
-                                <!--                                                                                <strong x-text="item.name"></strong>-->
-                                <!--                                                                            </div>-->
-
-                                <!--                                                                            &lt;!&ndash; Giá (col-md-3) &ndash;&gt;-->
-                                <!--                                                                            <div class="col-md-3 d-flex align-items-center justify-content-end">-->
-                                <!--                                                                                Giá: <span class="ms-1" x-text="formatCurrency(item.price)"></span>-->
-                                <!--                                                                            </div>-->
-
-                                <!--                                                                            &lt;!&ndash; Tổng (col-md-3), lệch sát phải &ndash;&gt;-->
-                                <!--                                                                            <div class="col-md-6 d-flex align-items-center justify-content-end pe-0">-->
-                                <!--                                                                                Tổng: <span class="ms-1"-->
-                                <!--                                                                                            x-text="formatCurrency(item.price * item.quantity)"></span>-->
-                                <!--                                                                            </div>-->
-                                <!--                                                                        </div>-->
-
-                                <!--                                                                        &lt;!&ndash; Dòng 2: Màu - Size | SL &ndash;&gt;-->
-                                <!--                                                                        <div class="row mt-1">-->
-                                <!--                                                                            <div class="col-md-6 text-muted">-->
-                                <!--                                                                                <span x-text="`${item.color} - ${item.size} x ${item.quantity}`"></span>-->
-                                <!--                                                                            </div>-->
-
-                                <!--                                                                        </div>-->
-                                <!--                                                                    </div>-->
-                                <!--                                                                </template>-->
-
                                 <!-- Tổng đơn -->
                                 <div class="d-flex justify-content-between align-items-center mt-4">
 
@@ -491,12 +448,11 @@
 {% block Modal %}
 
 
-<!-- Bulk Update Modal -->
 <div class="modal fade" id="bulkUpdateModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Bulk Update Orders</h5>
+                <h5 class="modal-title">Cập nhật đơn hàng</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">

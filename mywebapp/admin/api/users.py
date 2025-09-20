@@ -67,15 +67,17 @@ def get_user_by_id(user_id):
     return jsonify(user)
 
 
-@admin_api.route('/users/<int:user_id>/deactivate', methods=['POST'])
+@admin_api.route('/users/<int:user_id>/status', methods=['PATCH'])
 @admin_required
-def deactivate_user(user_id):
-    if utils.deactivate_user(user_id):
+def update_status_user(user_id):
+    data = request.get_json()
+    new_status = data.get('status')
+    if utils.update_status_user(user_id,new_status):
+        msg = f'Cập nhật status={new_status} cho User ID={user_id}'
         utils.log_activity(
             user_id=user_id,
-            action='deactivate_user',
-            message=f'Vô hiệu hóa tài khoản User ID={user_id}',
-            ip=request.remote_addr
+            action=new_status,
+            message=msg,
         )
     return jsonify({'success': True})
 
@@ -150,12 +152,6 @@ def update_user(user_id):
     else:
         return {'success': False, 'error': 'Cập nhật thất bại'}
 
-
-# @admin_api.route('/users/<int:user_id>/status', methods=['GET'])
-# # @login_required
-# # @admin_required
-# def get_status_user(user_id):
-#     reslut = utils.get_user_by_id(user_id)
 
 
 @admin_api.route('/activity-logs', methods=["GET"])

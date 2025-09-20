@@ -35,8 +35,6 @@ def create_cart_item():
         cart = session.get('cart', {})
 
     cart = utils.add_item_to_cart(cart, data)
-    print(cart)
-
     if current_user.is_authenticated:
         utils.log_activity(
             current_user.MaNguoiDung,

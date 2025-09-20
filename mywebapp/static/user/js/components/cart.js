@@ -22,7 +22,6 @@ function addToCart() {
             id: productFromServer.id,
             quantity: quantity,
             name: productFromServer.name,
-            price: productFromServer.price,
             color: color,
             size: size,
             image:productFromServer.image

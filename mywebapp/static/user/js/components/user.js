@@ -309,8 +309,6 @@ function togglePassword(fieldId, el) {
     }
 }
 
-
-// Đánh giá
 import Alpine from 'https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/module.esm.js';
 
 window.Alpine = Alpine;
@@ -430,7 +428,6 @@ document.addEventListener('alpine:init', () => {
                     const res = await fetch(`/user/api/orders/${orderId}/products`);
                     const data = await res.json();
                     this.products = data;
-                    console.log(this.products)
                 } catch (err) {
                     console.error("Lỗi tải sản phẩm:", err);
                 } finally {
@@ -458,14 +455,13 @@ document.addEventListener('alpine:init', () => {
             },
 
             init() {
-                console.log(123);
                 Alpine.store('reviewFormStore', this);
             }
         })
     )
     ;
-
 })
 ;
 Alpine.start();
+
 

@@ -19488,11 +19488,26 @@ textarea.form-control-lg {
 }
 
 .order-management .order-status {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     font-weight: 600;
-    padding: 0.25rem 0.75rem;
+    line-height: 1.4;
+    padding: 0.35rem 2rem 0.35rem 1rem;
     border-radius: 50px;
-    text-transform: capitalize;
+    min-width: 120px;
+    white-space: nowrap;
+    display: inline-block;
+
+    /* custom mũi tên */
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center; /* mũi tên nằm gọn bên phải */
+    background-size: 12px;
+
+    /* SVG mũi tên màu trắng (có thể đổi fill) */
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 20 20'><path fill='white' d='M5 7l5 5 5-5H5z'/></svg>");
 }
 
 .order-management .status-pending {
@@ -19507,7 +19522,7 @@ textarea.form-control-lg {
     border: 1px solid var(--bs-info-border-subtle);
 }
 
-.order-management .status-shipped {
+.order-management .status-shipping {
     background-color: var(--bs-primary-bg-subtle);
     color: var(--bs-primary-text-emphasis);
     border: 1px solid var(--bs-primary-border-subtle);
@@ -25023,3 +25038,7 @@ textarea.form-control-lg {
     color: var(--bs-primary-text-emphasis);
     border: 1px solid var(--bs-primary-border-subtle);
 }
+
+
+
+

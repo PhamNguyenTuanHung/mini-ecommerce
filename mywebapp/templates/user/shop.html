@@ -1,19 +1,5 @@
 {% extends 'user/layout/base.html' %}
-{% block css %}
-<!-- Favicon -->
-<link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.png') }}"/>
 
-<!-- Plugin CSS -->
-<link rel="stylesheet" href="{{ url_for('static', filename='user/plugins/themefisher-font/style.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='user/plugins/bootstrap/css/bootstrap.min.css') }}">
-<link rel="stylesheet"
-      href="{{ url_for('static', filename='user/plugins/bootstrap-touchspin/dist/jquery.bootstrap-touchspin.min.css') }}">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-<!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">-->
-<link rel="stylesheet" href="{{ url_for('static', filename='user/css/style1.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='user/css/style.css') }}">
-
-{% endblock %}
 {% block title %} Cửa hàng {% endblock %}
 {% block content %}
 
@@ -38,7 +24,7 @@
                             <div class="panel panel-default">
                                 <div class="panel-heading">
                                     <h4 class="panel-title">
-                                        <a data-toggle="collapse"  href="#collapseOne">
+                                        <a data-toggle="collapse" href="#collapseOne">
                                             Danh mục sản phẩm <span class="caret"></span>
                                         </a>
                                     </h4>
@@ -46,14 +32,13 @@
                                 <div id="collapseOne" class="panel-collapse collapse in">
                                     <div class="panel-body">
                                         <div class="shop__sidebar__categories">
-                                            <ul>
+                                            <ul >
                                                 <template x-for="category in categories" :key="category.id">
                                                     <li>
                                                         <a href="#"
-                                                           @click.prevent="
-                                           categoryFilter = (categoryFilter === category.id ? '' : category.id);
-                                           filterProducts();"
-                                                           :class="categoryFilter === category.id ? 'active' : ''"
+                                                           @click.prevent="categoryFilter = (categoryFilter == category.id ? '' : category.id);
+                                                                   filterProducts();"
+                                                           :class="categoryFilter == category.id ? 'active' : ''"
                                                            x-text="category.name">
                                                         </a>
                                                     </li>
@@ -68,7 +53,7 @@
                             <div class="panel panel-default">
                                 <div class="panel-heading">
                                     <h4 class="panel-title">
-                                        <a data-toggle="collapse"href="#collapseTwo">
+                                        <a data-toggle="collapse" href="#collapseTwo">
                                             Thương hiệu <span class="caret"></span>
                                         </a>
                                     </h4>
@@ -81,9 +66,9 @@
                                                     <li>
                                                         <a href="#"
                                                            @click.prevent="
-                                           brandFilter = brandFilter === brand.id ? '' : brand.id;
-                                           filterProducts();"
-                                                           :class="brandFilter === brand.id ? 'active' : ''"
+                                                               brandFilter = brandFilter == brand.id ? '' : brand.id;
+                                                               filterProducts();"
+                                                           :class="brandFilter == brand.id ? 'active' : ''"
                                                            x-text="brand.name">
                                                         </a>
                                                     </li>
@@ -123,11 +108,18 @@
                             <div class="col-lg-3 col-md-6 col-sm-6">
                                 <div class="product-item">
                                     <div class="product-thumb">
-                                        <span class="bage">Sale</span>
-                                        <img class="img-responsive"
-                                             :src="product.image"
-                                             alt="product-img"/>
-                                        <a :href="`/product/${product.MaSanPham}`"></a>
+                                        <!-- Hiển thị badge sale nếu có -->
+                                        <template x-if="product.sale_percent > 0">
+                                            <span class="sale" x-text="product.sale_percent + '%'"></span>
+                                        </template>
+
+                                        <!-- Hiển thị badge NEW nếu sản phẩm mới -->
+                                        <template x-if="product.new">
+                                            <span class="new">NEW</span>
+                                        </template>
+
+                                        <img class="img-responsive" :src="product.image" alt="product-img"/>
+                                        <a :href="`/product/${product.id}`"></a>
                                         <div class="preview-meta">
                                             <ul>
                                                 <li>
@@ -141,16 +133,28 @@
                                             </ul>
                                         </div>
                                     </div>
-                                    <div class="product-content">
-                                        <h4><a :href="`/product_single/${product.id}`" x-text="product.name"></a></h4>
-                                        <p class="price" x-text="`$${product.price}`"></p>
-                                    </div>
+
+                                    <a :href="`/product_single/${product.id}`" class="product-content">
+                                        <div class="product-name">
+                                            <h5 x-text="product.name"></h5>
+                                        </div>
+                                        <p class="price">
+                                            <!-- Nếu có giảm giá thì hiển thị giá gốc + giá giảm -->
+                                            <template x-if="product.sale_percent > 0">
+                                        <span>
+                                            <span x-text="`$${product.price}`" class="original-price"></span>
+                                            <span x-text="`$${product.price_after_discount}`" class="discount-price"></span>
+                                        </span>
+                                            </template>
+
+                                            <!-- Nếu không giảm giá thì hiện giá gốc -->
+                                            <template x-if="product.sale_percent == 0">
+                                                <span x-text="`$${product.price}`"></span>
+                                            </template>
+                                        </p>
+                                    </a>
                                 </div>
-                            </div>
-                        </template>
-                        <template x-for="n in (8 - products.length)" :key="`empty-${n}`">
-                            <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
-                                <div class="product-item placeholder"></div>
+
                             </div>
                         </template>
                     </div>

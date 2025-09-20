@@ -41,14 +41,12 @@ document.addEventListener('alpine:init', () => {
                 })
                     .then(response => response.json())
                     .then(data => {
-                        console.log(123);
                         this.products = data.products;
                         this.salesData = data.sales_data;
                         this.topSellerData = this.getTopSellers(7);
                         this.filterProducts();
                         this.calculateStats();
                         this.initCharts();
-
                     })
                     .catch(error => {
                         console.error('Lỗi khi load sản phẩm:', error);
@@ -121,7 +119,6 @@ document.addEventListener('alpine:init', () => {
             }
             ,
             calculateStats() {
-
                 this.stats.total = this.products.length;
                 this.stats.inStock = this.products.filter(p => p.stock > 20).length;
                 this.stats.lowStock = this.products.filter(p => p.stock > 0 && p.stock <= 20).length;
@@ -153,14 +150,13 @@ document.addEventListener('alpine:init', () => {
                     const matchesBrand = !this.brandFilter || product.brand.name === this.brandFilter;
 
                     const matchesStock = !this.stockFilter ||
-                        (this.stockFilter === 'in-stock' && product.stock > 20) ||
-                        (this.stockFilter === 'low-stock' && product.stock > 0 && product.stock <= 20) ||
+                        (this.stockFilter === 'in-stock' && product.stock > 150) ||
+                        (this.stockFilter === 'low-stock' && product.stock > 100 && product.stock <= 150) ||
                         (this.stockFilter === 'out-of-stock' && product.stock === 0);
 
                     return matchesSearch && matchesCategory && matchesStock && matchesBrand;
                 });
 
-                this.sortProducts();
                 this.currentPage = 1;
             }
             ,
@@ -587,6 +583,8 @@ document.addEventListener('alpine:init', () => {
             price: '',
             description: '',
             variants: [],
+            sale: '',
+            publish: 1,
             image_url: null,
             galleryImages: [],
             imagePre: null
@@ -595,7 +593,6 @@ document.addEventListener('alpine:init', () => {
         openModal(mode, product = null) {
             this.mode = mode;
             this.resetForm();
-
             if (product) {
                 this.editMode = true;
                 this.productId = product.id;
@@ -606,6 +603,8 @@ document.addEventListener('alpine:init', () => {
                 this.form.description = product.description;
                 this.form.image_url = product.image;
                 this.originalImg = product.image;
+                this.form.sale = product.sale;
+                this.form.publish = product.publish;
                 this.form.variants = product.variants.map(v => ({
                     color: v.color,
                     size: v.size,
@@ -619,6 +618,7 @@ document.addEventListener('alpine:init', () => {
                 }
 
             }
+            console.log(this.form)
             const modal = new bootstrap.Modal(document.getElementById('productModal'));
             modal.show();
         }
@@ -632,6 +632,8 @@ document.addEventListener('alpine:init', () => {
                 price: '',
                 description: '',
                 variants: [],
+                sale: '',
+                publish: 1,
                 image_url: null,
                 imagePre: null,
                 galleryImages: []
@@ -640,6 +642,8 @@ document.addEventListener('alpine:init', () => {
             this.originalImg = null;
             const fileInput = document.querySelector('#productImageInput');
             if (fileInput) fileInput.value = null;
+            const galleryInput = document.querySelector('input[name="gallery_images"]');
+            if (galleryInput) galleryInput.value = null;
         }
         ,
 
@@ -671,6 +675,8 @@ document.addEventListener('alpine:init', () => {
             formData.append('price', this.form.price);
             formData.append('description', this.form.description);
             formData.append('variants', JSON.stringify(this.form.variants));
+            formData.append('sale', this.form.sale);
+            formData.append('publish', this.form.publish);
             if (this.form.imagePre) {
                 formData.append('image', this.form.imagePre);
             } else if (this.form.image_url !== this.originalImg) {
@@ -701,6 +707,9 @@ document.addEventListener('alpine:init', () => {
                         if (productTable) {
                             productTable.loadDataProducts();
                         }
+                        const modalEl = document.getElementById('productModal');
+                        const bsModal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                        bsModal.hide();
                     } else {
                         Swal.fire({
                             title: 'Lỗi',

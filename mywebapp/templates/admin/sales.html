@@ -1,0 +1,295 @@
+{% extends 'admin/layout/base.html' %}
+{% block title %} Flash Sale {%endblock%}
+<!-- Main Content -->
+{% block content %}
+<main class="admin-main">
+    <div class="container-fluid p-4 p-lg-5">
+
+        <!-- Page Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4 mb-lg-5">
+            <div>
+                <h1 class="h3 mb-0">Quản lý Khuyễn mãi</h1>
+                <p class="text-muted mb-0"></p>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-secondary" @click="exportCoupon()">
+                    <i class="bi bi-download me-2"></i>Xuất danh sách mã giảm giá
+                </button>
+                <div>
+                    <button type="button" class="btn btn-primary"
+                            x-data="flashSaleForm"
+                            @click="$store.flashSaleFormStore.openModal('add',null)">
+                        <i class="bi bi-plus-lg me-2"></i>Thêm khuyễn mãi
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- category Management Container -->
+        <div x-data="flashSaleTable">
+            <!-- Coupon Table -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="card-title mb-0">Quản lý khuyễn mãi</h5>
+                        </div>
+                        <div class="col-auto">
+                            <div class="d-flex gap-2">
+                                <!-- Search -->
+                                <div class="position-relative">
+                                    <input type="search" class="form-control form-control-sm"
+                                           placeholder="Tìm kiếm mã giảm giá..." x-model="searchQuery"
+                                           @input="filterFlashSales()" style="width: 200px;">
+                                    <i class="bi bi-search position-absolute top-50 end-0 translate-middle-y me-2 text-muted"></i>
+                                </div>
+
+                                <!-- Loại giảm giá -->
+                                <select class="form-select form-select-sm" x-model="saleTypeFilter"
+                                        @change="filterFlashSales()" style="width: 150px;">
+                                    <option value="">Tất cả loại</option>
+                                    <option value="percent">Giảm theo %</option>
+                                    <option value="fixed">Giảm theo số tiền</option>
+                                </select>
+
+                                <!-- Trạng thái -->
+                                <select class="form-select form-select-sm" x-model="statusFilter"
+                                        @change="filterFlashSales()" style="width: 150px;">
+                                    <option value="">Tất cả trạng thái</option>
+                                    <option value="active">Đang hoạt động</option>
+                                    <option value="expired">Hết hạn</option>
+                                    <option value="scheduled">Chưa bắt đầu</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Bulk Actions Bar -->
+                    <div class="bulk-actions-bar p-3 bg-light border-bottom" x-show="selectedFlashSales.length > 0"
+                         x-transition>
+                        <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted">
+                        <span x-text="selectedFlashSales.length"></span> khuyễn mãi được chọn
+                    </span>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-secondary" @click="bulkAction('activate')">
+                                    <i class="bi bi-check-circle me-1"></i>Kích hoạt
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" @click="bulkAction('deactivate')">
+                                    <i class="bi bi-slash-circle me-1"></i>Ngừng
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" @click="bulkAction('delete')">
+                                    <i class="bi bi-trash me-1"></i>Xóa
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th style="width: 40px;">
+                                    <input type="checkbox"
+                                           class="form-check-input"
+                                           @change="toggleAll($event.target.checked)"
+                                           :checked="selectedFlashSales.length === selectedFlashSales.length && selectedFlashSales.length > 0">
+                                </th>
+                                <th>Mã giảm giá</th>
+                                <th @click="sortBy('code')" class="sortable">Tên Khuyến Mãi</th>
+                                <th @click="sortBy('discount')" class="sortable">Giảm giá</th>
+                                <th @click="sortBy('expiry')" class="sortable">Ngày bắt đầu</th>
+                                <th @click="sortBy('expiry')" class="sortable">Ngày hết hạn</th>
+                                <th style="width: 120px;">Thao tác</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <template x-for="sale in paginatedFlashSales" :key="sale.id">
+                                <tr>
+                                    <td>
+                                        <input type="checkbox"
+                                               class="form-check-input"
+                                               :value="sale.id"
+                                               x-model="selectedFlashSales">
+                                    </td>
+                                    <td x-text="sale.id"></td>
+                                    <td x-text="sale.name"></td>
+                                    <td x-text="sale.discount + '%'"></td>
+                                    <td x-text="sale.start">
+                                    <td x-text="sale.end"></td>
+                                    <td class="position-relative">
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary"
+                                                    type="button"
+                                                    data-bs-toggle="dropdown"
+                                                    aria-expanded="false">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end" data-bs-popper="static">
+                                                <li><a class="dropdown-item" href="" @click.prevent="editSale(sale)">✏️ Sửa</a></li>
+                                                <li>
+                                                    <hr class="dropdown-divider">
+                                                </li>
+                                                <li><a class="dropdown-item text-danger" href="#">🗑 Xóa</a></li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="d-flex justify-content-between align-items-center p-3">
+                        <div class="text-muted">
+                            Hiển thị <span x-text="(currentPage - 1) * itemsPerPage + 1"></span> đến
+                            <span x-text="Math.min(currentPage * itemsPerPage, filteredFlashSales.length)"></span>
+                            trong tổng <span x-text="filteredFlashSales.length"></span> kết quả
+                        </div>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0">
+                                <li class="page-item" :class="{ 'disabled': currentPage === 1 }">
+                                    <a class="page-link" href="#"
+                                       @click.prevent="goToPage(currentPage - 1)">Trước</a>
+                                </li>
+                                <template x-for="(page, index) in visiblePages" :key="`page-${index}`">
+                                    <li class="page-item" :class="{ 'active': page === currentPage }">
+                                        <a class="page-link" href="#"
+                                           @click.prevent="page !== '...' && goToPage(page)"
+                                           x-text="page"></a>
+                                    </li>
+                                </template>
+                                <li class="page-item" :class="{ 'disabled': currentPage === totalPages }">
+                                    <a class="page-link" href="#"
+                                       @click.prevent="goToPage(currentPage + 1)">Tiếp</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Coupon Management Container -->
+        <div x-data="bulkAssignFlashSale">
+            <h4>Thêm khuyễn mãi cho sản phẩm</h4>
+            <!-- Chọn voucher -->
+            <div class="mb-3">
+                <select x-model="selectedFlashSaleID" class="form-control">
+                    <option value="">-- Chọn khuyễn mãi --</option>
+                    <template x-for="sale in flashSales" :key="sale.id">
+                        <option :value="sale.id" x-text="sale.name + ' - ' + sale.discount + '%'"></option>
+                    </template>
+                </select>
+            </div>
+
+
+            <!-- Bảng product -->
+            <table class="table table-bordered table-hover">
+                <thead>
+                <tr>
+                    <th style="width: 40px;">
+                        <input type="checkbox"
+                               class="form-check-input"
+                               @change="toggleAll($event.target.checked)">
+                    </th>
+                    <th>ID</th>
+                    <th>Tên sản phẩm</th>
+                </tr>
+                </thead>
+                <tbody>
+                <template x-for="product in paginatedProducts" :key="product.id">
+                    <tr>
+                        <td>
+                            <input type="checkbox" :value="product.id" x-model="selectedProducts">
+                        </td>
+                        <td x-text="product.id"></td>
+                        <td x-text="product.name"></td>
+                    </tr>
+                </template>
+                </tbody>
+            </table>
+            <div class="d-flex justify-content-between align-items-center p-3">
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item" :class="{ 'disabled': currentPage === 1 }">
+                            <a class="page-link" href="#"
+                               @click.prevent="goToPage(currentPage - 1)">Trước</a>
+                        </li>
+                        <template x-for="(page, index) in visiblePages" :key="`page-${index}`">
+                            <li class="page-item" :class="{ 'active': page === currentPage }">
+                                <a class="page-link" href="#"
+                                   @click.prevent="page !== '...' && goToPage(page)"
+                                   x-text="page"></a>
+                            </li>
+                        </template>
+                        <li class="page-item" :class="{ 'disabled': currentPage === totalPages }">
+                            <a class="page-link" href="#"
+                               @click.prevent="goToPage(currentPage + 1)">Tiếp</a>
+                        </li>
+                    </ul>
+                </nav>
+                <button class="btn btn-primary" @click="assignSale()" :disabled="!canAssign()">Gán mã giảm giá
+                </button>
+
+            </div>
+        </div>
+
+    </div>
+
+</main>
+{%endblock%}
+{% block Modal %}
+<!-- category Modal (Add/Edit) -->
+<div class="modal fade" id="flashSaleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thông tin khuyễn mãi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body" x-data="flashSaleForm">
+                <div class="tab-content">
+                    <!-- Thông tin sản phẩm -->
+                    <div class="tab-pane fade show active">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">Tên khuyễn mãi</label>
+                                <input type="text" class="form-control" x-model="form.name" required>
+                            </div>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">Phần trăm giảm</label>
+                                <input type="number" class="form-control" x-model="form.discount" required>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Ngày bắt đầu</label>
+                            <input type="datetime-local" class="form-control" x-model="form.start" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Ngày kết thúc</label>
+                            <input type="datetime-local" class="form-control" x-model="form.end" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-primary"
+                            @click="saveSale"
+                            x-text="mode === 'view' ? 'Sửa' : (mode === 'add' ? 'Thêm' : 'Lưu thay đổi')">
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

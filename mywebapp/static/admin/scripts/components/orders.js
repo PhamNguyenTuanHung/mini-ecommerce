@@ -201,40 +201,23 @@ document.addEventListener('alpine:init', () => {
 
         bulkAction(action) {
             if (this.selectedOrders.length === 0) return;
-
             const selectedOrderObjects = this.orders.filter(o =>
-                this.selectedOrders.includes(o.id)
+                this.selectedOrders.map(Number).includes(Number(o.id))
             );
 
-            switch (action) {
-                case 'processing':
-                    selectedOrderObjects.forEach(order => {
-                        if (order.status === 'pending') {
-                            order.status = 'processing';
-                        }
-                    });
-                    this.showNotification('Orders marked as processing!', 'success');
-                    break;
-                case 'shipped':
-                    selectedOrderObjects.forEach(order => {
-                        if (order.status === 'processing') {
-                            order.status = 'shipped';
-                        }
-                    });
-                    this.showNotification('Orders marked as shipped!', 'success');
-                    break;
-                case 'delivered':
-                    selectedOrderObjects.forEach(order => {
-                        if (order.status === 'shipped') {
-                            order.status = 'delivered';
-                        }
-                    });
-                    this.showNotification('Orders marked as delivered!', 'success');
-                    break;
-            }
+            console.log("Chọn được:", selectedOrderObjects);
 
+            selectedOrderObjects.forEach(order => {
+                if (action === 'processing' && order.status === 'pending') {
+                    order.status = 'processing';
+                } else if (action === 'shipped' && order.status === 'processing') {
+                    order.status = 'shipped';
+                } else if (action === 'delivered' && order.status === 'shipped') {
+                    order.status = 'delivered';
+                }
+                this.updateStatusOrder(order);
+            });
             this.selectedOrders = [];
-            this.calculateStats();
         },
 
         updateStatusOrder(order) {

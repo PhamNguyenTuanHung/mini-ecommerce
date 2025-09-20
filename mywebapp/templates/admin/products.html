@@ -17,7 +17,6 @@
                 </button>
                 <div>
                     <button type="button" class="btn btn-primary"
-                            x-data="productForm"
                             @click="$store.productFormStore.openModal('add',null)">
                         <i class="bi bi-plus-lg me-2"></i>Thêm sản phẩm
                     </button>
@@ -26,7 +25,7 @@
         </div>
 
         <!-- Product Management Container -->
-        <div >
+        <div>
             <!-- Product Stats Widgets -->
             <div class="row g-4 g-lg-5 mb-5">
                 <div class="col-xl-3 col-lg-6">
@@ -186,7 +185,7 @@
                                         @change="filterProducts()" style="width: 150px;">
                                     <option value="">Tất cả thương hiệu</option>
                                     {% for brand in brands %}
-                                    <option value="{{brand.id}}">{{brand.name}}</option>
+                                    <option value="{{brand.name}}">{{brand.name}}</option>
                                     {% endfor %}
                                 </select>
 
@@ -235,6 +234,7 @@
                                            @change="toggleAll($event.target.checked)"
                                            :checked="selectedProducts.length === filteredProducts.length && filteredProducts.length > 0">
                                 </th>
+                                <th @click="sortBy('ID')" class="sortable">ID</th>
                                 <th>Sản phẩm</th>
                                 <th @click="sortBy('category')" class="sortable">Danh mục</th>
                                 <th @click="sortBy('brand')" class="sortable">Thương hiệu</th>
@@ -251,7 +251,8 @@
                                                class="form-check-input"
                                                :value="product.id"
                                                x-model="selectedProducts">
-                                    </td>
+                                    </td >
+                                    <td x-text="product.id"></td>
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <img :src="product.image" class="product-image me-3">
@@ -273,8 +274,8 @@
                                     <td x-text="`$${product.price}`"></td>
                                     <td>
                                                         <span class="badge stock-badge" :class="{
-                                                                  'in-stock': product.stock > 20,
-                                                                  'low-stock': product.stock > 0 && product.stock <= 20,
+                                                                  'in-stock': product.stock > 150,
+                                                                  'low-stock': product.stock > 50 && product.stock <= 150,
                                                                   'out-of-stock': product.stock === 0
                                                               }" x-text="product.stock + ' sản phẩm'"></span>
                                     </td>
@@ -287,18 +288,14 @@
                                             </button>
                                             <ul class="dropdown-menu">
                                                 <li><a class="dropdown-item" href="#" @click="editProduct(product)">
-                                                    <i class="bi bi-pencil me-2"></i>Sửa
-                                                </a></li>
-                                                <li><a class="dropdown-item" href="#"
-                                                       @click="viewProduct(product)">
-                                                    <i class="bi bi-eye me-2"></i>Xem chi tiết
+                                                    <i class="bi bi-pencil me-2"></i>Xem và sửa
                                                 </a></li>
                                                 <li>
                                                     <hr class="dropdown-divider">
                                                 </li>
                                                 <li><a class="dropdown-item text-danger" href="#"
                                                        @click="deleteProduct(product)">
-                                                    <i class="bi bi-trash me-2"></i>Xóa
+                                                    <i class="bi bi-trash me-2"></i>Ẩn sản phẩm
                                                 </a></li>
                                             </ul>
                                         </div>
@@ -401,6 +398,17 @@
                                 <div class="col-md-6">
                                     <label class="form-label">Giá</label>
                                     <input type="number" class="form-control" x-model="form.price" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Giảm giá (₫)</label>
+                                    <input type="number" class="form-control" x-model="form.sale">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Hiển thị sản phẩm</label>
+                                    <select class="form-select" x-model="form.publish">
+                                        <option :value="1">Hiển thị</option>
+                                        <option :value="0">Ẩn</option>
+                                    </select>
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label">Mô tả</label>
@@ -520,35 +528,7 @@
                         </button>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
                     </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Import Modal -->
-<div class="modal fade" id="importModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Import Products</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label">Upload CSV File</label>
-                    <input type="file" class="form-control" accept=".csv">
-                    <div class="form-text">Upload a CSV file with columns: name, sku, category, price, stock, status
-                    </div>
-                </div>
-                <div class="alert alert-info">
-                    <i class="bi bi-info-circle me-2"></i>
-                    <strong>CSV Format:</strong> name, sku, category, price, stock, status<br>
-                    <small>Example: iPhone 14, IPHONE14-128, electronics, 799.99, 50, published</small>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary">Import Products</button>
+                </form>
             </div>
         </div>
     </div>

@@ -1,5 +1,6 @@
 import math
 import random
+import secrets
 from datetime import datetime, timedelta
 import requests
 from sqlalchemy import func, false, desc
@@ -8,7 +9,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from mywebapp import db
 from mywebapp.models import Product, Category, Brand, CartItem, Cart, User, ProductVariant, Order, OrderDetail, Payment, \
     ShippingInfo, UserAddress, ProductImage, ActivityLog, OrderLog, Review, Admin, OTP, AdminLog, Coupon, UserCoupon, \
-    PendingOrder
+    PendingOrder, FlashSale, FlashSaleProduct
 from decimal import Decimal
 from sqlalchemy import or_
 from sqlalchemy.orm import joinedload
@@ -122,6 +123,7 @@ def get_brands_summary():
         for brand_id, name, revenue in rows
     ]
 
+
 def get_brands():
     brands = Brand.query.all()
     return [
@@ -132,6 +134,7 @@ def get_brands():
         for brand in brands
     ]
 
+
 def delete_brand(brand_id):
     brand = db.session.query(Brand).get(brand_id)
     if brand:
@@ -139,6 +142,7 @@ def delete_brand(brand_id):
         db.session.commit()
         return True
     return False
+
 
 def update_brand(brand_id, name):
     brand = db.session.query(Brand).get(brand_id)
@@ -148,12 +152,15 @@ def update_brand(brand_id, name):
         return True
     return False
 
+
 # Product
 
 def load_products(cate_id=None, brand_id=None, kw=None, page=1, sort_by=None):
+    now = datetime.utcnow()
     query = db.session.query(Product).options(
         joinedload(Product.brand),
-        joinedload(Product.category)
+        joinedload(Product.category),
+        joinedload(Product.flash_sales)
     )
 
     sales_data = dict(db.session.query(
@@ -163,49 +170,54 @@ def load_products(cate_id=None, brand_id=None, kw=None, page=1, sort_by=None):
 
     if cate_id:
         query = query.filter(Product.MaDanhMuc == cate_id)
-
     if brand_id:
         query = query.filter(Product.MaThuongHieu == brand_id)
-
     if kw:
         query = query.filter(Product.TenSanPham.ilike(f"%{kw}%"))
 
     if sort_by == "priceLowHigh":
-        query = query.order_by(Product.Gia.asc())
+        query = query.order_by(Product.DonGia.asc())
     elif sort_by == "priceHighLow":
-        query = query.order_by(Product.Gia.desc())
+        query = query.order_by(Product.DonGia.desc())
     elif sort_by == "newest":
-        query = query.order_by(Product.MaSanPham.desc())
+        query = query.order_by(Product.NgayTao.desc())
     else:
-        query = query.order_by(Product.TenSanPham.asc())
+        query = query.order_by(Product.MaSanPham.asc())
 
     page_size = current_app.config.get('PAGE_SIZE', 12)
     total_items = query.count()
     total_pages = math.ceil(total_items / page_size) if total_items > 0 else 1
-
     items = query.offset((page - 1) * page_size).limit(page_size).all()
 
     products = []
     for item in items:
-        products.append({
-            'id': item.MaSanPham,
-            'name': item.TenSanPham,
-            'price': item.Gia,
-            'image': item.HinhAnh,
-            'description': item.MoTa,
-            'brand': {
-                'id': item.brand.MaThuongHieu,
-                'name': item.brand.TenThuongHieu
-            } if item.brand else None,
-            'category': {
-                'id': item.category.MaDanhMuc,
-                'name': item.category.TenDanhMuc
-            } if item.category else None,
-            'rating': item.DiemDanhGia,
-        })
+        if item.TrangThaiHienThi:
+            # Lấy thông tin giá bằng hàm get_price_info() của product
+            price_info = item.get_price_info()
+
+            products.append({
+                'id': item.MaSanPham,
+                'name': item.TenSanPham,
+                'price': price_info['price'],  # Giá gốc
+                'price_after_discount': price_info['price_after_discount'],  # Giá cuối
+                'sale_percent': price_info['sale_percent'],  # % giảm cuối cùng
+                'image': item.HinhAnh,
+                'description': item.MoTa,
+                'brand': {
+                    'id': item.brand.MaThuongHieu,
+                    'name': item.brand.TenThuongHieu
+                } if item.brand else None,
+                'category': {
+                    'id': item.category.MaDanhMuc,
+                    'name': item.category.TenDanhMuc
+                } if item.category else None,
+                'rating': item.get_rating(),
+                'new': item.is_new(),
+                'quantity_sold': sales_data.get(item.MaSanPham, 0)
+            })
 
     if sort_by == "bestseller":
-        query.sort(key=lambda p: p["quantity_sold"], reverse=True)
+        products.sort(key=lambda p: p["quantity_sold"], reverse=True)
 
     return {
         "products": products,
@@ -218,36 +230,6 @@ def load_products(cate_id=None, brand_id=None, kw=None, page=1, sort_by=None):
 def get_gallery(product_id):
     images = ProductImage.query.filter_by(MaSanPham=product_id).all()
     return [img.DuongDan for img in images]
-
-
-def get_products():
-    products = Product.query.all()
-    sales_data = dict(db.session.query(
-        OrderDetail.MaSanPham,
-        func.sum(OrderDetail.SoLuong)
-    ).group_by(OrderDetail.MaSanPham).all())
-
-    result = []
-    for product in products:
-        quantity_sold = sales_data.get(product.MaSanPham, 0)
-        result.append({
-            'id': product.MaSanPham,
-            'name': product.TenSanPham,
-            'price': product.Gia,
-            'image': product.HinhAnh,
-            'description': product.MoTa,
-            'brand': {
-                'id': product.brand.MaThuongHieu,
-                'name': product.brand.TenThuongHieu
-            },
-            'category': {
-                'id': product.category.MaDanhMuc,
-                'name': product.category.TenDanhMuc
-            },
-            'rating': product.DiemDanhGia,
-            'quantity_sold': quantity_sold
-        })
-    return result
 
 
 def get_order_products_with_user_reviews(order_id, user_id):
@@ -295,7 +277,8 @@ def get_products_full():
         .options(
             joinedload(Product.brand),
             joinedload(Product.category),
-            joinedload(Product.product_variants)
+            joinedload(Product.product_variants),
+            joinedload(Product.flash_sales),
         )
         .all()
     )
@@ -314,11 +297,16 @@ def get_products_full():
 
         gallery_images = get_gallery(product.MaSanPham)
 
+        price_after_discount = product.DonGia
+        if product.GiaGiam:
+            price_after_discount = product.DonGia - (product.DonGia * product.GiaGiam / 100)
+
         result.append({
             'id': product.MaSanPham,
             'name': product.TenSanPham,
             'stock': total_stock,
-            'price': product.Gia,
+            'price': product.DonGia,
+            'price_after_discount': price_after_discount,
             'image': product.HinhAnh,
             'description': product.MoTa,
             'brand': {
@@ -330,9 +318,12 @@ def get_products_full():
                 'name': product.category.TenDanhMuc
             },
             'variants': variants,
-            'gallery_images': gallery_images
+            'gallery_images': gallery_images,
+            'sale': product.GiaGiam or 0,
+            'publish': product.TrangThaiHienThi
         })
 
+    result.sort(key=lambda x: x['id'])
     return result
 
 
@@ -358,21 +349,25 @@ def get_all_sales():
 
 def get_product_by_id(product_id):
     product = Product.query.get(product_id)
+    price_info = product.get_price_info()
+
     return {
         'id': product.MaSanPham,
         'name': product.TenSanPham,
-        'price': product.Gia,
+        'price': price_info['price'],
+        'price_after_discount': price_info['price_after_discount'],
+        'sale_percent': price_info['sale_percent'],
         'image': product.HinhAnh,
         'description': product.MoTa,
         'brand': {
             'id': product.brand.MaThuongHieu,
             'name': product.brand.TenThuongHieu
-        },
+        } if product.brand else None,
         'category': {
             'id': product.category.MaDanhMuc,
             'name': product.category.TenDanhMuc
-        },
-        'rating': get_average_rating(product=product),
+        } if product.category else None,
+        'rating': product.get_rating(),
     }
 
 
@@ -397,13 +392,14 @@ def count_stock_product(product_id, size=None, color=None):
 
     variant = query.first()
     return {
-        "id":product_id,
-        "color":color,
-        "size":size,
+        "id": product_id,
+        "color": color,
+        "size": size,
         "quantity": variant.SoLuongTon if variant else 0}
 
 
-def get_best_sellers(limit=4):
+def get_best_sellers(limit=8):
+    now = datetime.utcnow()
     sales_subq = (
         db.session.query(
             OrderDetail.MaSanPham,
@@ -412,81 +408,154 @@ def get_best_sellers(limit=4):
         .group_by(OrderDetail.MaSanPham)
         .subquery()
     )
+
+    flash_subq = (
+        db.session.query(
+            FlashSaleProduct.MaSanPham,
+            FlashSale.GiaGiam.label("flash_sale")
+        )
+        .join(FlashSale, FlashSale.MaKhuyenMai == FlashSaleProduct.MaKhuyenMai)
+        .filter(FlashSale.NgayBatDau <= now, FlashSale.NgayKetThuc >= now)
+        .subquery()
+    )
+
     query = (
         db.session.query(
             Product,
-            func.coalesce(sales_subq.c.quantity_sold, 0).label("quantity_sold")
+            func.coalesce(sales_subq.c.quantity_sold, 0).label("quantity_sold"),
+            func.coalesce(flash_subq.c.flash_sale, Product.GiaGiam).label("sale")
         )
         .outerjoin(sales_subq, Product.MaSanPham == sales_subq.c.MaSanPham)
+        .outerjoin(flash_subq, Product.MaSanPham == flash_subq.c.MaSanPham)
         .order_by(func.coalesce(sales_subq.c.quantity_sold, 0).desc())
         .limit(limit)
     )
 
     results = []
-    for product, quantity_sold in query.all():
+    for product, quantity_sold, sale in query.all():
+        price_after_discount = product.DonGia - product.DonGia * (sale / 100) if sale else product.DonGia
+        results.append({
+            "id": product.MaSanPham,
+            "name": product.TenSanPham,
+            "price": product.DonGia,
+            "sale": sale,
+            "price_after_discount": price_after_discount,
+            "quantity_sold": quantity_sold,
+            "image": product.HinhAnh,
+            "brand": {
+                "id": product.brand.MaThuongHieu,
+                "name": product.brand.TenThuongHieu
+            },
+            "category": {
+                "id": product.category.MaDanhMuc,
+                "name": product.category.TenDanhMuc
+            },
+            'new': product.is_new()
+        })
+    return results
+
+
+def get_best_rated(limit=8):
+    now = datetime.utcnow()
+
+    products = Product.query.all()
+
+    products.sort(key=lambda p: p.get_rating(), reverse=True)
+
+    results = []
+    for product in products:
+        if len(results) >= 8:
+            break
+        active_flash_sale = next(
+            (fs for fs in product.flash_sales if fs.NgayBatDau <= now <= fs.NgayKetThuc),
+            None
+        )
+        flash_sale_percent = active_flash_sale.GiaGiam if active_flash_sale else 0
+        final_sale_percent = flash_sale_percent or product.GiaGiam or 0
+        price_after_discount = product.DonGia - product.DonGia * (
+                    final_sale_percent / 100) if final_sale_percent else product.DonGia
+
         results.append({
             'id': product.MaSanPham,
             'name': product.TenSanPham,
-            'price': product.Gia,
+            'price': product.DonGia,
+            'price_after_discount': price_after_discount,
+            'sale': final_sale_percent,
             'image': product.HinhAnh,
             'description': product.MoTa,
             'brand': {
                 'id': product.brand.MaThuongHieu,
                 'name': product.brand.TenThuongHieu
-            },
+            } if product.brand else None,
             'category': {
                 'id': product.category.MaDanhMuc,
                 'name': product.category.TenDanhMuc
-            },
-            'rating': product.DiemDanhGia,
-            'quantity_sold': quantity_sold
+            } if product.category else None,
+            'new': product.is_new()
         })
     return results
 
 
-def get_best_rated(limit=4):
+def get_newest_products(limit=8):
     query = (
         Product.query
-        .order_by(Product.DiemDanhGia.desc())
+        .order_by(Product.NgayTao.desc())
         .limit(limit)
         .all()
     )
-
+    now = datetime.utcnow()
     results = []
+
     for product in query:
+        active_flash_sale = next(
+            (fs for fs in product.flash_sales if fs.NgayBatDau <= now <= fs.NgayKetThuc),
+            None
+        )
+        sale_percent = active_flash_sale.GiaGiam if active_flash_sale else 0
+        price_after_discount = product.DonGia - product.DonGia * (
+                    sale_percent / 100) if sale_percent else product.DonGia
+
         results.append({
             'id': product.MaSanPham,
             'name': product.TenSanPham,
-            'price': product.Gia,
+            'price': product.DonGia,
+            'price_after_discount': price_after_discount,
+            'sale': sale_percent,
             'image': product.HinhAnh,
             'description': product.MoTa,
             'brand': {
                 'id': product.brand.MaThuongHieu,
                 'name': product.brand.TenThuongHieu
-            },
+            } if product.brand else None,
             'category': {
                 'id': product.category.MaDanhMuc,
                 'name': product.category.TenDanhMuc
-            },
-            'rating': get_average_rating(product=product)
+            } if product.category else None,
+            'new': product.is_new()
         })
     return results
 
 
-def get_newest_products(limit=4):
-    query = (
-        Product.query
-        .order_by(Product.MaSanPham.desc())
+def get_flash_sale_products(limit=8):
+    now = datetime.utcnow()
+    products = (
+        db.session.query(
+            Product,
+            FlashSale.GiaGiam
+        )
+        .join(FlashSaleProduct, FlashSaleProduct.MaSanPham == Product.MaSanPham)
+        .join(FlashSale, FlashSale.MaKhuyenMai == FlashSaleProduct.MaKhuyenMai)
+        .filter(FlashSale.NgayBatDau <= now, FlashSale.NgayKetThuc >= now)
         .limit(limit)
         .all()
     )
-
-    results = []
-    for product in query:
-        results.append({
+    result = []
+    for product, sale in products:
+        price_after_discount = product.DonGia - product.DonGia * (sale / 100)
+        result.append({
             'id': product.MaSanPham,
             'name': product.TenSanPham,
-            'price': product.Gia,
+            'price': product.DonGia,
             'image': product.HinhAnh,
             'description': product.MoTa,
             'brand': {
@@ -497,20 +566,10 @@ def get_newest_products(limit=4):
                 'id': product.category.MaDanhMuc,
                 'name': product.category.TenDanhMuc
             },
-            'rating': product.DiemDanhGia,
+            'sale': sale,
+            'price_after_discount': price_after_discount
         })
-    return results
-
-
-def get_average_rating(product):
-    reviews = product.reviews
-    if not reviews:
-        return 0
-
-    score = sum(review.DiemDanhGia for review in reviews)
-    avg_rating = score / len(reviews)
-
-    return round(avg_rating, 2)
+    return result
 
 
 def delete_product_by_id(product_id):
@@ -532,14 +591,15 @@ def delete_product_by_id(product_id):
         return False
 
 
-def create_products(name, price, description, category_id, brand_id):
+def create_products(name, price, description, category_id, brand_id, sale=None, publish=1):
     new_product = Product(
         TenSanPham=name,
-        Gia=price,
+        DonGia=price,
         MoTa=description,
         MaDanhMuc=category_id,
         MaThuongHieu=brand_id,
-        HinhAnh=None
+        GiamGia=sale,
+        TrangThaiHienThi=publish
     )
     db.session.add(new_product)
     db.session.commit()
@@ -581,58 +641,23 @@ def add_product_images(product_id, images):
     db.session.commit()
 
 
-def add_product(name, price, description, category_id, brand_id, img, variants):
-    try:
-        if not variants or not isinstance(variants, list) or len(variants) == 0:
-            return {"success": False, "error": "Phải có ít nhất một biến thể sản phẩm"}
+def update_product(product_id, name, price, description, category_id, brand_id, main_img=None, variants=None,
+                   gallery=None, sale=None, publish=None):
+    variants = variants or []
+    gallery = gallery or []
 
-        new_product = Product(
-            TenSanPham=name,
-            Gia=price,
-            MoTa=description,
-            MaDanhMuc=category_id,
-            MaThuongHieu=brand_id,
-            HinhAnh=img if img else None
-        )
-        db.session.add(new_product)
-        db.session.flush()
-
-        for v in variants:
-            kich_thuoc = v.get('size') or v.get('KichThuoc')
-            mau_sac = v.get('color') or v.get('MauSac')
-            so_luong = v.get('stock') or v.get('SoLuongTon', 0)
-
-            if not kich_thuoc or not mau_sac:
-                return {"success": False, "error": "Biến thể phải có cả Màu sắc và Kích thước"}
-
-            variant = ProductVariant(
-                MaSanPham=new_product.MaSanPham,
-                KichThuoc=kich_thuoc,
-                MauSac=mau_sac,
-                SoLuongTon=so_luong
-            )
-            db.session.add(variant)
-
-        db.session.commit()
-        return {"success": True, "id": new_product.MaSanPham, "product": new_product}
-
-    except Exception as e:
-        db.session.rollback()
-        return {"success": False, "error": str(e)}
-
-
-def update_product(product_id, name, price, description, category_id, brand_id, main_img=None, variants=[], gallery=[]):
     try:
         product = Product.query.get(product_id)
         if not product:
             return {"success": False, "error": "Không tìm thấy sản phẩm"}
 
-        # Cập nhật thông tin cơ bản
         product.TenSanPham = name
-        product.Gia = price
+        product.DonGia = price
         product.MoTa = description
         product.MaDanhMuc = category_id
         product.MaThuongHieu = brand_id
+        product.GiaGiam = 0 if sale is None else sale
+        product.TrangThaiHienThi = 1 if publish else 0
 
         if main_img:
             product.HinhAnh = main_img
@@ -645,7 +670,6 @@ def update_product(product_id, name, price, description, category_id, brand_id, 
             img = ProductImage(MaSanPham=product_id, DuongDan=img_url)
             db.session.add(img)
 
-        # Cập nhật variants
         existing_variants = {(v.KichThuoc, v.MauSac): v for v in
                              ProductVariant.query.filter_by(MaSanPham=product_id).all()}
         updated_keys = set()
@@ -706,7 +730,26 @@ def related_products(product_id, limit=10):
             )
         )
 
-    return query.limit(limit).all()
+    products = []
+
+    for product in query.limit(limit).all():
+        products.append({
+            'id': product.MaSanPham,
+            'name': product.TenSanPham,
+            'price': product.DonGia,
+            'image': product.HinhAnh,
+            'description': product.MoTa,
+            'brand': {
+                'id': product.brand.MaThuongHieu,
+                'name': product.brand.TenThuongHieu
+            },
+            'category': {
+                'id': product.category.MaDanhMuc,
+                'name': product.category.TenDanhMuc
+            },
+            'rating': product.get_rating(),
+        })
+    return products
 
 
 # User
@@ -823,6 +866,24 @@ def add_user(fullname, username, password, email, sdt, avatar):
     return user
 
 
+def create_user_from_google(email, name, avatar=None):
+    random_password = secrets.token_hex(16)
+    hashed_password = generate_password_hash(random_password)
+
+    user = User(
+        HoTen=name,
+        TenDangNhap=email.split('@')[0],
+        MatKhau=hashed_password,
+        Email=email,
+        SoDienThoai=None,
+        AnhDaiDien=avatar
+    )
+
+    db.session.add(user)
+    db.session.commit()
+    return user
+
+
 def update_user(user_id, name=None, email=None, phone=None, avatar=None, status=None):
     user = User.query.get(user_id)
     if not user:
@@ -844,7 +905,6 @@ def update_user(user_id, name=None, email=None, phone=None, avatar=None, status=
         return user
     except Exception as e:
         db.session.rollback()
-        print(f"Error updating user: {e}")
         return None
 
 
@@ -929,9 +989,17 @@ def check_login(username, password):
             User.Email == username
         )
     ).first()
-    if user and check_password_hash(user.MatKhau, password):
-        return user  # Đăng nhập thành công, trả về đối tượng user
-    return None  # Đăng nhập thất bại
+
+    if not user:
+        return None, "Tài khoản không tồn tại"
+
+    if not check_password_hash(user.MatKhau, password):
+        return None, "Mật khẩu không đúng"
+
+    if not user.KichHoat:
+        return None, "Tài khoản bị vô hiệu"
+
+    return user, "Đăng nhập thành công"
 
 
 def is_username_exist(username):
@@ -970,17 +1038,22 @@ def get_cart(user_id=None, key=None):
             quantity = item.SoLuong
             item_key = f"{product_id}_{size}_{color}"
 
+            # Lấy giá cuối cùng (có sale / flash sale)
+            price_info = product.get_price_info()
+            final_price = price_info['price_after_discount']
+
             cart_dict[item_key] = {
                 'key': item_key,
                 'product_id': product_id,
                 'name': product.TenSanPham,
                 'image': product.HinhAnh,
-                'price': float(product.Gia),
+                'price': float(final_price),
                 'quantity': quantity,
                 'size': size,
                 'color': color
             }
     else:
+        # Lấy từ session cart
         cart_dict = session.get('cart', {})
 
     if key:
@@ -1050,21 +1123,30 @@ def add_item_to_cart(cart, item):
     size = item.get('size')
     color = item.get('color')
     image = item.get('image')
-    key = f'{product_id}_{size}_{color}'
     quantity = item.get('quantity', 1)
+    product = Product.query.get(product_id)
+    if not product:
+        raise ValueError("Sản phẩm không tồn tại")
+
+    price_info = product.get_price_info()
+    final_price = price_info['price_after_discount']
+    print(final_price)
+
+    key = f'{product_id}_{size}_{color}'
 
     if key in cart:
         cart[key]['quantity'] += quantity
     else:
         cart[key] = {
             'product_id': product_id,
-            'name': item['name'],
-            'price': float(item['price']),
+            'name': product.TenSanPham,
+            'price': float(final_price),
             'quantity': quantity,
             'size': size,
             'color': color,
             'image': image
         }
+
     return cart
 
 
@@ -1136,7 +1218,6 @@ def get_orders_by_user_id(user_id):
         joinedload(Order.user),
         joinedload(Order.user_address),
         joinedload(Order.order_details).joinedload(OrderDetail.product),
-        joinedload(Order.shipping_infos),
         joinedload(Order.payment)
     ).filter_by(MaNguoiDung=user_id).order_by(Order.NgayDat.desc()).all()
 
@@ -1319,7 +1400,6 @@ def get_order_detail():
     return result
 
 
-
 def create_order(user_id, order_info, order_details, status=None):
     new_order = Order(
         MaNguoiDung=user_id,
@@ -1328,7 +1408,7 @@ def create_order(user_id, order_info, order_details, status=None):
         GiamGia=order_info.get('discount', 0),
         TrangThai='pending' if status is None else status,
         MaDiaChi=order_info['address_id'],
-        MaGiamGia = order_info.get('voucher_id', None),
+        MaGiamGia=order_info.get('voucher_id', None),
     )
     db.session.add(new_order)
     db.session.flush()
@@ -1514,11 +1594,11 @@ def get_admin_activity_logs():
     return results
 
 
-def deactivate_user(user_id):
-    user = User.query.filter_by(id=user_id).first()
+def update_status_user(user_id, status):
+    user = User.query.filter_by(MaNguoiDung=user_id).first()
     if not user:
-        return False  # Không tìm thấy người dùng
-    user.KichHoat = 0
+        return False
+    user.KichHoat = 1 if status == 'active' else 0
     db.session.commit()
     return True
 
@@ -1638,9 +1718,14 @@ def check_admin_login(username, password):
             Admin.Email == username
         )
     ).first()
-    if admin:
-        return admin
-    return None
+
+    if not admin:
+        return None, "Tài khoản không tồn tại"
+
+    # if not check_password_hash(admin.MatKhau, password):
+    #     return None, "Mật khẩu không đúng"
+
+    return admin, "Đăng nhập thành công"
 
 
 def add_admin(fullname, username, password, email, sdt, avatar):
@@ -1668,19 +1753,20 @@ def get_user_vouchers(user_id: int):
         db.session.query(Coupon)
         .join(UserCoupon, Coupon.MaGiamGia == UserCoupon.MaGiamGia)
         .filter(UserCoupon.MaNguoiDung == user_id)
-        .filter(UserCoupon.DaSuDung==0)
+        .filter(UserCoupon.DaSuDung == 0)
         .all()
     )
     return [
         {
             "id": v.MaGiamGia,
-            "code":v.MaGiam,
+            "code": v.MaGiam,
             "discount_per": v.PhanTramGiam,
             "expiry_date": v.NgayHetHan,
             "description": v.MoTa
         }
         for v in vouchers
     ]
+
 
 def mark_voucher_used(user_id, coupon_id):
     user_coupon = (
@@ -1761,9 +1847,10 @@ def assign_voucher_to_users(user_ids: list[int], voucher_id: int):
     db.session.commit()
     return new_entries
 
+
 # pendind order
 
-def create_pending_order(pending_order_id,user_id,order_info,order_details):
+def create_pending_order(pending_order_id, user_id, order_info, order_details):
     pending_order = PendingOrder(
         MaDonHangTam=pending_order_id,
         MaNguoiDung=user_id,
@@ -1774,6 +1861,7 @@ def create_pending_order(pending_order_id,user_id,order_info,order_details):
     db.session.commit()
     return pending_order
 
+
 def delete_pending_order(ma_don_hang):
     pending_order = PendingOrder.query.filter_by(MaDonHang=ma_don_hang).first()
     if pending_order:
@@ -1781,5 +1869,80 @@ def delete_pending_order(ma_don_hang):
         db.session.commit()
         return True
     return False
+
+
 def get_pending_order(pending_order_id):
     return PendingOrder.query.filter_by(MaDonHang=pending_order_id).first()
+
+
+def get_sales():
+    sales = FlashSale.query.all()
+    data = []
+    for sale in sales:
+        data.append({
+            "id": sale.MaKhuyenMai,
+            "name": sale.TenKhuyenMai,
+            "discount": sale.GiaGiam,
+            "start": sale.NgayBatDau.strftime("%Y-%m-%dT%H:%M") if sale.NgayBatDau else None,
+            "end": sale.NgayKetThuc.strftime("%Y-%m-%dT%H:%M") if sale.NgayKetThuc else None,
+        })
+
+    return data
+
+
+def update_sale(sale_id, name, start, discount, end):
+    sale = FlashSale.query.get(sale_id)
+    if sale:
+        sale.TenKhuyenMai = name
+        sale.GiaGiam = discount
+        sale.NgayKetThuc = end
+        sale.NgayBatDau = start
+        db.session.commit()
+        return True
+    return False
+
+
+def add_sale(name, discount, start, end):
+    try:
+        sale = FlashSale(
+            TenKhuyenMai=name,
+            GiaGiam=discount,
+            NgayBatDau=start,
+            NgayKetThuc=end
+        )
+        db.session.add(sale)
+        db.session.commit()
+        return True
+    except Exception as e:
+        db.session.rollback()
+        print("Lỗi khi thêm coupon:", e)
+        return False
+
+
+def assign_sale_to_products(products, sale):
+    new_entries = [
+        FlashSaleProduct(
+            MaKhuyenMai=sale,
+            MaSanPham=product_id,
+        )
+        for product_id in products
+    ]
+
+    db.session.bulk_save_objects(new_entries)
+    db.session.commit()
+    return new_entries
+
+
+def get_active_sales():
+    now = datetime.utcnow()
+    sale = FlashSale.query.filter(
+        FlashSale.NgayBatDau <= now,
+        FlashSale.NgayKetThuc >= now
+    ).first()
+    return {
+        "id": sale.MaKhuyenMai,
+        "name": sale.TenKhuyenMai,
+        "discount": sale.GiaGiam,
+        "start": sale.NgayBatDau.isoformat(),
+        "end": sale.NgayKetThuc.isoformat()
+    }

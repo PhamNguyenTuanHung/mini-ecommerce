@@ -1,9 +1,11 @@
 import math
 from datetime import datetime, timedelta
+
 from flask import render_template, request, redirect, flash, session, current_app, jsonify, url_for, g
 from flask_mail import Message
+from sympy.physics.vector import outer
 
-from mywebapp import utils, mail
+from mywebapp import utils, mail, oauth
 from flask_login import login_user, current_user, logout_user, login_required
 from cloudinary import uploader
 from flask import Blueprint
@@ -27,12 +29,12 @@ def update_last_active():
 @main.route('/login', methods=['GET', 'POST'])
 def login():
     next_page = request.args.get('next')
-
+    username=""
     if request.method == "POST":
         username = request.form.get('username')
         password = request.form.get('password')
         next_page = request.form.get('next') or next_page
-        user = utils.check_login(username, password)
+        user,msg = utils.check_login(username, password)
 
         if user:
             login_user(user)
@@ -49,10 +51,45 @@ def login():
                 next_page = url_for('main.home')
             return redirect(next_page)
         else:
-            flash('Thông tin đăng nhập hoặc mật khẩu không chính xác', 'danger')
+            flash(msg, 'danger')
 
-    print("DEBUG next_page:", next_page)
-    return render_template('login.html', next=next_page)
+    return render_template('login.html', next=next_page,username=username)
+
+
+
+@main.route('/login/google')
+def login_google():
+    redirect_uri = url_for('main.authorize_google', _external=True)
+    return oauth.google.authorize_redirect(redirect_uri)
+
+@main.route('/auth/google/callback')
+def authorize_google():
+    token = oauth.google.authorize_access_token()
+    user_info = oauth.google.userinfo()
+
+    if not user_info:
+        flash('Không lấy được thông tin từ Google', 'danger')
+        return redirect(url_for('main.login'))
+
+    email = user_info.get('email')
+    name = user_info.get('name')
+    avatar = user_info.get('picture')
+
+    user = utils.get_user_by_email(email)
+    if not user:
+        user = utils.create_user_from_google(email=email, name=name, avatar=avatar)
+
+    # Login user
+    login_user(user)
+    utils.log_activity(
+        user.MaNguoiDung,
+        action='login',
+        message=f'User {email} đăng nhập bằng Google thành công'
+    )
+
+    flash('Đăng nhập bằng Google thành công!', 'success')
+    return redirect(url_for('main.home'))
+
 
 
 @main.route('/register', methods=['GET', 'POST'])
@@ -113,6 +150,48 @@ def register():
 
     return render_template('register.html')
 
+
+@main.route('/test', methods=['GET', 'POST'])
+def test():
+    if request.method == 'POST':
+        fullname = request.form.get('fullname', '').strip()
+        email = request.form.get('email', '').strip()
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
+        confirm_password = request.form.get('confirm_password', '').strip()
+        sdt = request.form.get('SDT', '').strip()
+        avatar = request.files.get('avatar')
+
+        # Avatar mặc định
+        avatar_path = "https://res.cloudinary.com/dmwhvc8tc/image/upload/v1753408922/user_avatar/avatar_default.png"
+
+        if utils.is_username_exist(username):
+            flash("Đã tồn tại tài khoản", "danger")
+        elif utils.is_email_exist(email):
+            flash("Email này đã được đăng ký", "danger")
+        elif password != confirm_password:
+            flash("Mật khẩu không trùng khớp", "danger")
+        else:
+            user = utils.add_user(
+                fullname=fullname,
+                username=username,
+                password=password,
+                email=email,
+                sdt=sdt,
+                avatar=avatar_path
+            )
+
+            login_user(user)
+            utils.log_activity(user.MaNguoiDung, 'register', f'Đăng ký thành công với username: {username}')
+            return redirect('/')
+
+        return render_template('register.html',
+                               fullname=fullname,
+                               email=email,
+                               username=username,
+                               SDT=sdt)
+
+    return render_template('test.html')
 
 @main.route('/logout')
 @login_required
@@ -303,7 +382,8 @@ def checkout():
 def home():
     products = utils.load_products()
     categories = utils.get_categories(quantity=3)
-    return render_template('index.html', products=products, categories=categories)
+    flash_sale =utils.get_active_sales()
+    return render_template('index.html', products=products, categories=categories, flash_sale=flash_sale)
 
 
 @main.route('/payment/return')
@@ -331,7 +411,6 @@ def shop():
     # page = int(request.args.get('page', 1))
     # products = utils.load_products(cate_id=cate_id, brand_id=brand_id, kw=kw, from_price=from_price, to_price=to_price,
     #                                page=page)
-    # products_count = utils.count_products()
     return render_template('shop.html')
 
 @main.route('/confirmation')
